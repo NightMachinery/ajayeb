@@ -50,6 +50,10 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator,
 			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temp(userID) && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
 		h.NameNo = a.assignment(userID).Number
+		if r.Names.Get(userID).UserID != "" {
+			yes := true
+			h.Linkable = &yes
+		}
 		humans = append(humans, h)
 	}
 	for i, s := range r.Slots {

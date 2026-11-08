@@ -26,7 +26,8 @@ const Schema = 2
 // were remembered by tableroom.ClientKey), and format 3 (before the name
 // ledger). A newer format is refused and left as it is.
 // Format 5 adds bounded temporary-role history and promotion ancestry.
-const recordFormat = 5
+// Format 6 adds bounded device-link epochs for remembered spectators.
+const recordFormat = 6
 
 // Seat counts: two seats start Duel (M18.shared-lobby), three to seven
 // Haftgane.
@@ -72,7 +73,8 @@ type Record struct {
 	// Slots are the lobby's slots in lobby order, SeatCount of them.
 	Slots []Slot `json:"slots"`
 	// Names retains bounded authority assignments and name history.
-	Names namenum.Ledger `json:"names"`
+	Names namenum.Ledger        `json:"names"`
+	Links []tableroom.LinkEpoch `json:"links"`
 	// Roles are the lobby's roles (package roles), carried into the game.
 	Roles roles.Roles `json:"roles"`
 	// Unseated are the users who released their slot or were removed from
@@ -122,6 +124,7 @@ type SeqRecord struct {
 func (r *Record) clone() Record {
 	c := *r
 	c.Names = r.Names.Clone()
+	c.Links = slices.Clone(r.Links)
 	if r.ArchivedAt != nil {
 		at := *r.ArchivedAt
 		c.ArchivedAt = &at
@@ -169,6 +172,9 @@ func cloneOptions(o wire.LobbyOptions) wire.LobbyOptions {
 // encode returns the record's file bytes, with every slice a JSON array.
 func (r *Record) encode() ([]byte, error) {
 	c := r.clone()
+	if c.Links == nil {
+		c.Links = []tableroom.LinkEpoch{}
+	}
 	for _, p := range []*[]string{&c.Unseated, &c.Retired} {
 		if *p == nil {
 			*p = []string{}
@@ -326,7 +332,7 @@ func validate(r *Record, acks int) error {
 		if s.Taken < 0 || s.Taken > r.Revision || s.Kind != SlotHuman && s.Taken != 0 {
 			return invalid("when slot %d was taken", i)
 		}
-		if s.Epoch < 0 || s.Epoch > r.Revision || s.Kind != SlotHuman && s.Epoch != 0 {
+		if s.Epoch < 0 || s.Epoch > r.Revision || s.Kind != SlotHuman && s.Kind != SlotReserved && s.Epoch != 0 {
 			return invalid("slot %d's claim epoch", i)
 		}
 	}
@@ -335,6 +341,14 @@ func validate(r *Record, acks int) error {
 	}
 	if r.Parent != "" && (store.ValidateCode(r.Parent) != nil || r.Parent == r.Code) {
 		return invalid("the parent")
+	}
+	if len(r.Links) > maxNameUsers {
+		return invalid("device links past their bound")
+	}
+	for i, link := range r.Links {
+		if link.UserID == "" || slotOf(r, link.UserID, SlotHuman) >= 0 || slotOf(r, link.UserID, SlotReserved) >= 0 || r.Names.Get(link.UserID).UserID == "" || link.Epoch < 0 || link.Epoch > r.Revision || slices.IndexFunc(r.Links, func(x tableroom.LinkEpoch) bool { return x.UserID == link.UserID }) != i {
+			return invalid("device links")
+		}
 	}
 	if r.Roles.Valid() != nil {
 		return invalid("the roles")

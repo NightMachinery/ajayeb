@@ -83,7 +83,7 @@ func TestFormat4TablePreservesMetadata(t *testing.T) {
 		}
 	}
 	after := h.record()
-	if after.Format != 5 || !reflect.DeepEqual(before.Names, after.Names) || !reflect.DeepEqual(before.Seqs, after.Seqs) {
+	if after.Format != recordFormat || !reflect.DeepEqual(before.Names, after.Names) || !reflect.DeepEqual(before.Seqs, after.Seqs) {
 		t.Fatal("format-4 migration reset name numbers or client keys")
 	}
 }
@@ -102,7 +102,7 @@ func TestFormat4TableFixture(t *testing.T) {
 	if _, _, err = restore(r, defaultBounds); err != nil {
 		t.Fatal(err)
 	}
-	if r.Format != 5 || r.Names.Get("user-0").Number != 3 || r.Names.Get("user-1").Number != 2 {
+	if r.Format != recordFormat || r.Names.Get("user-0").Number != 3 || r.Names.Get("user-1").Number != 2 {
 		t.Fatalf("name ledger reset: %+v", r.Names)
 	}
 }

@@ -307,6 +307,11 @@ func (a *actor) claimHolder(r *Record, claim string) (string, bool) {
 			user = sr.UserID
 		}
 	}
+	for _, l := range r.Links {
+		if cl.VerifyClaim(claim, a.code, l.UserID, l.Epoch) && user == "" {
+			user = l.UserID
+		}
+	}
 	return user, user != ""
 }
 
@@ -735,9 +740,17 @@ func (a *actor) inbound(c *room.Client, f wire.ClientMessage) {
 	case wire.TableResign:
 		a.resign(c, f)
 	case wire.PlatformLink:
-		a.link(c, f.Seat, false)
+		if f.UserID != nil {
+			a.linkUser(c, *f.UserID, false, true)
+		} else {
+			a.link(c, f.Seat, false)
+		}
 	case wire.PlatformRelink:
-		a.link(c, f.Seat, true)
+		if f.UserID != nil {
+			a.linkUser(c, *f.UserID, true, true)
+		} else {
+			a.link(c, f.Seat, true)
+		}
 	case wire.Link:
 		a.link(c, f.Seat, false)
 	case wire.Relink:
@@ -1192,6 +1205,7 @@ func (a *actor) commit(op string, cand Record, g game, by *room.Client) error {
 		cand.Updated = a.now()
 	}
 	cand.syncNames(a.visitors)
+	cand.pruneLinks()
 	// The candidate must restore after a restart: the same checks, on the
 	// engine value this transaction produced instead of a replay.
 	if err := validate(&cand, &g, a.t.bounds()); err != nil {

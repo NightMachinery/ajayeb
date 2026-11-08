@@ -243,3 +243,24 @@ func TestSharedLobbyDuelHintOptionsDecoder(t *testing.T) {
 		}
 	}
 }
+
+func TestPlatformUserLinkTargets(t *testing.T) {
+	for _, raw := range []string{
+		`{"t":"link","code":"REGAAA","seat":-1,"userId":"member"}`,
+		`{"t":"relink","code":"REGAAA","seat":-1,"userId":"member"}`,
+	} {
+		if _, err := DecodeClientVersion([]byte(raw), PlatformProtocolVersion); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, raw := range []string{
+		`{"t":"link","code":"REGAAA","seat":0,"userId":"member"}`,
+		`{"t":"link","code":"REGAAA","seat":-1}`,
+		`{"t":"link","code":"REGAAA","seat":-1,"userId":""}`,
+		`{"t":"relink","code":"REGAAA","seat":-1,"userId":null}`,
+	} {
+		if _, err := DecodeClientVersion([]byte(raw), PlatformProtocolVersion); err == nil {
+			t.Fatalf("accepted %s", raw)
+		}
+	}
+}

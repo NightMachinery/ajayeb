@@ -27,6 +27,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
@@ -290,10 +291,9 @@ type Participant struct {
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
 	Bot    string `json:"bot"`
-	// FreshClaim: the lobby revoked this human's rematch claim (they lost
-	// their slot and were seated again), so their seat starts at a fresh
-	// claim epoch, the table's first public revision, not at the
-	// rematch's 0. Only the lobby's Start sets it.
+	// Epoch carries a lobby human's claim epoch unchanged at Start.
+	Epoch int `json:"-"`
+	// FreshClaim is retained for older direct callers; lobby Start uses Epoch.
 	FreshClaim bool `json:"-"`
 }
 
@@ -302,6 +302,10 @@ type Participant struct {
 // the creator (if any) is the one admin. Prefix, for tests and development
 // only, starts the table with these complete batches already resolved.
 type Spec struct {
+	Links   []LinkEpoch             `json:"-"`
+	Retired []string                `json:"-"`
+	Public  int                     `json:"-"`
+	RoomLog []wire.PlatformLogEntry `json:"-"`
 	// Names is the lobby ledger carried at Start, including retained authority holders.
 	Names         *namenum.Ledger `json:"-"`
 	Sides         string          `json:"sides"` // day (default), random, or choose
@@ -461,6 +465,28 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	if spec.Names != nil {
 		base.Names = spec.Names.Clone()
 	}
+	if spec.Public > base.Public {
+		base.Public = spec.Public
+	}
+	base.Links = slices.Clone(spec.Links)
+	base.Retired = slices.Clone(spec.Retired)
+	for _, e := range spec.RoomLog {
+		if e.Seat != nil {
+			seat := -1
+			// Map a lobby slot to its fixed seat.
+			for s := range n {
+				if int(order[s]) == *e.Seat {
+					seat = s
+				}
+			}
+			if seat >= 0 {
+				e.Seat = &seat
+			} else {
+				e.Seat = nil
+			}
+		}
+		base.RoomLog = append(base.RoomLog, e)
+	}
 	for i, p := range spec.Participants {
 		if p.UserID != "" {
 			base.Names.Assign(p.UserID, p.Name)
@@ -470,7 +496,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	for s := range n {
 		p := spec.Participants[order[s]]
 		base.Assignment[s] = int(order[s])
-		sr := SeatRecord{Seat: s, Kind: SeatHuman, UserID: p.UserID, Name: p.Name}
+		sr := SeatRecord{Seat: s, Kind: SeatHuman, UserID: p.UserID, Name: p.Name, Epoch: p.Epoch}
 		if p.FreshClaim {
 			sr.Epoch = base.Public
 		}
@@ -483,6 +509,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	}
 	openPoint(&base, &g)
 	base.syncNames(nil)
+	base.pruneLinks()
 	if err := validate(&base, &g, t.bounds()); err != nil {
 		t.log.Error("table create invalid", "err", err)
 		return Record{}, game{}, ErrSpec

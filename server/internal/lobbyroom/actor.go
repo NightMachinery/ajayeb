@@ -263,6 +263,11 @@ func (a *actor) claimHolder(claim string) (string, bool) {
 			user = s.UserID
 		}
 	}
+	for _, l := range a.rec.Links {
+		if cl.VerifyClaim(claim, a.code, l.UserID, l.Epoch) && user == "" {
+			user = l.UserID
+		}
+	}
 	return user, user != ""
 }
 
@@ -363,6 +368,11 @@ func (a *actor) takeSlot(user, name string, claimed bool) bool {
 	name = namenum.CleanName(name)
 	r := &a.rec
 	i := slotOf(r, user, SlotReserved)
+	// A remembered spectator's device must not take a newly opened slot,
+	// rename its claimed identity, or invalidate the very link it joined with.
+	if claimed && i < 0 {
+		return false
+	}
 	cand := r.clone()
 	cand.Revision++
 	epoch := cand.Revision
@@ -555,6 +565,7 @@ func (a *actor) commit(op string, cand Record) error {
 		cand.Updated = a.now()
 	}
 	cand.syncNames(a.visitors)
+	cand.pruneLinks()
 	if err := validate(&cand, a.l.cfg.SeqClients); err != nil {
 		a.l.log.Error("lobby candidate invalid", "room", a.code, "op", op, "err", err)
 		return err
@@ -600,11 +611,18 @@ func (a *actor) inbound(c *room.Client, f wire.ClientMessage) bool {
 		a.role(c, f)
 	case wire.LobbyStart:
 		return a.start(c, f)
+	case wire.PlatformLink:
+		a.link(c, f.Seat, f.UserID, false)
+	case wire.PlatformRelink:
+		a.link(c, f.Seat, f.UserID, true)
+	case wire.Link:
+		a.link(c, f.Seat, nil, false)
+	case wire.Relink:
+		a.link(c, f.Seat, nil, true)
 	case wire.Resync:
 		c.Out.Push(a.frame(c, nil))
 	default:
-		// No device links in a lobby (a rematch hands out its reserved
-		// slots' claims), and no rematch of a lobby.
+		// A lobby has no rematch.
 		c.Out.Push(wire.NewLobbyReject(seqOf(f), outBad))
 	}
 	return false
@@ -917,10 +935,14 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	spec.Roles = &rs
 	names := r.Names.Clone()
 	spec.Names = &names
+	spec.Links = slices.Clone(r.Links)
+	spec.Retired = slices.Clone(r.Retired)
+	spec.Public = r.Revision + 1
+	spec.RoomLog = slices.Clone(r.RoomLog)
 	for _, s := range r.Slots {
 		switch s.Kind {
 		case SlotHuman:
-			spec.Participants = append(spec.Participants, tableroom.Participant{UserID: s.UserID, Name: s.Name, FreshClaim: s.Epoch != 0})
+			spec.Participants = append(spec.Participants, tableroom.Participant{UserID: s.UserID, Name: s.Name, Epoch: s.Epoch})
 		case SlotBot:
 			spec.Participants = append(spec.Participants, tableroom.Participant{Bot: creationLevel(s.Bot, r.SeatCount)})
 		default:
@@ -948,6 +970,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		}
 		members = append(members, mb)
 	}
+	var ended []*room.Client
 	var started tableroom.Started
 	var err error
 	if r.SeatCount == 2 {
@@ -970,6 +993,12 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		}
 		handoff := make([]room.StartMember, 0, len(members))
 		for _, mb := range members {
+			// Duel recognizes seated claims only. Never strip a claim and
+			// accidentally admit the device as its unrelated browser identity.
+			if mb.Claim != "" && slotOf(r, mb.User, SlotHuman) < 0 {
+				ended = append(ended, mb.Client)
+				continue
+			}
 			handoff = append(handoff, room.StartMember{Client: mb.Client, Claim: mb.Claim})
 		}
 		var next room.StartedDuel
@@ -990,6 +1019,10 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		a.l.log.Error("lobby swap failed", "room", a.code, "err", err)
 		started.Abort()
 		a.m.Forget(a.h)
+	} else {
+		for _, o := range ended {
+			o.Out.Push(wire.NewError(wire.ErrorCodeBadClaim, "lobby-link-ended"))
+		}
 	}
 	a.drain()
 	a.note("start", outStarted)

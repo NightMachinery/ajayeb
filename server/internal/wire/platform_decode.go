@@ -158,17 +158,11 @@ func DecodeClientVersion(raw []byte, version int) (ClientMessage, error) {
 		return decodePlatform[LobbyStart](raw, t, nil)
 	case "link":
 		return decodePlatform[PlatformLink](raw, t, func(m PlatformLink) error {
-			if !platformSeat(m.Seat) {
-				return fmt.Errorf("seat outside 0..6")
-			}
-			return nil
+			return platformLinkTarget(m.Seat, m.UserID)
 		})
 	case "relink":
 		return decodePlatform[PlatformRelink](raw, t, func(m PlatformRelink) error {
-			if !platformSeat(m.Seat) {
-				return fmt.Errorf("seat outside 0..6")
-			}
-			return nil
+			return platformLinkTarget(m.Seat, m.UserID)
 		})
 	default:
 		return DecodeClient(raw)
@@ -372,6 +366,20 @@ func NewLobbyReject(seq int, code string) LobbyReject {
 // names.
 func requestSeat(seat *int) error {
 	if seat != nil && !platformSeat(*seat) {
+		return fmt.Errorf("seat outside 0..6")
+	}
+	return nil
+}
+
+// User-targeted links use an explicit sentinel, avoiding two competing targets.
+func platformLinkTarget(seat int, user *string) error {
+	if user != nil {
+		if seat != -1 {
+			return fmt.Errorf("userId requires seat -1")
+		}
+		return platformID(*user)
+	}
+	if !platformSeat(seat) {
 		return fmt.Errorf("seat outside 0..6")
 	}
 	return nil

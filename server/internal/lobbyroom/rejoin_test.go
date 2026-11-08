@@ -127,7 +127,7 @@ func TestFormat4LobbyPreservesMetadata(t *testing.T) {
 	if err = validate(after, defaultSeqClients); err != nil {
 		t.Fatal(err)
 	}
-	if after.Format != 5 || !reflect.DeepEqual(before.Names, after.Names) || !reflect.DeepEqual(before.Seqs, after.Seqs) {
+	if after.Format != recordFormat || !reflect.DeepEqual(before.Names, after.Names) || !reflect.DeepEqual(before.Seqs, after.Seqs) {
 		t.Fatal("migration reset names or client keys")
 	}
 	f.close()
@@ -156,7 +156,7 @@ func TestFormat4LobbyFixture(t *testing.T) {
 	if err = validate(r, defaultSeqClients); err != nil {
 		t.Fatal(err)
 	}
-	if r.Format != 5 || r.Names.Get("user-0").Number != 3 || r.Names.Get("user-1").Number != 2 {
+	if r.Format != recordFormat || r.Names.Get("user-0").Number != 3 || r.Names.Get("user-1").Number != 2 {
 		t.Fatalf("name ledger reset: %+v", r.Names)
 	}
 }

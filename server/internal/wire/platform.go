@@ -22,6 +22,8 @@ type PlatformHuman struct {
 	Admin      bool    `json:"admin"`
 	Temporary  bool    `json:"temporary"`
 	PromotedBy *string `json:"promotedBy,omitempty"`
+	// Linkable identifies a member of the bounded remembered population.
+	Linkable *bool `json:"linkable,omitempty"`
 }
 
 // PlatformSeat has no hidden game information. A reserved seat stays reserved
@@ -57,7 +59,7 @@ type PlatformYou struct {
 // PlatformLogEntry describes public control changes, never submitted action
 // keys, observations or seeds. At is a completed batch count (zero in lobby).
 type PlatformLogEntry struct {
-	Kind    string  `json:"kind" tstype:"'seat' | 'role' | 'resign' | 'link'"`
+	Kind    string  `json:"kind" tstype:"'seat' | 'role' | 'resign' | 'link' | 'link-copy'"`
 	At      int     `json:"at"`
 	By      string  `json:"by"`
 	UserID  *string `json:"userId,omitempty"`
@@ -68,22 +70,27 @@ type PlatformLogEntry struct {
 
 // PlatformLink and PlatformRelink extend the common device-link operation to
 // seven seats. Actual room dispatch still restricts Duel to seats zero and one.
+// UserID targets a remembered human; Seat must be -1 in that form.
+// Without UserID, Seat retains the historical seat-targeted operation.
 type PlatformLink struct {
-	T    string `json:"t" tstype:"'link'"`
-	Code string `json:"code"`
-	Seat int    `json:"seat"`
+	T      string  `json:"t" tstype:"'link'"`
+	UserID *string `json:"userId,omitempty"`
+	Code   string  `json:"code"`
+	Seat   int     `json:"seat"`
 }
 type PlatformRelink struct {
-	T    string `json:"t" tstype:"'relink'"`
-	Code string `json:"code"`
-	Seat int    `json:"seat"`
+	T      string  `json:"t" tstype:"'relink'"`
+	UserID *string `json:"userId,omitempty"`
+	Code   string  `json:"code"`
+	Seat   int     `json:"seat"`
 }
 
 // PlatformLinked is a private response to a non-Duel device-link operation.
 // Duel continues to emit Linked on both protocol versions.
 type PlatformLinked struct {
-	T     string `json:"t" tstype:"'linked'"`
-	Code  string `json:"code"`
-	Seat  int    `json:"seat"`
-	Claim string `json:"claim"`
+	T      string  `json:"t" tstype:"'linked'"`
+	UserID *string `json:"userId,omitempty"`
+	Code   string  `json:"code"`
+	Seat   int     `json:"seat"`
+	Claim  string  `json:"claim"`
 }

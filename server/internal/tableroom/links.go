@@ -21,38 +21,81 @@ type Member struct {
 	User       string
 }
 
-// link answers link, or with reset relink, in the protocol's order:
-// device links must be on, a human must hold the seat, and the sender must
-// act as that seat's user. An admin, real or temporary, has no other
-// seat's link: a claim lets a device play as the seat's user, seeing its
-// hand and pending pick, and nothing would show it, while every seat switch
-// is in everyone's log. An admin who needs another seat seats someone
-// there, publicly. A reset
-// raises the seat's epoch to the next public revision, which revokes every
-// claim made for it before, logs the reset for everyone and ends the
-// connections that joined with a revoked claim. Either way the sender
-// alone receives the seat's current claim, in a linked frame. Every
-// refusal carries seq 0.
+// LinkEpoch is a remembered spectator's issued device-link epoch. Seated
+// humans use the existing seat epoch. This list never exceeds the name ledger.
+type LinkEpoch struct {
+	UserID string `json:"userId"`
+	Epoch  int    `json:"epoch"`
+}
+
+func (r *Record) linkEpoch(user string) (int, bool) {
+	if seat := seatIn(r, user); seat >= 0 {
+		return r.Seats[seat].Epoch, true
+	}
+	for _, l := range r.Links {
+		if l.UserID == user {
+			return l.Epoch, true
+		}
+	}
+	return 0, false
+}
+
+// pruneLinks drops spectator links on seating or on leaving bounded history.
+func (r *Record) pruneLinks() {
+	r.Links = slices.DeleteFunc(r.Links, func(l LinkEpoch) bool {
+		return seatIn(r, l.UserID) >= 0 || r.Names.Get(l.UserID).UserID == ""
+	})
+}
+
+// link retains the historical seat-targeted API; user links also cover remembered spectators.
 func (a *actor) link(c *room.Client, seat int, reset bool) string {
+	if seat < 0 || seat >= len(a.st.rec.Seats) || a.st.rec.Seats[seat].Kind != SeatHuman {
+		return a.refuse(c, 0, "link", seat, outBad)
+	}
+	return a.linkUser(c, a.st.rec.Seats[seat].UserID, reset, false)
+}
+
+// linkUser persists public disclosure before releasing another human's claim.
+// The claim itself is sent only to the requester, never in a broadcast or log.
+func (a *actor) linkUser(c *room.Client, target string, reset, byUser bool) string {
 	r := &a.st.rec
 	op := "link"
 	if reset {
 		op = "relink"
 	}
+	seat := seatIn(r, target)
 	cl := a.m.Claims()
-	if cl == nil || seat < 0 || seat >= len(r.Seats) || r.Seats[seat].Kind != SeatHuman {
+	if cl == nil || r.Names.Get(target).UserID == "" {
 		return a.refuse(c, 0, op, seat, outBad)
 	}
-	user, target := a.userOf(c), r.Seats[seat].UserID
-	if user != target {
+	user := a.userOf(c)
+	if user != target && !a.isAdmin(user) {
 		return a.refuse(c, 0, op, seat, outNotAdmin)
 	}
-	if reset {
+	epoch, issued := r.linkEpoch(target)
+	changed := reset || user != target || !issued
+	if changed {
 		cand := r.clone()
 		bumpPublic(&cand)
-		cand.Seats[seat].Epoch = cand.Public
-		s := seat
-		appendLog(&cand, wire.PlatformLogEntry{Kind: "link", At: len(cand.Batches), By: user, Seat: &s})
+		if reset || !issued {
+			epoch = cand.Public
+			if seat >= 0 {
+				cand.Seats[seat].Epoch = epoch
+			} else {
+				cand.Links = slices.DeleteFunc(cand.Links, func(l LinkEpoch) bool { return l.UserID == target })
+				cand.Links = append(cand.Links, LinkEpoch{UserID: target, Epoch: epoch})
+			}
+		}
+		entry := wire.PlatformLogEntry{Kind: "link-copy", At: len(cand.Batches), By: user, UserID: &target}
+		if reset {
+			entry.Kind = "link"
+		}
+		if seat >= 0 {
+			entry.Seat = &seat
+		}
+		if reset || user != target {
+			appendLog(&cand, entry)
+		}
 		if !a.affords(c) {
 			return a.refuse(c, 0, op, seat, outRate)
 		}
@@ -60,14 +103,16 @@ func (a *actor) link(c *room.Client, seat int, reset bool) string {
 			return a.refuse(c, 0, op, seat, outStorage)
 		}
 	}
-	claim := cl.Claim(a.code, target, a.st.rec.Seats[seat].Epoch)
+	claim := cl.Claim(a.code, target, epoch)
 	if own, ok := a.claims[c]; reset && ok && own.user == target {
-		// The sender joined with the claim it has just revoked: it keeps
-		// its place under the new one, which it is about to receive.
 		a.claims[c] = claimed{claim: claim, user: target}
 	}
-	c.Out.Push(wire.PlatformLinked{T: "linked", Code: a.code, Seat: seat, Claim: claim})
-	if reset {
+	linked := wire.PlatformLinked{T: "linked", Code: a.code, Seat: seat, Claim: claim}
+	if byUser {
+		linked.Seat, linked.UserID = -1, &target
+	}
+	c.Out.Push(linked)
+	if changed {
 		gone := a.revokeClaims()
 		a.publish(a.newBroadcast(false), nil, nil)
 		a.afterRevoke(gone)

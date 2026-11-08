@@ -129,6 +129,10 @@ export interface PlatformHuman {
   admin: boolean;
   temporary: boolean;
   promotedBy?: string;
+  /**
+   * Linkable identifies a member of the bounded remembered population.
+   */
+  linkable?: boolean;
 }
 /**
  * PlatformSeat has no hidden game information. A reserved seat stays reserved
@@ -168,7 +172,7 @@ export interface PlatformYou {
  * keys, observations or seeds. At is a completed batch count (zero in lobby).
  */
 export interface PlatformLogEntry {
-  kind: 'seat' | 'role' | 'resign' | 'link';
+  kind: 'seat' | 'role' | 'resign' | 'link' | 'link-copy';
   at: number /* int */;
   by: string;
   userId?: string;
@@ -179,14 +183,18 @@ export interface PlatformLogEntry {
 /**
  * PlatformLink and PlatformRelink extend the common device-link operation to
  * seven seats. Actual room dispatch still restricts Duel to seats zero and one.
+ * UserID targets a remembered human; Seat must be -1 in that form.
+ * Without UserID, Seat retains the historical seat-targeted operation.
  */
 export interface PlatformLink {
   t: 'link';
+  userId?: string;
   code: string;
   seat: number /* int */;
 }
 export interface PlatformRelink {
   t: 'relink';
+  userId?: string;
   code: string;
   seat: number /* int */;
 }
@@ -196,6 +204,7 @@ export interface PlatformRelink {
  */
 export interface PlatformLinked {
   t: 'linked';
+  userId?: string;
   code: string;
   seat: number /* int */;
   claim: string;

@@ -64,6 +64,7 @@ type Record struct {
 	Rematcher string `json:"rematcher"`
 	// Names retains bounded authority assignments and name history.
 	Names namenum.Ledger `json:"names"`
+	Links []LinkEpoch    `json:"links"`
 	// Roles are the table's roles (package roles), carried on from the
 	// lobby at Start.
 	Roles roles.Roles `json:"roles"`
@@ -214,7 +215,8 @@ type StartSlot struct {
 // kept the id as sent, which upgrade re-keys once. Format 4 adds the
 // room-lifetime name ledger, initialized in current seat order on upgrade.
 // Format 5 adds bounded temporary-role history and promotion ancestry.
-const recordFormat = 5
+// Format 6 adds bounded device-link epochs for remembered spectators.
+const recordFormat = 6
 
 // BatchRecord is one complete batch: the logical point id and one key per
 // required seat, sorted by seat.
@@ -267,6 +269,7 @@ const (
 func (r *Record) clone() Record {
 	c := *r
 	c.Names = r.Names.Clone()
+	c.Links = slices.Clone(r.Links)
 	if r.ArchivedAt != nil {
 		at := *r.ArchivedAt
 		c.ArchivedAt = &at
@@ -303,6 +306,9 @@ func (r *Record) clone() Record {
 // encode returns the record's file bytes, with every slice a JSON array.
 func (r *Record) encode() ([]byte, error) {
 	c := r.clone()
+	if c.Links == nil {
+		c.Links = []LinkEpoch{}
+	}
 	for i := range c.Pending {
 		if c.Pending[i].Seqs == nil {
 			c.Pending[i].Seqs = []SeqRecord{}
@@ -631,6 +637,14 @@ func validate(r *Record, g *game, b seqBounds) error {
 // only a user with authority or a retired one has seqs remembered, each at
 // most b.acks clients.
 func checkAuthority(r *Record, b seqBounds) error {
+	if len(r.Links) > maxNameUsers {
+		return invalid("device links past their bound")
+	}
+	for i, link := range r.Links {
+		if link.UserID == "" || seatIn(r, link.UserID) >= 0 || r.Names.Get(link.UserID).UserID == "" || link.Epoch < 0 || link.Epoch > r.Public || slices.IndexFunc(r.Links, func(x LinkEpoch) bool { return x.UserID == link.UserID }) != i {
+			return invalid("device links")
+		}
+	}
 	if r.Roles.Valid() != nil {
 		return invalid("the roles")
 	}
