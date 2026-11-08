@@ -502,6 +502,18 @@ again, a restart and Start never revive them, while an unbroken claim
 reaches its seat at the table. `TestRematchOneSuccessor` refuses each of a
 rematch's three writes, restarts and lets the other original human retry:
 the table always ends with one successor.
+The shared `finished()` driver waits for the next table frame from either
+human when neither can act. The actor publishes to connections in order, so
+the first human can already see a new discard-build point while the second
+still shows the previous, confirmed turn. If only the second human must
+decide, waiting exclusively on the first human strands the driver even after
+the second human's frame arrives. Each browser reads its own socket
+independently, so this fixture deadlock does not describe a player losing a
+frame. `TestFinishedWaitsForEitherPlayer` pins this schedule for either seat,
+with its frame queued, buffered by a drain, or delivered after the wait
+starts. It uses Go's `testing/synctest` clock to force the delayed delivery
+without a wall-clock sleep, including a stale notification on the other
+connection. The original first-human-only wait fails the second-seat cases.
 `TestCreationCollisions` races a rematch's lobby against another rematch,
 an ordinary lobby, a table and a Duel room drawing the same code, in both
 orders: the first to write keeps the code and its bytes, and the other

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
@@ -66,10 +67,82 @@ func (f *fixture) finished() (string, *conn, *conn) {
 			for i, k := range ks {
 				f.t.Logf("player %d before the wait: %s", i, tableSummary(cur[k]))
 			}
-			cur[k0] = k0.table("the next frame", func(wire.TableState) bool { return true })
+			k, st := f.nextTable(k0, k1)
+			cur[k] = st
 		}
 	}
 	return code, k0, k1
+}
+
+// nextTable waits for either human's next table frame. A publication reaches
+// the connections one at a time: the first may already show a point that only
+// the second can answer. Waiting on the first alone would strand that point.
+func (f *fixture) nextTable(k0, k1 *conn) (*conn, wire.TableState) {
+	f.t.Helper()
+	deadline := time.After(wait)
+	for {
+		for _, k := range []*conn{k0, k1} {
+			k.drain()
+			for i, m := range k.frames {
+				if st, ok := m.(wire.TableState); ok {
+					k.frames = k.frames[i+1:]
+					return k, st
+				}
+			}
+		}
+		// Ready means there may be a frame. A stale token is harmless:
+		// drain both clients again before waiting on either notification.
+		select {
+		case <-k0.c.Out.Ready():
+		case <-k1.c.Out.Ready():
+		case <-deadline:
+			f.t.Fatalf("waiting for either player's next table frame; got %d and %d frames", len(k0.frames), len(k1.frames))
+		}
+	}
+}
+
+// TestFinishedWaitsForEitherPlayer reproduces a split publication: one
+// connection has consumed its new point, while the other receives it later.
+// At a discard-build point only that second seat may act, so the driver must
+// read its frame without waiting for another publication to the first seat.
+func TestFinishedWaitsForEitherPlayer(t *testing.T) {
+	for _, seat := range []int{0, 1} {
+		for _, arrival := range []string{"queued", "buffered", "after waiting"} {
+			t.Run(fmt.Sprintf("seat %d/%s", seat, arrival), func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					f := &fixture{t: t}
+					ks := []*conn{f.conn(user(0), "c0", "P0"), f.conn(user(1), "c1", "P1")}
+					st := wire.NewTableState("TESTAA")
+					st.Batch = 13
+					st.Point = &wire.TablePoint{Ref: wire.PointRef{ID: "discard-build", Revision: 13}, Kind: "discard-build", Required: []int{seat}, Confirmed: []int{}}
+					// The non-acting seat already saw this publication. Taking
+					// its frame leaves a stale Ready token, just as drain does.
+					early := ks[1-seat]
+					early.c.Out.Push(st)
+					early.table("the early frame", func(wire.TableState) bool { return true })
+					late := ks[seat]
+					switch arrival {
+					case "queued":
+						late.c.Out.Push(st)
+					case "buffered":
+						late.c.Out.Push(st)
+						late.drain()
+					case "after waiting":
+						go func() {
+							// The bubble's clock advances only once the reader
+							// blocks; this never sleeps in wall-clock time.
+							time.Sleep(time.Second)
+							late.c.Out.Push(st)
+						}()
+					}
+					k, got := f.nextTable(ks[0], ks[1])
+					if k != late || got.Batch != st.Batch || got.Point == nil || got.Point.Ref != st.Point.Ref {
+						t.Fatalf("next frame: client %p, %s; want client %p, %s", k, tableSummary(got), late, tableSummary(st))
+					}
+				})
+			})
+		}
+	}
 }
 
 // tableSummary is the part of a table frame that says who must act.
