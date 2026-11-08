@@ -104,7 +104,10 @@ every 25 minutes to a Codex agent and every 50 minutes to any other (the
 provider comes from `paseo inspect UUID --json`), during the first 3.5 hours
 only (HEAVY_WARM_CODEX, HEAVY_WARM_CLAUDE and HEAVY_WARM_MAX override the
 seconds). A ping skips an agent whose Status is running, and the outcome waits
-up to 5 minutes for it to go idle. A mode refusal is still reported at once without detaching. Nested
+up to 5 minutes for it to go idle. A closed agent never reads its messages, so
+pings skip it, and its outcome goes to its ParentAgentId instead (the agent that
+launched it), prefixed with a line naming the closed agent; with no usable parent
+the outcome is sent to the closed agent as before. A mode refusal is still reported at once without detaching. Nested
 runs ignore HEAVY_NOTIFY and run inline, and the command never sees it. Under
 make (MAKELEVEL set) HEAVY_NOTIFY is refused, because each step would detach
 on its own; wrap the whole target instead:
@@ -1946,6 +1949,16 @@ class Notifier:
     def busy(self, data: Mapping) -> bool:
         return str(data.get("Status") or "").lower() == "running"
 
+    def closed(self, data: Mapping) -> bool:
+        return str(data.get("Status") or "").lower() == "closed" or data.get("Archived") is True
+
+    def recipient(self, data: Mapping) -> Optional[str]:
+        """The closed agent's parent, when the outcome should go there instead."""
+        parent = str(data.get("ParentAgentId") or "")
+        if self.closed(data) and AGENT_RE.match(parent) and parent.lower() != self.agent:
+            return parent.lower()
+        return None
+
     def where(self) -> str:
         if self.guard.started_at is not None:
             return f"is still running ({fmt_secs(self.guard.clock.monotonic() - self.guard.started_at)} so far)"
@@ -1969,6 +1982,10 @@ class Notifier:
             return False
         data = self.inspect()
         if since < self.interval():
+            return False
+        if self.closed(data):  # it will never read a ping
+            self.last_contact = now
+            self.note("agent is closed; keep-warm ping skipped")
             return False
         if self.busy(data):  # its cache is warm, and a message would cut its turn
             self.last_contact = now
@@ -2044,18 +2061,27 @@ class Notifier:
             self.finished = True
         text = self.message(rc, refusal)
         waited = 0.0
-        while waited < BUSY_MAX and self.busy(self.inspect()):
+        data = self.inspect()
+        while waited < BUSY_MAX and self.busy(data):
             self.guard.clock.sleep(BUSY_POLL)
             waited += BUSY_POLL
+            data = self.inspect()
         if waited:
             self.note(f"waited {fmt_secs(waited)} for the agent to go idle")
+        target = self.agent
+        parent = self.recipient(data)
+        if parent:
+            target = parent
+            text = (f"heavy.py: agent {self.agent} is closed, so the outcome of the job it "
+                    f"started comes to you, its parent.\n{text}")
+            self.note(f"agent is closed; sending the outcome to its parent {parent}")
         detail = ""
         for attempt in range(len(NOTIFY_BACKOFF) + 1):
             if attempt:
                 self.guard.clock.sleep(NOTIFY_BACKOFF[attempt - 1])
-            ok, _, detail = self.paseo("send", self.agent, text, "--no-wait", "--json")
+            ok, _, detail = self.paseo("send", target, text, "--no-wait", "--json")
             if ok:
-                self.note(f"sent the outcome to {self.agent}")
+                self.note(f"sent the outcome to {target}")
                 return True
             self.note(f"send {attempt + 1} failed: {detail}")
         self.alert(rc, refusal, text, detail)

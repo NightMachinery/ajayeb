@@ -1945,6 +1945,7 @@ class ArgonReviewTests(GuardCase):
 
 
 AGENT = "00000000-0000-4000-8000-000000000001"  # placeholder Paseo agent id
+PARENT = "00000000-0000-4000-8000-000000000002"  # its placeholder parent
 
 FAKE_PASEO = r"""#!/usr/bin/env python3
 import json, os, sys
@@ -1961,8 +1962,10 @@ if sys.argv[1:2] == ["inspect"]:
     flag = os.environ.get("FAKE_PASEO_BUSY_FILE")
     if flag and os.path.exists(flag):
         status = "running"
+    status = os.environ.get("FAKE_PASEO_STATUS", status)
     print(json.dumps({"Id": sys.argv[2], "Status": status,
-                      "Provider": os.environ.get("FAKE_PASEO_PROVIDER", "")}))
+                      "Provider": os.environ.get("FAKE_PASEO_PROVIDER", ""),
+                      "ParentAgentId": os.environ.get("FAKE_PASEO_PARENT")}))
     sys.exit(0)
 if os.environ.get("FAKE_PASEO_FAIL"):
     print("paseo: daemon unreachable", file=sys.stderr)
@@ -2139,6 +2142,29 @@ class NotifyFinishTests(NotifyCase):
         self.assertEqual(sum(self.clock.sleeps), heavy.BUSY_MAX)
         self.assertEqual(len(self.sends()), 2)
 
+    def test_closed_agent_outcome_goes_to_its_parent(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_STATUS="closed", FAKE_PASEO_PARENT=PARENT))
+        n = self.notifier(g)
+        self.assertTrue(n.finish(0, None))
+        sends = self.sends()
+        self.assertEqual(len(sends), 1)
+        self.assertEqual(sends[0][1], PARENT)
+        self.assertIn(f"agent {AGENT} is closed", sends[0][2])
+        self.assertIn("ended: ok (exit 0)", sends[0][2])
+
+    def test_closed_agent_without_a_parent_is_sent_to_as_before(self):
+        for parent in ("", "nobody", AGENT):
+            if os.path.exists(self.paseo_log):
+                os.unlink(self.paseo_log)
+            g = self.guard(env=self.notify_env(FAKE_PASEO_STATUS="closed", FAKE_PASEO_PARENT=parent))
+            self.assertTrue(self.notifier(g).finish(0, None))
+            self.assertEqual([s[1] for s in self.sends()], [AGENT], parent)
+
+    def test_open_agent_keeps_its_outcome(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PARENT=PARENT))
+        self.assertTrue(self.notifier(g).finish(0, None))
+        self.assertEqual([s[1] for s in self.sends()], [AGENT])
+
     def test_outcome_is_sent_after_the_jobs_directory_is_removed(self):
         # The coordinator merges and removes a worktree while the outcome
         # waits for it to go idle; the send must not run from that directory.
@@ -2214,6 +2240,14 @@ class NotifyPingTests(NotifyCase):
         self.clock.mono = 6000
         self.assertTrue(n.maybe_ping())
         self.assertEqual(len(self.sends()), 1)
+
+    def test_a_closed_agent_is_not_pinged(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="claude", FAKE_PASEO_STATUS="closed",
+                                           FAKE_PASEO_PARENT=PARENT))
+        n = self.notifier(g)
+        self.clock.mono = 3000
+        self.assertFalse(n.maybe_ping())
+        self.assertEqual(self.sends(), [])
 
     def test_no_ping_after_the_outcome(self):
         g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="claude"))
