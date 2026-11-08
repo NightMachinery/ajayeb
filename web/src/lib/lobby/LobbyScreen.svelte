@@ -1,4 +1,6 @@
 <script lang="ts">
+  import MemberLink from '$lib/components/identity/MemberLink.svelte';
+  import DeviceLinkLog from '$lib/components/identity/DeviceLinkLog.svelte';
   import { copyText } from '$lib/ui/clipboard';
   // The lobby renders public roster and role metadata. The actor owns every
   // permission, option and seat change, including concurrent edits and Start.
@@ -124,7 +126,12 @@
   </label>
 {/snippet}
 {#snippet person(h: PlatformHuman)}
-  <span class="min-w-0 font-semibold break-words" dir="auto">{name(h)}</span>
+  <span class="inline-flex max-w-full items-center gap-1"
+    ><span class="min-w-0 font-semibold break-words" dir="auto">{name(h)}</span><MemberLink
+      {session}
+      human={h}
+    /></span
+  >
   <span class="flex flex-wrap gap-1 text-xs text-fg-muted" data-role-tags={h.userId}>
     {#if h.userId === lobby.you.userId}<span>{t('lobby.you')}</span>{/if}
     {#if h.creator}<span>{t('lobby.creator')}</span>{/if}
@@ -186,6 +193,7 @@
         >
       </div>
     {/if}
+    <DeviceLinkLog entries={lobby.roomLog} humans={lobby.humans} />
     <div class="grid gap-5 split:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
       <section
         class="min-w-0 rounded-panel border border-rule bg-panel p-4"

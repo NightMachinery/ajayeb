@@ -123,7 +123,11 @@ export class RoomBootstrap {
         socket.send(JSON.stringify({ t: 'join', code, ...(claim ? { claim } : {}) }));
         this.#listener?.joined();
       } else if (raw['t'] === 'error' && typeof raw['code'] === 'string') {
-        this.#fail(raw['code']);
+        this.#fail(
+          raw['code'] === 'bad-claim' && raw['msg'] === 'lobby-link-ended'
+            ? 'lobby-link-ended'
+            : raw['code']
+        );
       } else if (
         this.#welcomed &&
         this.#listener &&

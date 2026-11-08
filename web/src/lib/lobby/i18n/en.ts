@@ -1,4 +1,14 @@
 export const lobby = {
+  'lobby.deviceIntro':
+    'Open this link on another device to return as you in this room, with your seat and roles. Anyone who has it can act as you. Keep it private.',
+  'lobby.deviceIntroOther':
+    'This link lets another device act as {name}, with their seat and roles. Requesting it is recorded in the public room log.',
+  'lobby.deviceResetHint':
+    'Reset stops earlier device links for this person and disconnects devices using them.',
+  'lobby.deviceCopied': '{name} requested the device link of {target}.',
+  'lobby.deviceActivity': 'Device-link activity',
+  'lobby.deviceMember': 'A room member',
+
   'lobby.sides': 'Wonder sides',
   'lobby.sidesChoose': 'Each picks',
   'lobby.sidesDay': 'Day',

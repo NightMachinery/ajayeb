@@ -726,6 +726,23 @@ describe('the lobby', () => {
 });
 
 describe('device links and saved rooms', () => {
+  it('links remembered users in the lobby, correlates targets and updates its own reset claim', async () => {
+    const initial = lobbyFrame();
+    const { session, connection } = setup(initial, 'old');
+    const user = initial.you.userId;
+    const own = session.requestUserLink(user, true);
+    await expect(session.requestUserLink(user)).rejects.toMatchObject({ code: 'busy' });
+    const other = session.requestUserLink('another');
+    expect(connection.last()).toEqual({ t: 'link', code: CODE, seat: -1, userId: 'another' });
+    connection.frame({ t: 'linked', code: CODE, seat: -1, userId: 'another', claim: 'other' });
+    await expect(other).resolves.toBe('other');
+    expect(session.claim).toBe('old');
+    connection.frame({ t: 'linked', code: CODE, seat: -1, userId: user, claim: 'new' });
+    await expect(own).resolves.toBe('new');
+    expect(session.claim).toBe('new');
+    expect(connection.claims).toEqual(['new']);
+  });
+
   it('resolves a link with its claim and moves a relinking device to the new claim', async () => {
     const { session, connection, rooms } = setup(tableFrame(), 'old-claim');
     const link = session.requestLink(1);

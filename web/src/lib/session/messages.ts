@@ -23,7 +23,8 @@ const ERRORS = {
   'bad-hello': 'session.error.badHello',
   protocol: 'session.error.protocol',
   busy: 'session.error.busy',
-  'bad-claim': 'session.error.badClaim'
+  'bad-claim': 'session.error.badClaim',
+  'lobby-link-ended': 'session.error.lobbyLinkEnded'
 } as const satisfies Readonly<Record<string, MessageKey>>;
 
 const CONN = {

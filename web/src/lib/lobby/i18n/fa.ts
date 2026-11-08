@@ -2,6 +2,16 @@ import type { lobby as en } from './en';
 import type { Translation } from '$lib/i18n/types';
 
 export const lobby = {
+  'lobby.deviceIntro':
+    'این پیوند را روی دستگاه دیگری باز کنید تا با جایگاه و نقش‌های خود به اتاق برگردید. هر کس آن را داشته باشد می‌تواند به جای شما عمل کند. آن را خصوصی نگه دارید.',
+  'lobby.deviceIntroOther':
+    'این پیوند به دستگاه دیگری اجازه می‌دهد با جایگاه و نقش‌های {name} عمل کند. درخواست آن در گزارش عمومی اتاق ثبت می‌شود.',
+  'lobby.deviceResetHint':
+    'بازنشانی، پیوندهای قبلی این شخص را از کار می‌اندازد و دستگاه‌هایی را که با آن‌ها آمده‌اند قطع می‌کند.',
+  'lobby.deviceCopied': '{name} پیوند دستگاه {target} را درخواست کرد.',
+  'lobby.deviceActivity': 'فعالیت پیوند دستگاه',
+  'lobby.deviceMember': 'یکی از اعضای اتاق',
+
   'lobby.sides': 'طرف شگفتی‌ها',
   'lobby.sidesChoose': 'هر کس برمی‌گزیند',
   'lobby.sidesDay': 'روز',

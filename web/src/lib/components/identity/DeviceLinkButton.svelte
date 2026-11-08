@@ -9,14 +9,15 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
-    seat: 0 | 1;
+    seat: number | string;
+    userId?: string;
     /** The accessible name, already translated. */
     label: string;
     onclick: () => void;
     class?: string;
   }
 
-  let { seat, label, onclick, class: className = '' }: Props = $props();
+  let { seat, userId, label, onclick, class: className = '' }: Props = $props();
 </script>
 
 <button
@@ -26,7 +27,9 @@
   aria-label={label}
   aria-haspopup="dialog"
   data-control="device-link"
-  data-seat={seat}
+  data-seat={userId === undefined ? seat : undefined}
+  data-device-link-user={userId}
+  data-act={userId === undefined ? undefined : `device-link:${userId}`}
   {onclick}
   {@attach tooltip({ text: label })}
 >

@@ -177,6 +177,7 @@ function sameRef(a: PointRef | undefined, b: PointRef | undefined): boolean {
 }
 
 interface LinkWaiter {
+  userId?: string;
   seat: number;
   reset: boolean;
   resolve: (claim: string) => void;
@@ -456,20 +457,35 @@ export class TableSession {
   }
 
   /**
-   * Asks for a seat's device link (only its own user may) and
+   * Asks for a seat's device link (its user or an admin may) and
    * resolves with its claim; with reset, the seat's old links stop working
    * first. Rejects when refused, when the link drops or when no answer comes.
    */
   requestLink(seat: number, reset = false): Promise<string> {
-    if (this.conn !== 'open' || !this.table) {
+    return this.#requestLink(seat, reset);
+  }
+
+  requestUserLink(userId: string, reset = false): Promise<string> {
+    return this.#requestLink(-1, reset, userId);
+  }
+
+  #requestLink(seat: number, reset: boolean, userId?: string): Promise<string> {
+    if (this.conn !== 'open' || !(this.table ?? this.lobby)) {
       return Promise.reject(new TableSessionError('offline'));
+    }
+    // Replies identify a target, not a request id. Keep one request per target
+    // so a read response cannot accidentally settle a later reset.
+    if (this.#links.some((w) => w.seat === seat && w.userId === userId)) {
+      return Promise.reject(new TableSessionError('busy'));
     }
     const frame: PlatformLink | PlatformRelink = reset
       ? { t: 'relink', code: this.code, seat }
       : { t: 'link', code: this.code, seat };
+    if (userId !== undefined) frame.userId = userId;
     return new Promise<string>((resolve, reject) => {
       const waiter: LinkWaiter = {
         seat,
+        userId,
         reset,
         resolve,
         reject,
@@ -605,7 +621,7 @@ export class TableSession {
         this.#onReject(frame.seq, frame.code);
         break;
       case 'linked':
-        if (frame.code === this.code) this.#onLinked(frame.seat, frame.claim);
+        if (frame.code === this.code) this.#onLinked(frame.seat, frame.claim, frame.userId);
         break;
       case 'created':
         if (this.table?.status === 'finished') {
@@ -762,12 +778,18 @@ export class TableSession {
     );
   }
 
-  #onLinked(seat: number, claim: string): void {
-    const done = this.#links.filter((w) => w.seat === seat);
-    this.#links = this.#links.filter((w) => w.seat !== seat);
+  #onLinked(seat: number, claim: string, userId?: string): void {
+    const matches = (w: LinkWaiter) => w.seat === seat && w.userId === userId;
+    const done = this.#links.filter(matches);
+    this.#links = this.#links.filter((w) => !matches(w));
     // A device on a claim that relinked its own seat keeps its place under
     // the new claim (docs/protocol.md, "Device links").
-    if (done.some((w) => w.reset) && this.claim && this.seat === seat && this.claim !== claim) {
+    if (
+      done.some((w) => w.reset) &&
+      this.claim &&
+      (userId !== undefined ? this.me?.userId === userId : this.seat === seat) &&
+      this.claim !== claim
+    ) {
       this.claim = claim;
       this.#connection.useClaim(claim);
       this.#rooms?.remember(this.code, 'online', this.#now(), claim, 'haftgane');

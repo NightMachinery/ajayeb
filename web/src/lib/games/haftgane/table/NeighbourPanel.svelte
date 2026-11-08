@@ -8,6 +8,7 @@
   // A spectator's view carries no trading facts, so those parts stay empty.
   // With `onopen` the crest and name form a button that opens the city.
   // An admin's crown follows the name.
+  import type { Snippet } from 'svelte';
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Neighbour, Seat } from '$lib/wire/haftgane.gen';
@@ -44,6 +45,7 @@
     role?: Role | null;
     /** Opens this seat's city. */
     onopen?: () => void;
+    link?: Snippet;
   }
 
   let {
@@ -58,7 +60,8 @@
     yourShields = 0,
     pass,
     role = null,
-    onopen
+    onopen,
+    link
   }: Props = $props();
 
   const stages = $derived(stagesOf(seat));
@@ -100,6 +103,7 @@
     {:else}
       <span class="who">{@render who()}</span>
     {/if}
+    {@render link?.()}
     {#if role}<RoleTag {role} {name} compact />{/if}
     <StatusBadge {status} {name} />
   </div>

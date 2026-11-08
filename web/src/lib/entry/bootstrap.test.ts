@@ -240,3 +240,13 @@ it('hands a started Duel back to discovery without forwarding its private stream
   expect(socket.readyState).toBe(1); // Membership stays until the ordinary v1 join succeeds.
   bootstrap.close();
 });
+
+it('explains an unseated lobby link ending at Duel Start', () => {
+  const { bootstrap, sockets, error } = setup();
+  const socket = sockets[0]!;
+  socket.open();
+  socket.message({ t: 'welcome', v: 2 });
+  socket.message({ t: 'error', code: 'bad-claim', msg: 'lobby-link-ended' });
+  expect(error).toHaveBeenCalledWith('lobby-link-ended');
+  bootstrap.close();
+});

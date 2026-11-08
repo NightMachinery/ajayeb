@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { copyText } from '$lib/ui/clipboard';
   // The device link of one seat, where the room page shows it (the strips,
   // the city panels, the lobby): the compact button beside the name, and
   // its sheet. It shows for the player's own seat, and for every player's
@@ -13,13 +12,9 @@
   // with the shared clipboard helper; when that fails the link is selected in the
   // sheet to copy by hand. Reset asks for a fresh claim, which stops every
   // earlier link.
-  import { resolve } from '$app/paths';
   import { t } from '$lib/i18n';
-  import { deviceLink } from '$lib/session/claim';
-  import { inviteUrl } from '$lib/ui/online';
   import { tryGameContext } from '../choices/room';
   import DeviceLinkButton from './DeviceLinkButton.svelte';
-  import DeviceLinkSheet from './DeviceLinkSheet.svelte';
 
   interface Props {
     seat: 0 | 1;
@@ -41,49 +36,9 @@
     return own || (frame.you.linkAdmin ?? frame.you.admin);
   });
 
+  // Loading the interaction only after a tap keeps its shared chunk out of
+  // Duel's cold entry. The leaf button and permissions remain unchanged.
   let open = $state(false);
-  let link = $state<string | null>(null);
-  let status = $state<'loading' | 'ready' | 'failed'>('loading');
-  let copied = $state<'idle' | 'copied' | 'failed'>('idle');
-  let wasReset = $state(false);
-
-  function toLink(code: string, claim: string): string {
-    return deviceLink(inviteUrl(location.origin, resolve('/play/[code]', { code })), claim);
-  }
-
-  async function fetchLink(reset: boolean): Promise<boolean> {
-    const session = ctx?.session;
-    const code = session?.code;
-    if (!session || !code) return false;
-    status = 'loading';
-    copied = 'idle';
-    wasReset = false;
-    try {
-      const claim = reset ? await session.resetLink(seat) : await session.requestLink(seat);
-      link = toLink(code, claim);
-      status = 'ready';
-      wasReset = reset;
-      return true;
-    } catch {
-      status = 'failed';
-      return false;
-    }
-  }
-
-  async function copy(): Promise<void> {
-    if (!link) return;
-    copied = (await copyText(link)) ? 'copied' : 'failed';
-  }
-
-  async function openSheet(): Promise<void> {
-    open = true;
-    link = null;
-    if (await fetchLink(false)) await copy();
-  }
-
-  async function reset(): Promise<void> {
-    if (await fetchLink(true)) await copy();
-  }
 </script>
 
 {#if shown}
@@ -91,19 +46,22 @@
     {seat}
     class={className}
     label={own ? t('online.link.buttonOwn') : t('online.link.button', { name })}
-    onclick={openSheet}
+    onclick={() => (open = true)}
   />
-  <DeviceLinkSheet
-    bind:open
-    {seat}
-    {name}
-    {own}
-    {link}
-    {status}
-    copy={copied}
-    reset={wasReset}
-    oncopy={copy}
-    onreset={reset}
-    onretry={() => void fetchLink(false)}
-  />
+  {#if open && ctx?.session.code}
+    {#await import('./DeviceLinkControl.svelte') then { default: DeviceLinkControl }}
+      <DeviceLinkControl
+        bind:open
+        code={ctx.session.code}
+        {seat}
+        {name}
+        {own}
+        trigger={false}
+        autoOpen
+        request={(reset) => (reset ? ctx!.session.resetLink(seat) : ctx!.session.requestLink(seat))}
+      />
+    {:catch}
+      <p role="alert" class="text-sm text-cinnabar-ink">{t('online.link.failed')}</p>
+    {/await}
+  {/if}
 {/if}

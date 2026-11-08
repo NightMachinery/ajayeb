@@ -31,6 +31,7 @@
   // nothing and every step is instant; the tags stay until the viewer
   // starts choosing again. A screen reader hears the recap.
   import '../theme.css';
+  import MemberLink from '$lib/components/identity/MemberLink.svelte';
   import ArtPrefetch from '../art/ArtPrefetch.svelte';
   import type { Snippet } from 'svelte';
   import { goto } from '$app/navigation';
@@ -472,7 +473,11 @@
                 status={seatStatus(frame, s.seat)}
                 role={roleAt(s.seat)}
                 onopen={() => (citySeat = s.seat)}
-              />
+                >{#snippet link()}{@const human = humanAt(frame, s.seat)}{#if human}<MemberLink
+                      {session}
+                      {human}
+                    />{/if}{/snippet}</FarSeatChip
+              >
               {@render tag(s.seat)}
             </div>
           {/each}
@@ -497,7 +502,11 @@
             pass={view.pass}
             role={roleAt(s.seat)}
             onopen={() => (citySeat = s.seat)}
-          />
+            >{#snippet link()}{@const human = humanAt(frame, s.seat)}{#if human}<MemberLink
+                  {session}
+                  {human}
+                />{/if}{/snippet}</NeighbourPanel
+          >
           {@render tag(s.seat)}
         </div>
       </div>
@@ -516,7 +525,11 @@
           stageOpen={deciding && stageOpen(choices)}
           role={roleAt(around.anchor.seat)}
           onopen={() => (citySeat = around.anchor.seat)}
-        />
+          >{#snippet link()}{@const human = humanAt(
+              frame,
+              around.anchor.seat
+            )}{#if human}<MemberLink {session} {human} />{/if}{/snippet}</YourStrip
+        >
         {@render tag(around.anchor.seat)}
       </div>
       {#if mine}

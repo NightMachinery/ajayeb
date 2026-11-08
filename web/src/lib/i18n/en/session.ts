@@ -32,6 +32,8 @@ export const session = {
   'session.error.busy': 'The server is full right now. Try again in a few minutes.',
   'session.error.badClaim':
     'This device link no longer works. Ask the player for a new one, or open the game without it.',
+  'session.error.lobbyLinkEnded':
+    'Duel started. This spectator link has ended. Open the room without the device link to watch.',
   'session.error.unknown': 'Something went wrong.',
 
   'debug.title': 'Room {code}',

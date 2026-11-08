@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   // A seat beyond the viewer's neighbours: crest, name, points, coins and
   // shields, with its status badge on the top corner. The desktop layout
   // adds the colours it holds. With `onopen` the whole chip is a button
@@ -27,6 +28,7 @@
     role?: Role | null;
     /** Opens this seat's city. */
     onopen?: () => void;
+    link?: Snippet;
   }
 
   let {
@@ -37,7 +39,8 @@
     bot,
     status,
     role = null,
-    onopen
+    onopen,
+    link
   }: Props = $props();
 </script>
 
@@ -59,6 +62,7 @@
   {:else}
     <span class="body">{@render body()}</span>
   {/if}
+  {@render link?.()}
   <span class="status"><StatusBadge {status} {name} /></span>
 </article>
 

@@ -14,11 +14,13 @@
 
   interface Props {
     open?: boolean;
-    seat: 0 | 1;
+    seat: number | string;
     /** The seat's display name. */
     name: string;
     /** The seat is the player's own (else the admin is looking at another's). */
     own: boolean;
+    description?: string;
+    resetHint?: string;
     /** The link, once it is known. */
     link: string | null;
     status: 'loading' | 'ready' | 'failed';
@@ -36,6 +38,8 @@
     seat,
     name,
     own,
+    description,
+    resetHint,
     link,
     status,
     copy = 'idle',
@@ -77,7 +81,7 @@
       {own ? t('online.link.title') : t('online.link.titleOther', { name })}
     </h2>
     <p class="text-sm text-fg-muted">
-      {own ? t('online.link.intro') : t('online.link.introOther', { name })}
+      {description ?? (own ? t('online.link.intro') : t('online.link.introOther', { name }))}
     </p>
 
     <div class="flex flex-col gap-1">
@@ -141,7 +145,7 @@
         onConfirm={onreset}
         data-control="device-link-reset"
       />
-      <p class="text-xs text-fg-muted">{t('online.link.resetHint')}</p>
+      <p class="text-xs text-fg-muted">{resetHint ?? t('online.link.resetHint')}</p>
     </div>
   </div>
 </Sheet>

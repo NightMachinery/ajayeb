@@ -60,7 +60,7 @@ const human = shape(
     admin: bool,
     temporary: bool
   },
-  { promotedBy: str }
+  { promotedBy: str, linkable: bool }
 );
 const you = shape(
   { userId: str },
@@ -72,7 +72,7 @@ const you = shape(
   }
 );
 const logEntry = shape(
-  { kind: oneOf('seat', 'role', 'resign', 'link'), at: count, by: str },
+  { kind: oneOf('seat', 'role', 'resign', 'link', 'link-copy'), at: count, by: str },
   {
     userId: str,
     seat: seat,
@@ -308,7 +308,10 @@ const LOBBY_REJECTS = [
 
 const tableReject = shape({ t: oneOf('table-reject'), seq: count, code: oneOf(...TABLE_REJECTS) });
 const lobbyReject = shape({ t: oneOf('lobby-reject'), seq: count, code: oneOf(...LOBBY_REJECTS) });
-const linked = shape({ t: oneOf('linked'), code: str, seat: seat, claim: str });
+const linked = shape(
+  { t: oneOf('linked'), code: str, seat: (v) => v === -1 || seat(v), claim: str },
+  { userId: str }
+);
 const created = shape({ t: oneOf('created'), code: str }, { claim: str });
 // Common requests (resync, link, relink, rematch) dropped by the frame rate
 // limit are refused in Duel's family (docs/protocol.md, "Reject codes"). Only

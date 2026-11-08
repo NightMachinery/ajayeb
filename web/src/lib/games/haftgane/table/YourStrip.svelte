@@ -6,6 +6,7 @@
   // For a spectator it is seat 0's city, without the "You" tag. With
   // `onopen` the crest and name form a button that opens the city. An
   // admin's role tag follows the name.
+  import type { Snippet } from 'svelte';
   import { formatNumber } from '$lib/i18n';
   import { hgTooltip } from './tooltip';
   import type { Seat } from '$lib/wire/haftgane.gen';
@@ -39,6 +40,7 @@
     role?: Role | null;
     /** Opens this seat's city. */
     onopen?: () => void;
+    link?: Snippet;
   }
 
   let {
@@ -51,7 +53,8 @@
     status,
     stageOpen = false,
     role = null,
-    onopen
+    onopen,
+    link
   }: Props = $props();
 
   const stages = $derived(stagesOf(seat));
@@ -116,6 +119,7 @@
     {:else}
       <span class="who">{@render who()}</span>
     {/if}
+    {@render link?.()}
     {#if role}<RoleTag {role} {name} />{/if}
     <StatusBadge {status} {name} />
     <span class="pills">

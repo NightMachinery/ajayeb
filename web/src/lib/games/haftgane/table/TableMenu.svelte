@@ -7,6 +7,8 @@
   // player. Every action asks first, and each appears only when the frame
   // says this viewer may take it; the Session sends it and the server
   // decides.
+  import MemberLink from '$lib/components/identity/MemberLink.svelte';
+  import DeviceLinkLog from '$lib/components/identity/DeviceLinkLog.svelte';
   import { t } from '$lib/i18n';
   import Button from '$lib/components/shell/Button.svelte';
   import { fullscreen } from '$lib/ui/fullscreen.svelte';
@@ -107,11 +109,12 @@
       </Button>
     {/if}
 
-    {#if admin}
+    {#if isAdmin(frame) || frame.you.seat !== undefined}
       <section class="part" aria-labelledby="hg-menu-seats">
         <h3 id="hg-menu-seats">{ht('hg.admin.seats')}</h3>
         <ul class="seats">
-          {#each frame.seats as s (s.seat)}
+          {#each frame.seats.filter((s) => isAdmin(frame) || s.userId === frame.you.userId) as s (s.seat)}
+            {@const human = frame.humans.find((h) => h.userId === s.userId)}
             {@const name = seatName(frame, s.seat)}
             {@const who = occupant(frame, s.seat)}
             {@const tip = ht('hg.admin.seat.open', { name })}
@@ -128,17 +131,18 @@
               <span class="name" dir="auto"
                 ><SeatName {name} generated={botName(frame, s.seat)} actionable={false} /></span
               >
+              {#if human}<MemberLink {session} {human} />{/if}
               {#if who?.role}<RoleTag role={who.role} name={who.name} compact />{/if}
-              <button
-                type="button"
-                class="manage"
-                data-act="seat-menu:{s.seat}"
-                aria-label={tip}
-                disabled={!controls}
-                onclick={() => onmanage?.(s.seat)}
-                {@attach tooltip({ text: tip, actionable: true })}
-                >{ht('hg.admin.seats.manage')}</button
-              >
+              {#if admin}<button
+                  type="button"
+                  class="manage"
+                  data-act="seat-menu:{s.seat}"
+                  aria-label={tip}
+                  disabled={!controls}
+                  onclick={() => onmanage?.(s.seat)}
+                  {@attach tooltip({ text: tip, actionable: true })}
+                  >{ht('hg.admin.seats.manage')}</button
+                >{/if}
             </li>
           {/each}
         </ul>
@@ -149,12 +153,15 @@
       <h3 id="hg-menu-spectators">{ht('hg.admin.spectators.title')}</h3>
       <SpectatorList
         {people}
+        {session}
         you={frame.you.userId}
         {roles}
         disabled={!controls}
         onrole={(a) => session.role(a.kind, a.userId)}
       />
     </section>
+
+    <DeviceLinkLog entries={frame.roomLog} humans={frame.humans} />
 
     {#if asking}
       <AdminConfirm

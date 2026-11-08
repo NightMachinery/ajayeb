@@ -5,6 +5,8 @@
   // admins). A real admin gets "Make admin" or "Remove admin" where the
   // roles allow, behind a confirmation. What each row offers comes from the
   // caller, read from the frame; the server decides.
+  import MemberLink from '$lib/components/identity/MemberLink.svelte';
+  import type { TableSession } from '../session/session.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import { ht } from '../i18n/messages.svelte';
@@ -14,6 +16,7 @@
 
   interface Props {
     people: readonly SeatPerson[];
+    session?: TableSession;
     /** The viewer's user id, tagged "you". */
     you: string;
     /** The role buttons each person gets, by user id. */
@@ -22,7 +25,7 @@
     onrole?: (action: Extract<SeatAction, { kind: 'promote' | 'demote' }>) => void;
   }
 
-  let { people, you, roles = {}, disabled = false, onrole }: Props = $props();
+  let { people, session, you, roles = {}, disabled = false, onrole }: Props = $props();
 
   let asking = $state<{ kind: 'promote' | 'demote'; userId: string; text: string } | null>(null);
 
@@ -43,9 +46,12 @@
   <ul class="list" data-spectator-list>
     {#each people as p (p.userId)}
       {@const r = roles[p.userId]}
+      {@const human = (session?.table ?? session?.lobby)?.humans.find((h) => h.userId === p.userId)}
+
       <li data-spectator={p.userId}>
         <div class="row">
           <span class="name" dir="auto">{p.name}</span>
+          {#if session && human}<MemberLink {session} {human} />{/if}
           {#if p.userId === you}<span class="you">{ht('hg.admin.you')}</span>{/if}
           {#if p.role}<RoleTag role={p.role} name={p.name} />{/if}
           {#if !p.connected}<span
