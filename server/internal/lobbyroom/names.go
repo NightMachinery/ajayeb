@@ -8,10 +8,10 @@ import (
 
 // assignSlotNames initializes a new or legacy record in deterministic slot
 // order. Existing assignments are retained when a user merely moves slots.
-func (r *Record) assignSlotNames() {
+func (r *Record) assignSlotNames(present ...namenum.Assignment) {
 	for i, s := range r.Slots {
 		if s.Kind == SlotHuman || s.Kind == SlotReserved {
-			r.Names.AssignBounded(s.UserID, s.Name, maxNameCounters)
+			r.Names.AssignBounded(s.UserID, s.Name, maxNameCounters, present...)
 			r.Slots[i].Name = r.Names.Get(s.UserID).Name
 		}
 	}
@@ -45,7 +45,7 @@ func (r *Record) syncNames(present []namenum.Assignment) {
 			r.Names.Import(a, maxNameCounters)
 		}
 	}
-	r.assignSlotNames()
+	r.assignSlotNames(present...)
 }
 
 func (a *actor) assignment(user string) namenum.Assignment {
@@ -61,6 +61,10 @@ func (a *actor) assignment(user string) namenum.Assignment {
 }
 
 func (a *actor) visit(user, name string) bool {
+	name = namenum.CleanName(name)
+	if name == "" {
+		return false
+	}
 	a.visitors = slices.DeleteFunc(a.visitors, func(x namenum.Assignment) bool { return !a.connected(x.UserID) })
 	old := a.assignment(user)
 	if old.UserID != "" && namenum.Key(old.Name) == namenum.Key(name) {

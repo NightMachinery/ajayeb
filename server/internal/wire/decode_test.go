@@ -334,3 +334,16 @@ func TestDecodeIdentityFrames(t *testing.T) {
 		t.Fatalf("a join without a claim decoded one: %q", *j.Claim)
 	}
 }
+
+func TestHelloUnicodeNameLength(t *testing.T) {
+	for _, name := range []string{strings.Repeat("م", 40), strings.Repeat("😀", 17), strings.Repeat("😀", maxNameLen)} {
+		raw := `{"t":"hello","v":1,"token":"` + validToken(t) + `","name":"` + name + `","clientId":"unicode"}`
+		if _, err := DecodeClient([]byte(raw)); err != nil {
+			t.Fatal("valid Unicode name refused", err)
+		}
+	}
+	raw := `{"t":"hello","v":1,"token":"` + validToken(t) + `","name":"` + strings.Repeat("😀", maxNameLen+1) + `","clientId":"unicode"}`
+	if _, err := DecodeClient([]byte(raw)); !errors.Is(err, ErrBadFrame) {
+		t.Fatal("overlong Unicode name accepted", err)
+	}
+}

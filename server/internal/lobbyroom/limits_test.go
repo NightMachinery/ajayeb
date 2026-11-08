@@ -23,12 +23,18 @@ import (
 // so an admin with puppet users could grow a lobby until the store could
 // no longer load it (M16.haftgane-security-review).
 func TestLargestLobbyFitsTheStore(t *testing.T) {
+	for _, glyph := range []string{"<", "😀"} {
+		t.Run(glyph, func(t *testing.T) { largestLobbyFitsTheStore(t, glyph) })
+	}
+}
+
+func largestLobbyFitsTheStore(t *testing.T, glyph string) {
 	f := newFixture(t, nil)
 	k := f.conn(user(0), "tab", "Creator")
 	code := f.create(k, MaxSeats, wire.LobbyOptions{Seating: ptr("lobby")})
 	r := f.record(code)
 	id := func(kind, i int) string { return fmt.Sprintf("%02x%030x", kind, i) }
-	name := strings.Repeat("<", maxNameLen-1) + "x"
+	name := strings.Repeat(glyph, namenum.MaxNameRunes)
 	r.Revision = math.MaxInt64
 	for i := range r.Slots {
 		r.Slots[i] = Slot{Kind: SlotHuman, UserID: id(1, i), Name: name, Taken: math.MaxInt64, Epoch: math.MaxInt64}
@@ -79,7 +85,7 @@ func TestLargestLobbyFitsTheStore(t *testing.T) {
 			n++
 		}
 	}
-	fullNameLedger(&r)
+	fullNameLedger(&r, glyph)
 	if err := validate(&r, defaultSeqClients); err != nil {
 		t.Fatalf("the largest lobby is not one a restart accepts: %v", err)
 	}
@@ -95,14 +101,14 @@ func TestLargestLobbyFitsTheStore(t *testing.T) {
 
 // fullNameLedger includes every permitted retained user and the worst encoded
 // key and counter lengths, including historical keys no current user holds.
-func fullNameLedger(r *Record) {
+func fullNameLedger(r *Record, glyph string) {
 	r.Names = namenum.Ledger{}
 	r.assignSlotNames()
 	users := append(authorities(r), r.Retired...)
 
 	for _, u := range users {
 		if r.Names.Get(u).UserID == "" {
-			r.Names.Assign(u, strings.Repeat("<", 64))
+			r.Names.Assign(u, strings.Repeat(glyph, namenum.MaxNameRunes))
 		}
 	}
 	for i := range r.Names.Users {

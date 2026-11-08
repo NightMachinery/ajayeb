@@ -27,10 +27,8 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/namenum"
@@ -50,8 +48,6 @@ const (
 	DefaultMaxClients  = 32
 	DefaultIdleTimeout = 30 * time.Minute
 	DefaultInboxSize   = 64
-	// maxNameBytes bounds a stored display name, as hello does.
-	maxNameBytes = 64
 )
 
 // Storage is what a table needs from package store; *store.Store
@@ -407,9 +403,12 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	if n < MinSeats || n > MaxSeats || len(spec.Prefix) > maxBatches {
 		return Record{}, game{}, ErrSpec
 	}
+	spec.Participants = append([]Participant{}, spec.Participants...)
 	users := map[string]bool{}
 	humans := 0
-	for _, p := range spec.Participants {
+	for i, p := range spec.Participants {
+		p.Name = namenum.CleanName(p.Name)
+		spec.Participants[i] = p
 		switch {
 		case p.Bot != "":
 			if _, ok := allowance(p.Bot); !ok || p.UserID != "" {
@@ -491,9 +490,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	return base, g, nil
 }
 
-func validName(name string) bool {
-	return name != "" && len(name) <= maxNameBytes && utf8.ValidString(name) && strings.TrimSpace(name) == name
-}
+func validName(name string) bool { return namenum.ValidName(name) }
 
 // openPoint installs g's open point in the record: a fresh wire reference
 // at the current public revision and a work row for each required bot

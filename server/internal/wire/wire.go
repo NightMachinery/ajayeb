@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 )
 
 // ProtocolVersion is the wire protocol version this build of the server (and
@@ -67,10 +69,10 @@ func frameErr(t string, err error) error {
 // They are generous bounds against abuse (MaxClientFrameBytes already caps
 // the whole frame), not an attempt to pick a "correct" display-name length.
 const (
-	maxNameLen      = 64  // Hello.Name, Create.Names entries
-	maxClientIDLen  = 128 // Hello.ClientID
-	maxCodeLen      = 32  // room codes; package store's own alphabet is the authority on the exact shape
-	maxActionKeyLen = 96  // Act.Key; matches the longest key engine.ParseKey accepts, with slack
+	maxNameLen      = namenum.MaxNameRunes // Hello.Name, Create.Names entries
+	maxClientIDLen  = 128                  // Hello.ClientID
+	maxCodeLen      = 32                   // room codes; package store's own alphabet is the authority on the exact shape
+	maxActionKeyLen = 96                   // Act.Key; matches the longest key engine.ParseKey accepts, with slack
 )
 
 // checkNonEmptyBounded rejects an empty string, one longer than max runes,

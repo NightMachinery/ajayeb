@@ -334,7 +334,7 @@ func (a *actor) nameOf(userID string) string {
 	}
 	for _, c := range a.conns {
 		if a.userOf(c) == userID {
-			return c.Name
+			return namenum.CleanName(c.Name)
 		}
 	}
 	return ""
@@ -361,6 +361,7 @@ func (a *actor) humanAttached() bool {
 // under another claim (or none) is detached and admitted afresh, and
 // stays detached if that fails.
 func (a *actor) attach(c *room.Client, claim *string) error {
+	name := namenum.CleanName(c.Name)
 	already := slices.Contains(a.conns, c)
 	if cl, ok := a.claims[c]; already && (ok != (claim != nil) || ok && cl.claim != *claim) {
 		a.detach(c)
@@ -390,9 +391,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		}
 	}
 	nameChanged := false
-	if claim == nil && validName(c.Name) && a.st.rec.Status != store.StatusArchived && a.st.rec.remembersName(user) {
+	if claim == nil && validName(name) && a.st.rec.Status != store.StatusArchived && a.st.rec.remembersName(user) {
 		cand := a.st.rec.clone()
-		if cand.rename(user, c.Name, a.visitors) {
+		if cand.rename(user, name, a.visitors) {
 			if a.st.rec.Names.Get(user).UserID != "" {
 				bumpPublic(&cand)
 			}
@@ -402,8 +403,8 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 			nameChanged = true
 		}
 	}
-	if claim == nil && validName(c.Name) && !a.st.rec.remembersName(user) {
-		nameChanged = a.visit(user, c.Name) || nameChanged
+	if claim == nil && validName(name) && !a.st.rec.remembersName(user) {
+		nameChanged = a.visit(user, name) || nameChanged
 	}
 	if !already {
 		a.conns = append(a.conns, c)

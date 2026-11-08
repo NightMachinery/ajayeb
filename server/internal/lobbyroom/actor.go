@@ -277,7 +277,7 @@ func (a *actor) nameOf(u string) string {
 	}
 	for _, c := range a.conns {
 		if a.userOf(c) == u {
-			return c.Name
+			return namenum.CleanName(c.Name)
 		}
 	}
 	return ""
@@ -288,6 +288,7 @@ func (a *actor) nameOf(u string) string {
 // watch. A connection already attached under another claim (or none) is
 // detached and admitted afresh.
 func (a *actor) attach(c *room.Client, claim *string) error {
+	name := namenum.CleanName(c.Name)
 	already := slices.Contains(a.conns, c)
 	if cl, ok := a.claims[c]; already && (ok != (claim != nil) || ok && cl.claim != *claim) {
 		a.detach(c)
@@ -318,9 +319,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		}
 	}
 	nameChanged := false
-	if claim == nil && validName(c.Name) && a.rec.Status != store.StatusArchived && a.rec.remembersName(user) {
+	if claim == nil && validName(name) && a.rec.Status != store.StatusArchived && a.rec.remembersName(user) {
 		cand := a.rec.clone()
-		if cand.rename(user, c.Name, a.visitors) {
+		if cand.rename(user, name, a.visitors) {
 			if a.rec.Names.Get(user).UserID != "" {
 				cand.Revision++
 			}
@@ -330,8 +331,8 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 			nameChanged = true
 		}
 	}
-	if claim == nil && validName(c.Name) && !a.rec.remembersName(user) {
-		nameChanged = a.visit(user, c.Name) || nameChanged
+	if claim == nil && validName(name) && !a.rec.remembersName(user) {
+		nameChanged = a.visit(user, name) || nameChanged
 	}
 	if !already {
 		a.conns = append(a.conns, c)
@@ -339,7 +340,7 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 			a.claims[c] = claimed{claim: *claim, user: user}
 		}
 	}
-	if !wasConnected && a.takeSlot(user, c.Name, claim != nil) {
+	if !wasConnected && a.takeSlot(user, name, claim != nil) {
 		a.publish(nil, nil)
 	} else {
 		c.Out.Push(a.frame(c, nil))
@@ -360,6 +361,7 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 // unless they left a slot before. A claim never renames its slot. It
 // reports whether it committed a change.
 func (a *actor) takeSlot(user, name string, claimed bool) bool {
+	name = namenum.CleanName(name)
 	r := &a.rec
 	i := slotOf(r, user, SlotReserved)
 	cand := r.clone()

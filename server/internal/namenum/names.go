@@ -33,6 +33,24 @@ type Ledger struct {
 	Names []Counter    `json:"names"`
 }
 
+// MaxNameRunes is the display-name limit shared with the wire.
+const MaxNameRunes = 64
+
+// ValidName checks a stored, trimmed display name. Entry points trim names
+// before applying this rule; empty names are handled by the caller's defaults.
+func ValidName(name string) bool {
+	return name != "" && utf8.ValidString(name) && utf8.RuneCountInString(name) <= MaxNameRunes && strings.TrimSpace(name) == name
+}
+
+// CleanName trims an incoming name and returns empty for an invalid name.
+func CleanName(name string) string {
+	name = strings.TrimSpace(name)
+	if !ValidName(name) {
+		return ""
+	}
+	return name
+}
+
 // Key matches Duel's comparison, ignoring case and outer whitespace.
 func Key(name string) string { return strings.ToLower(strings.TrimSpace(name)) }
 
@@ -57,9 +75,13 @@ func (l *Ledger) Assign(user, name string) bool {
 	return l.AssignBounded(user, name, int(^uint(0)>>1))
 }
 
-// AssignBounded freezes an existing user's rename when history is full. New
-// authority holders can always enter: Import evicts an unused historical key.
+// AssignBounded records a name, evicting unused historical keys at capacity.
+// It never changes another retained or connected holder's assignment.
 func (l *Ledger) AssignBounded(user, name string, capacity int, present ...Assignment) bool {
+	name = CleanName(name)
+	if name == "" {
+		return false
+	}
 	i := slices.IndexFunc(l.Users, func(a Assignment) bool { return a.UserID == user })
 	if i >= 0 && l.Users[i].Name == name {
 		return false
@@ -68,9 +90,6 @@ func (l *Ledger) AssignBounded(user, name string, capacity int, present ...Assig
 	if i >= 0 && counterKey(l.Users[i].Name) == key {
 		l.Users[i].Name = name
 		return true
-	}
-	if i >= 0 && len(l.Names) >= capacity {
-		return false
 	}
 	a := l.Preview(user, name, present)
 	l.Import(a, capacity)
@@ -95,7 +114,7 @@ func (l Ledger) Valid() error {
 	for _, a := range l.Users {
 		key := counterKey(a.Name)
 		k := used{key, a.Number}
-		if a.UserID == "" || len(a.UserID) > 64 || !utf8.ValidString(a.UserID) || users[a.UserID] || Key(a.Name) == "" || len(a.Name) > 64 || !utf8.ValidString(a.Name) || a.Number < 0 || a.Number == 1 || a.Number >= names[key] || numbers[k] {
+		if a.UserID == "" || len(a.UserID) > 64 || !utf8.ValidString(a.UserID) || users[a.UserID] || !ValidName(a.Name) || a.Number < 0 || a.Number == 1 || a.Number >= names[key] || numbers[k] {
 			return errors.New("invalid name assignment")
 		}
 		users[a.UserID], numbers[k] = true, true
@@ -108,6 +127,7 @@ const maxOrdinal = 1<<53 - 1
 // Preview allocates without consuming persistent history, avoiding every
 // retained and currently connected holder of the same name.
 func (l Ledger) Preview(user, name string, present []Assignment) Assignment {
+	name = CleanName(name)
 	key := counterKey(name)
 	next := 1
 	for _, c := range l.Names {
@@ -155,6 +175,7 @@ func (l Ledger) Preview(user, name string, present []Assignment) Assignment {
 // oldest historical key with no retained holder, never a current holder's key.
 // Capacity must exceed the containing actor's bounded authority population.
 func (l *Ledger) Import(a Assignment, capacity int) {
+	a.Name = CleanName(a.Name)
 	key := counterKey(a.Name)
 	i := slices.IndexFunc(l.Users, func(x Assignment) bool { return x.UserID == a.UserID })
 	if i < 0 {

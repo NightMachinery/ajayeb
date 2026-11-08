@@ -162,12 +162,23 @@ func TestTableNameJoinRenameLoopsStayBounded(t *testing.T) {
 	if len(r.Names.Names) != maxNameCounters || len(r.Names.Users) > maxNameUsers {
 		t.Fatal("unbounded ledger")
 	}
-	name := r.Names.Get(userOf(1))
-	if err := h.p.join(h.ctx, "frozen", userOf(1), "Overflow"); err != nil {
+	others := []string{userOf(0), userOf(2)}
+	if err := h.p.join(h.ctx, "overflow-watcher", "overflow-watcher", "Overflow"); err != nil {
 		t.Fatal(err)
 	}
-	if got := h.record().Names.Get(userOf(1)); got != name {
-		t.Fatal("rename did not freeze", got)
+	if err := h.p.join(h.ctx, "overflow-rename", userOf(1), "Overflow"); err != nil {
+		t.Fatal(err)
+	}
+	if got := h.record().Names.Get(userOf(1)); got.Name != "Overflow" || got.Number != 2 {
+		t.Fatal("rename at capacity failed", got)
+	}
+	if human(t, h.latest("overflow-watcher"), "overflow-watcher").NameNo != 0 {
+		t.Fatal("rename renumbered spectator")
+	}
+	for _, u := range others {
+		if h.record().Names.Get(u) != r.Names.Get(u) {
+			t.Fatal("rename renumbered retained holder")
+		}
 	}
 	data, err := r.encode()
 	if err != nil {
@@ -261,5 +272,58 @@ func TestSpectatorNamesOnlyWhilePresent(t *testing.T) {
 	r := h.record()
 	if r.Names.Get("visitor1").UserID != "" || r.Names.Get("visitor2").UserID != "" {
 		t.Fatal("spectator names persisted")
+	}
+}
+
+func TestTableTrimmedNameCollision(t *testing.T) {
+	h := newTH(t, Config{BotWork: blockBots}, humans(3, 313))
+	admin := tabletest.SeatClient(0)
+	if err := h.p.join(h.ctx, "honest", "honest", "River"); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.p.join(h.ctx, "padded", "padded", "River "); err != nil {
+		t.Fatal(err)
+	}
+	if human(t, h.latest("padded"), "padded").NameNo != 2 {
+		t.Fatal("padded name collided with spectator")
+	}
+	h.want(admin, toBot(1, 1, BotEasy), outAccepted, "free a seat")
+	h.want(admin, toHuman(2, 1, "padded"), outAccepted, "seat a padded name")
+	h.want(admin, roleOp(3, "promote", "honest"), outAccepted, "promote the honest spectator")
+	h.want(admin, toBot(4, 2, BotEasy), outAccepted, "free another seat")
+	h.want(admin, toHuman(5, 2, "honest"), outAccepted, "seat the honest spectator")
+	st := h.latest("honest")
+	if honest, padded := human(t, st, "honest"), human(t, st, "padded"); honest.NameNo != 0 || padded.NameNo != 2 || padded.Name != "River" {
+		t.Fatal("seating changed assignments", honest, padded)
+	}
+}
+
+func TestTableUnicodeNameLifecycle(t *testing.T) {
+	for _, name := range []string{strings.Repeat("م", 40), strings.Repeat("😀", 17)} {
+		t.Run(name, func(t *testing.T) {
+			sp := humans(3, 313)
+			sp.Participants[1].Name = name
+			h := newTH(t, Config{BotWork: blockBots}, sp)
+			admin := tabletest.SeatClient(0)
+			if err := h.p.join(h.ctx, "watcher", "watcher", " "+name+" "); err != nil {
+				t.Fatal(err)
+			}
+			if human(t, h.latest("watcher"), "watcher").NameNo != 2 {
+				t.Fatal("Unicode spectator not numbered")
+			}
+			h.want(admin, roleOp(1, "promote", "watcher"), outAccepted, "promote Unicode name")
+			h.want(admin, toBot(2, 2, BotEasy), outAccepted, "free a seat")
+			h.want(admin, toHuman(3, 2, "watcher"), outAccepted, "seat Unicode name")
+			if human(t, h.latest("watcher"), "watcher").NameNo != 2 {
+				t.Fatal("promotion or seating renumbered Unicode name")
+			}
+			renamed := name + "م"
+			if err := h.p.join(h.ctx, "rename", "watcher", renamed); err != nil {
+				t.Fatal(err)
+			}
+			if got := human(t, h.latest("rename"), "watcher"); got.Name != renamed || got.NameNo != 0 {
+				t.Fatal("Unicode rename failed", got)
+			}
+		})
 	}
 }

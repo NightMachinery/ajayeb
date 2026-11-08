@@ -223,16 +223,25 @@ func TestFullLobbyNameLedgerStillStarts(t *testing.T) {
 	if len(r.Names.Names) != maxNameCounters {
 		t.Fatalf("history: %d", len(r.Names.Names))
 	}
-	name := r.Names.Get(user(1))
-	k := f.conn(user(1), "frozen", "Overflow")
+	others := []namenum.Assignment{r.Names.Get(user(0)), r.Names.Get(user(2))}
+	w := f.conn(user(10), "overflow-watcher", "Overflow")
+	f.join(w, code)
+	wantNameNo(t, w.last().Humans, user(10), 0)
+	k := f.conn(user(1), "overflow-rename", "Overflow")
 	f.join(k, code)
-	k.last()
-	if got := f.record(code).Names.Get(user(1)); got != name {
+	overflow := k.last()
+	if got := f.record(code).Names.Get(user(1)); got.Name != "Overflow" || got.Number != 2 {
 		t.Fatalf("rename at capacity: %+v", got)
+	}
+	wantNameNo(t, overflow.Humans, user(10), 0)
+	for _, old := range others {
+		if f.record(code).Names.Get(old.UserID) != old {
+			t.Fatal("rename renumbered a retained holder")
+		}
 	}
 	f.send(a, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1, FillBots: true})
 	st := a.until("table", func(v any) bool { _, ok := v.(wire.TableState); return ok }).(wire.TableState)
-	wantNameNo(t, st.Humans, user(1), name.Number)
+	wantNameNo(t, st.Humans, user(1), 2)
 }
 
 func TestLobbyNameRetention(t *testing.T) {
@@ -297,6 +306,79 @@ func TestRematchNameAssignments(t *testing.T) {
 			k := f.conn(user(0), "reload", "River")
 			f.join(k, code)
 			wantNameNo(t, k.last().Humans, user(0), 5)
+		})
+	}
+}
+
+func TestLobbyTrimmedNameCollision(t *testing.T) {
+	f := newFixture(t, nil)
+	a := f.conn(user(0), "admin", "Admin")
+	code := f.create(a, 3, wire.LobbyOptions{})
+	b, c := f.conn(user(1), "b", "B"), f.conn(user(2), "c", "C")
+	f.join(b, code)
+	f.join(c, code)
+	w := f.conn(user(3), "honest", "River")
+	f.join(w, code)
+	wantNameNo(t, w.last().Humans, user(3), 0)
+	padded := f.conn(user(4), "padded", "River ")
+	f.join(padded, code)
+	wantNameNo(t, padded.last().Humans, user(4), 2)
+	f.send(b, edit(code, 1, "release"))
+	b.acked(1)
+	seat := edit(code, 1, "seat")
+	seat.Seat, seat.UserID = ptr(1), ptr(user(4))
+	f.send(a, seat)
+	st := a.acked(1)
+	wantNameNo(t, st.Humans, user(4), 2)
+	if f.record(code).Names.Get(user(4)).Name != "River" {
+		t.Fatal("untrimmed name persisted")
+	}
+	// Importing the honest spectator used to fail with storage after seating
+	// the padded name, because both were assigned number zero.
+	f.send(a, wire.LobbyRole{T: "lobby-role", Code: code, Seq: 2, Op: "promote", UserID: ptr(user(3))})
+	wantNameNo(t, a.acked(2).Humans, user(3), 0)
+	f.send(c, edit(code, 1, "release"))
+	c.acked(1)
+	seat = edit(code, 3, "seat")
+	seat.Seat, seat.UserID = ptr(2), ptr(user(3))
+	f.send(a, seat)
+	st = a.acked(3)
+	wantNameNo(t, st.Humans, user(3), 0)
+	wantNameNo(t, st.Humans, user(4), 2)
+}
+
+func TestLobbyUnicodeNameLifecycle(t *testing.T) {
+	for _, name := range []string{strings.Repeat("م", 40), strings.Repeat("😀", 17)} {
+		t.Run(name, func(t *testing.T) {
+			f := newFixture(t, nil)
+			a := f.conn(user(0), "admin", "Admin")
+			code := f.create(a, 2, wire.LobbyOptions{})
+			// Joining an open slot also covers the pre-ledger takeSlot refusal.
+			b := f.conn(user(1), "auto-seat", name)
+			f.join(b, code)
+			b.last()
+			if s := f.record(code).Slots[1]; s.Kind != SlotHuman || s.Name != name {
+				t.Fatal("Unicode hello did not take open slot", s)
+			}
+			w := f.conn(user(2), "watcher", " "+name+" ")
+			f.join(w, code)
+			wantNameNo(t, w.last().Humans, user(2), 2)
+			f.send(a, wire.LobbyRole{T: "lobby-role", Code: code, Seq: 1, Op: "promote", UserID: ptr(user(2))})
+			wantNameNo(t, a.acked(1).Humans, user(2), 2)
+			f.send(b, edit(code, 1, "release"))
+			b.acked(1)
+			seat := edit(code, 2, "seat")
+			seat.Seat, seat.UserID = ptr(1), ptr(user(2))
+			f.send(a, seat)
+			wantNameNo(t, a.acked(2).Humans, user(2), 2)
+			// Rename a retained user to another name over 64 bytes.
+			renamed := name + "م"
+			k := f.conn(user(2), "rename", renamed)
+			f.join(k, code)
+			wantNameNo(t, k.last().Humans, user(2), 0)
+			if got := f.record(code).Names.Get(user(2)).Name; got != renamed {
+				t.Fatal("Unicode rename refused", got)
+			}
 		})
 	}
 }

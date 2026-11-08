@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
@@ -47,10 +45,10 @@ const (
 
 // Bounds of the lists that grow with the lobby's life.
 const (
-	maxRoomLog  = 512
-	maxRetired  = 32
-	maxUnseated = 64
-	maxNameLen  = 64
+	maxRoomLog     = 512
+	maxRetired     = 32
+	maxUnseated    = 64
+	maxUserIDBytes = 64
 	// maxSeqUsers bounds the users with remembered seqs: the humans in
 	// slots, the real admins, the temporary admin and the retired users.
 	maxSeqUsers = MaxSeats + roles.MaxAdmins + 1 + maxRetired
@@ -297,7 +295,7 @@ func validate(r *Record, acks int) error {
 				return invalid("open slot %d", i)
 			}
 		case SlotReserved, SlotHuman:
-			if s.UserID == "" || len(s.UserID) > maxNameLen || users[s.UserID] || !validName(s.Name) || s.Bot != "" {
+			if s.UserID == "" || len(s.UserID) > maxUserIDBytes || users[s.UserID] || !validName(s.Name) || s.Bot != "" {
 				return invalid("slot %d", i)
 			}
 			if r.Names.Get(s.UserID).Name != s.Name {
@@ -351,9 +349,7 @@ func validate(r *Record, acks int) error {
 	return nil
 }
 
-func validName(name string) bool {
-	return name != "" && len(name) <= maxNameLen && utf8.ValidString(name) && strings.TrimSpace(name) == name
-}
+func validName(name string) bool { return namenum.ValidName(name) }
 
 // creationLevel translates a carried hard bot when a shared lobby changes
 // games or an old table rematches. Only a new table gets the current release

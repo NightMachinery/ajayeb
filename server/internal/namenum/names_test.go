@@ -2,6 +2,7 @@ package namenum
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -77,9 +78,14 @@ func TestBoundedNameHistory(t *testing.T) {
 	}
 	l.AssignBounded("a", "Third", 4)
 	l.AssignBounded("a", "Fourth", 4)
-	old := l.Get("a")
-	if l.AssignBounded("a", "Fifth", 4) || l.Get("a") != old {
-		t.Fatal("full ledger did not freeze rename")
+	held := l.Get("a")
+	l.Import(Assignment{UserID: "holder", Name: "Fourth", Number: 2}, 4)
+	visitor = l.Preview("watch", "Fifth", nil)
+	if !l.AssignBounded("a", "Fifth", 4, visitor) || l.Get("a").Name != "Fifth" || l.Get("a").Number != 2 {
+		t.Fatal("full ledger blocked rename or collided with visitor")
+	}
+	if l.Get("holder").Number != 2 || l.Get("holder").Name != held.Name || l.Names[0].Key != counterKey("Brook") {
+		t.Fatal("rename changed another holder or did not evict the oldest unused key", l)
 	}
 	l.AssignBounded("b", "New authority", 4)
 	if len(l.Names) != 4 || l.Get("b").Name != "New authority" {
@@ -97,5 +103,29 @@ func TestExhaustedOrdinalStillAdmitsAuthority(t *testing.T) {
 	l.AssignBounded("b", "River", 4)
 	if l.Get("b").Number != 2 || l.Valid() != nil {
 		t.Fatal("exhausted ordinal blocked admission", l)
+	}
+}
+
+func TestNameRule(t *testing.T) {
+	for _, name := range []string{strings.Repeat("م", 40), strings.Repeat("😀", 17), strings.Repeat("😀", MaxNameRunes)} {
+		if !ValidName(name) || CleanName(" "+name+" ") != name {
+			t.Fatal("valid Unicode name refused", name)
+		}
+		var l Ledger
+		l.Assign("a", " "+name+" ")
+		if err := l.Valid(); err != nil || l.Get("a").Name != name {
+			t.Fatal("ledger disagrees with name rule", err)
+		}
+	}
+	for _, name := range []string{"", " ", " River ", strings.Repeat("😀", MaxNameRunes+1), string([]byte{0xff})} {
+		if ValidName(name) {
+			t.Fatal("invalid name accepted", name)
+		}
+		var l Ledger
+		l.Assign("a", "River")
+		l.Users[0].Name = name
+		if l.Valid() == nil {
+			t.Fatal("ledger accepted invalid name", name)
+		}
 	}
 }

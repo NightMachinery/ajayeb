@@ -85,11 +85,17 @@ func seqHas(xs []SeqRecord, user, client string) bool {
 // admin with puppet users could grow a table until the store could no
 // longer load it (M16.haftgane-security-review).
 func TestLargestRecordFitsTheStore(t *testing.T) {
+	for _, glyph := range []string{"<", "😀"} {
+		t.Run(glyph, func(t *testing.T) { largestRecordFitsTheStore(t, glyph) })
+	}
+}
+
+func largestRecordFitsTheStore(t *testing.T, glyph string) {
 	seed := uint64(212)
 	// The creator holds no seat, so every admin is a user of their own.
 	sp := Spec{Seed: &seed, Creator: hexUser(2, 0)}
 	for s := range MaxSeats {
-		sp.Participants = append(sp.Participants, Participant{UserID: hexUser(1, s), Name: strings.Repeat("<", maxNameBytes-1) + "x"})
+		sp.Participants = append(sp.Participants, Participant{UserID: hexUser(1, s), Name: strings.Repeat(glyph, namenum.MaxNameRunes)})
 	}
 	h := newTH(t, Config{BotWork: blockBots}, sp)
 	a, err := h.p.actor()
@@ -150,7 +156,7 @@ func TestLargestRecordFitsTheStore(t *testing.T) {
 			}
 			r.Pending = append(r.Pending, slot)
 		}
-		fullNameLedger(&r)
+		fullNameLedger(&r, glyph)
 		if err := validate(&r, &g, defaultBounds); err != nil {
 			t.Fatalf("the largest record is not one restore accepts: %v", err)
 		}
@@ -188,7 +194,7 @@ const (
 
 // fullNameLedger includes every permitted retained user and the worst encoded
 // key and counter lengths, including historical keys no current user holds.
-func fullNameLedger(r *Record) {
+func fullNameLedger(r *Record, glyph string) {
 	r.Names = namenum.Ledger{}
 	r.assignSeatNames()
 	users := append(authorities(r), r.Retired...)
@@ -198,7 +204,7 @@ func fullNameLedger(r *Record) {
 
 	for _, u := range users {
 		if r.Names.Get(u).UserID == "" {
-			r.Names.Assign(u, strings.Repeat("<", 64))
+			r.Names.Assign(u, strings.Repeat(glyph, namenum.MaxNameRunes))
 		}
 	}
 	for i := range r.Names.Users {

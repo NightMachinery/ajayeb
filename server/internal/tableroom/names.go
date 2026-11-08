@@ -7,10 +7,10 @@ import (
 )
 
 // assignSeatNames initializes a legacy table once in its current seat order.
-func (r *Record) assignSeatNames() {
+func (r *Record) assignSeatNames(present ...namenum.Assignment) {
 	for i, s := range r.Seats {
 		if s.Kind == SeatHuman {
-			r.Names.AssignBounded(s.UserID, s.Name, maxNameCounters)
+			r.Names.AssignBounded(s.UserID, s.Name, maxNameCounters, present...)
 			r.Seats[i].Name = r.Names.Get(s.UserID).Name
 		}
 	}
@@ -42,7 +42,7 @@ func (r *Record) syncNames(present []namenum.Assignment) {
 			r.Names.Import(a, maxNameCounters)
 		}
 	}
-	r.assignSeatNames()
+	r.assignSeatNames(present...)
 }
 
 func (a *actor) assignment(user string) namenum.Assignment {
@@ -58,6 +58,10 @@ func (a *actor) assignment(user string) namenum.Assignment {
 }
 
 func (a *actor) visit(user, name string) bool {
+	name = namenum.CleanName(name)
+	if name == "" {
+		return false
+	}
 	a.visitors = slices.DeleteFunc(a.visitors, func(x namenum.Assignment) bool { return !a.connected(x.UserID) })
 	old := a.assignment(user)
 	if old.UserID != "" && namenum.Key(old.Name) == namenum.Key(name) {

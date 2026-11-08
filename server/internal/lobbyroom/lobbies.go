@@ -182,15 +182,16 @@ func (unbound) CreateGame(string, string, []byte) ([]byte, error) { return nil, 
 // options, the creator in its first slot and its one real admin. The
 // Manager then joins the creator.
 func (l *Lobbies) create(m *room.Manager, c *room.Client, msg wire.ClientMessage) (string, error) {
+	name := namenum.CleanName(c.Name)
 	req, ok := msg.(wire.LobbyCreate)
 	switch {
-	case !ok || req.SeatCount < MinSeats || req.SeatCount > MaxSeats || !validOptions(req.Options) || !validName(c.Name):
+	case !ok || req.SeatCount < MinSeats || req.SeatCount > MaxSeats || !validOptions(req.Options) || !validName(name):
 		return "", room.ErrInvalidSpec
 	case !l.allows(req.SeatCount):
 		return "", room.ErrForbidden
 	}
 	r := newRecord(req.SeatCount, req.Options, c.UserID)
-	r.Slots[0] = Slot{Kind: SlotHuman, UserID: c.UserID, Name: c.Name}
+	r.Slots[0] = Slot{Kind: SlotHuman, UserID: c.UserID, Name: name}
 	return l.save(m, r)
 }
 
