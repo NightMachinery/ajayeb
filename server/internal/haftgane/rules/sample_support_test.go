@@ -28,6 +28,12 @@ func TestSamplerSupportSweep(t *testing.T) {
 	rebuildSources := 0
 	for n := uint8(MinSeats); n <= MaxSeats; n++ {
 		for seed := 0; seed < games; seed++ {
+			// Keep all seat counts, side rules, hide settings and play policies
+			// in the race sample. Every prefix/seat and six-place permutation
+			// still runs for each selected game; non-race retains every seed.
+			if RaceEnabled && seed%10 != 0 && seed%10 != 5 && seed%10 != 7 {
+				continue
+			}
 			setup := Setup{Seats: n, Seed: uint64(seed) + 0x9a1, Options: Options{Sides: SideRule(seed % 3), HideAtEnd: seed%2 == 1}}
 			run := samplerSweepPlay(t, setup, uint64(seed)+311, (seed/3)%3)
 			for prefix, g := range run.games {

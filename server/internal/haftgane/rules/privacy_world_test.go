@@ -160,8 +160,12 @@ func privacySweepJSON(t *testing.T, v any) []byte {
 // observations, statistics, histories and offers, at every position.
 func TestWholeGameGuildSwapNoninterference(t *testing.T) {
 	pairs, positions, frames, skipped, diverged := 0, 0, 0, 0, 0
+	seeds := uint64(6)
+	if RaceEnabled {
+		seeds = 3 // All side rules, seat counts and hide settings remain covered.
+	}
 	for n := uint8(3); n <= 7; n++ {
-		for seed := uint64(0); seed < 6; seed++ {
+		for seed := uint64(0); seed < seeds; seed++ {
 			for _, hide := range []bool{false, true} {
 				setup := Setup{Seats: n, Seed: 0xabcdef00 + seed*7919, Options: Options{Sides: SideRule(seed % 3), HideAtEnd: hide}}
 				a := privacySweepPlay(t, setup, seed)

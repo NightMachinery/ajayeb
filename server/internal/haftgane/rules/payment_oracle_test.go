@@ -218,10 +218,14 @@ func checkPaymentOracle(t testing.TB, in tradeInput) {
 
 func TestPaymentOracleRandom(t *testing.T) {
 	rng := rand.New(rand.NewPCG(0x73a91, 0x908fe))
-	for k := 0; k < 100000; k++ {
+	inputs := 100000
+	if RaceEnabled {
+		inputs = 10000 // The full random-input sweep is pure, sequential work.
+	}
+	for k := 0; k < inputs; k++ {
 		checkPaymentOracle(t, randomTrade(rng))
 	}
-	t.Log("100000 catalog-shaped inputs agree, including every witness and quote")
+	t.Logf("%d catalog-shaped inputs agree, including every witness and quote", inputs)
 }
 
 func randomTrade(rng *rand.Rand) tradeInput {

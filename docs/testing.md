@@ -13,6 +13,44 @@ strength and the playout sweep. These run as part of `make test-go`, in
 process, with no server, no socket and no browser; they are the cheapest
 layer and catch almost everything.
 
+Haftgane's rules sweeps are pure, single-goroutine work. Under `-race`,
+`RaceEnabled` samples three expensive sweeps while retaining their assertions:
+
+- `TestSamplerSupportSweep` selects seeds 0, 5 and 7 in each block of ten.
+  These retain all side rules, both end-reveal settings and all three play
+  policies, at every seat count. Every prefix, viewer and six-place
+  permutation of each selected game still runs.
+- `TestPaymentOracleRandom` checks 10,000 inputs instead of 100,000,
+  including every payment witness and quote for each input.
+- `TestWholeGameGuildSwapNoninterference` uses three seeds instead of six,
+  retaining all side rules, both end-reveal settings and every seat count.
+
+All three sweeps run in full, without `-short` or race sampling, in
+`make verify-quick` (`test-go`) and the nightly CI `nightly` job's `go test
+-shuffle=on -timeout 120m ./...`. Fixed sampler regression fixtures and the
+enumerable replay oracle remain unchanged under race. A measured local run
+with `-race -shuffle=on -timeout 30m -count=1` dropped from 798 to 381 seconds;
+the support sweep dropped from 535 to 146 seconds. Runner timings vary, so
+the first CI run after integration is the headroom check.
+
+Push and pull-request CI split race tests across two parallel 30-minute jobs,
+both with `-race -shuffle=on -timeout 20m` and without `-short`:
+
+- `go` keeps its check name, `go (fmt, vet, race tests, lint)`, and runs fmt,
+  tidy, vet, race tests for every package except the two rules engines, the
+  full non-race tableroom suite and golangci-lint v2.12, each exactly once.
+- `go-rules`, named `go rules (race tests)`, runs
+  `internal/haftgane/rules` and `internal/engine`. The other job filters only
+  these exact package paths from `go list ./...`, so new packages and engine
+  subpackages still receive race coverage.
+
+All three e2e jobs depend on both Go jobs and `web`. The lint job caches the
+installed binary by runner OS, architecture and pinned version. A cache hit
+uses the lint action's `install-mode: none`, avoiding release and version
+downloads during an outage; a cold cache still needs the release download.
+Changing the version pin creates a new binary cache. With the minor pin
+`v2.12`, delete that cache to pick up a newer patch release within the series.
+
 The catalog's three-way data check, `TestVerify` in
 `server/internal/engine/catalog/verify_test.go`, joins the catalog's own CSV
 tables with two blind verifier tables and compares every field (the rulings it
@@ -433,7 +471,7 @@ clocks and memory.
 
 Measured on the development machine, the race build with `-short`, as
 `make test-race` runs it, went from about 680 to 347 seconds; without
-`-short`, as CI runs it with every other package in the go job's race step,
+`-short`, as CI runs it with the other non-engine packages in the go job's race step,
 it takes 384 seconds. The full run without the race detector is no slower
 (about four minutes; the parallel pair overlaps).
 

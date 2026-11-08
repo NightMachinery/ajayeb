@@ -67,14 +67,55 @@ jobs:
         # tableroom's race build plays its long sweeps on a sample and skips
         # the exhaustive arrival orders (RaceEnabled, SweepSeats); the next
         # step runs them all without the race detector.
-        run: go test -race -shuffle=on -timeout 20m ./...
+        # The two rules engines have their own parallel go-rules job. List
+        # everything else dynamically so new packages cannot miss race tests.
+        run: |
+          packages=$(go list ./... | grep -Ev '/internal/(haftgane/rules|engine)$')
+          go test -race -shuffle=on -timeout 20m $packages
       - name: go test tableroom (no race, not short)
         run: go test -shuffle=on -timeout 20m ./internal/tableroom/...
+      - name: Cache the golangci-lint binary
+        id: lint-binary
+        uses: actions/cache@v6
+        with:
+          path: ~/golangci-lint-*/golangci-lint
+          key: golangci-lint-binary-${{ runner.os }}-${{ runner.arch }}-${{ env.GOLANGCI_LINT_VERSION }}
+      - name: Add the cached golangci-lint to PATH
+        if: steps.lint-binary.outputs.cache-hit == 'true'
+        run: |
+          for binary in "$HOME"/golangci-lint-*/golangci-lint; do
+            if [ -x "$binary" ]; then
+              dirname "$binary" >> "$GITHUB_PATH"
+              exit 0
+            fi
+          done
+          echo '::error::Cached golangci-lint binary is missing or not executable'
+          exit 1
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
+          # A hit bypasses release/version downloads; the action's ordinary
+          # analysis cache alone does not cache its installed binary.
+          install-mode: ${{ steps.lint-binary.outputs.cache-hit == 'true' && 'none' || 'binary' }}
           working-directory: server
+
+  go-rules:
+    name: go rules (race tests)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - name: go test rules -race
+        run: go test -race -shuffle=on -timeout 20m ./internal/haftgane/rules ./internal/engine
 
   web:
     name: web (check, lint, test, build) and e2e sources
@@ -111,7 +152,7 @@ jobs:
     # browser install, and three in M18, when the seven-seat table
     # playthroughs pushed the first shard past 30 minutes.
     name: e2e (Playwright, bundled Chromium, shard ${{ matrix.shard }} of 4)
-    needs: [go, web]
+    needs: [go, go-rules, web]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -160,7 +201,7 @@ jobs:
   e2e-webkit:
     name: e2e WebKit (smoke, layout, RTL, native audio)
     if: github.event_name != 'schedule'
-    needs: [go, web]
+    needs: [go, go-rules, web]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -223,7 +264,7 @@ jobs:
     # job, and one in fewer is listed as flaky in the run summary. A failure
     # marks this job but not the workflow.
     name: e2e perf report (4x long tasks, not gating)
-    needs: [go, web]
+    needs: [go, go-rules, web]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     continue-on-error: true
