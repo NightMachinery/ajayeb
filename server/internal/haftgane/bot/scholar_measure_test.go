@@ -175,6 +175,19 @@ func TestScholarCancellationMeasurements(t *testing.T) {
 	}
 	positions := scholarLaterPositions(t)
 	positions = append(positions, ageTail(t))
+	// Add the costliest roots: turn one of each Age at both seat-count extremes.
+	for _, n := range []uint8{3, 7} {
+		roots := 0
+		for _, g := range ageHistory(t, rules.Setup{Seats: n, Seed: 0x73636870726f6265, Options: rules.Options{Sides: rules.SidesChoose}}, 0x2026, true) {
+			if g.State.Phase == rules.PhaseTurn && g.State.Turn == 1 {
+				positions = append(positions, g)
+				roots++
+			}
+		}
+		if roots != 3 {
+			t.Fatal("missing turn-one Ages", n, roots)
+		}
+	}
 	quantile := func(ds []time.Duration, p int) float64 {
 		slices.Sort(ds)
 		return float64(ds[(len(ds)*p+99)/100-1]) / 1e6
@@ -193,7 +206,7 @@ func TestScholarCancellationMeasurements(t *testing.T) {
 				o, cs := g.Observe(seat), g.Legal(seat)
 				for tape := uint64(0); tape < 8; tape++ {
 					clock := &ageGapContext{Context: context.Background(), last: time.Now()}
-					out, err := ChooseAge(clock, o, cs, tape, AgeWork{Attempts: 2, Candidates: 8, SamplerChecks: rules.MaxSamplerChecks})
+					out, err := ChooseAge(clock, o, cs, tape, ScholarWork())
 					clock.finish()
 					if err != nil || out.Fallback {
 						t.Fatal(err, out.Counters)
@@ -202,7 +215,7 @@ func TestScholarCancellationMeasurements(t *testing.T) {
 					ctx, cancel := context.WithCancel(context.Background())
 					sent := make(chan time.Time, 1)
 					go func() { time.Sleep(time.Millisecond); at := time.Now(); cancel(); sent <- at }()
-					_, err = ChooseAge(ctx, o, cs, tape, AgeWork{Attempts: 2, Candidates: 8, SamplerChecks: rules.MaxSamplerChecks})
+					_, err = ChooseAge(ctx, o, cs, tape, ScholarWork())
 					returned := time.Now()
 					at := <-sent
 					cancel()

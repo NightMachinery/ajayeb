@@ -401,7 +401,7 @@ func TestLobbyEditsAndStart(t *testing.T) {
 		t.Fatalf("the removed human took a slot again: %v", kinds(st))
 	}
 	ab := edit(code, 2, "add-bot")
-	ab.Seat, ab.Bot = ptr(1), ptr(tableroom.BotHard)
+	ab.Seat, ab.Bot = ptr(1), ptr(tableroom.BotNormal)
 	f.send(ks[0], ab)
 	if got := ks[0].reject(2); got != outBad {
 		t.Fatalf("a bot in a human's slot: %s", got)
@@ -655,7 +655,7 @@ func TestRematch(t *testing.T) {
 	k := f.conn(user(0), "c0", "P0")
 	code := f.create(k, 3, wire.LobbyOptions{Seating: ptr("lobby"), Sides: ptr("random"), AllowUndo: ptr(false), FinalReveal: ptr(false)})
 	ab := edit(code, 1, "add-bot")
-	ab.Seat, ab.Bot = ptr(2), ptr(tableroom.BotHard)
+	ab.Seat, ab.Bot = ptr(2), ptr(tableroom.BotNormal)
 	f.send(k, ab)
 	k.acked(1)
 	f.send(k, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 2, FillBots: true})
@@ -709,7 +709,7 @@ func TestRematch(t *testing.T) {
 	}
 	r := f.record(next.Code)
 	if r.SeatCount != 3 || r.Slots[0] != (Slot{Kind: SlotReserved, UserID: user(0), Name: "P0"}) || r.Slots[1].Bot != tableroom.BotEasy ||
-		r.Slots[2].Bot != tableroom.BotHard || *r.Options.Seating != "lobby" || r.Options.Sides == nil || *r.Options.Sides != "random" || *r.Options.AllowUndo || *r.Options.FinalReveal ||
+		r.Slots[2].Bot != tableroom.BotNormal || *r.Options.Seating != "lobby" || r.Options.Sides == nil || *r.Options.Sides != "random" || *r.Options.AllowUndo || *r.Options.FinalReveal ||
 		r.Roles.Creator != user(0) || len(r.Roles.Admins) != 1 {
 		t.Fatalf("the successor: %+v", r)
 	}
@@ -719,5 +719,56 @@ func TestRematch(t *testing.T) {
 	ls := dev.lobby("the device in the successor", any2)
 	if ls.You.UserID != user(0) || ls.You.Seat == nil || *ls.You.Seat != 0 || ls.Humans[0].Name != "P0" || !ls.Humans[0].Admin {
 		t.Fatalf("the claimed slot: %+v %+v", ls.You, ls.Humans)
+	}
+}
+
+// A shared lobby still accepts Duel hard at two seats. Haftgane offers only
+// its released levels, even when an old client submits the wire's hard code.
+func TestLobbyRejectsUnreleasedHaftganeMaster(t *testing.T) {
+	f := newFixture(t, nil)
+	k := f.conn(user(0), "c0", "Creator")
+	code := f.create(k, 3, wire.LobbyOptions{})
+	ab := edit(code, 1, "add-bot")
+	ab.Seat, ab.Bot = ptr(1), ptr(tableroom.BotHard)
+	f.send(k, ab)
+	if got := k.reject(1); got != outBad {
+		t.Fatal("unreleased Master accepted", got)
+	}
+	ab.Bot = ptr(tableroom.BotNormal)
+	f.send(k, ab)
+	k.acked(1)
+}
+
+func TestLobbyCarriesHardToReleasedScholar(t *testing.T) {
+	f := newFixture(t, nil)
+	k := f.conn(user(0), "c0", "Creator")
+	code := f.create(k, 2, wire.LobbyOptions{Seating: ptr("lobby")})
+	ab := edit(code, 1, "add-bot")
+	ab.Seat, ab.Bot = ptr(1), ptr(tableroom.BotHard)
+	f.send(k, ab)
+	k.acked(1)
+	resize := edit(code, 2, "seats")
+	resize.SeatCount = ptr(3)
+	f.send(k, resize)
+	st := k.acked(2)
+	if st.Seats[1].Bot == nil || *st.Seats[1].Bot != tableroom.BotNormal || f.record(code).Slots[1].Bot != tableroom.BotNormal {
+		t.Fatal("Duel hard survived as unreleased Master")
+	}
+	f.send(k, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 3, FillBots: true})
+	table := k.table("new Haftgane table", func(wire.TableState) bool { return true })
+	if table.Seats[1].Bot == nil || *table.Seats[1].Bot != tableroom.BotNormal {
+		t.Fatal("carried level did not start as Scholar")
+	}
+}
+
+func TestLegacyMasterRematchUsesReleasedScholar(t *testing.T) {
+	f := newFixture(t, nil)
+	rm := tableroom.Rematch{Parent: "PRNAAA", Creator: user(0), Slots: []tableroom.StartSlot{{UserID: user(0), Name: "Creator"}, {Bot: tableroom.BotHard}, {Bot: tableroom.BotEasy}}}
+	if err := f.lobbies.Rematch(f.m, "NEWAAA", rm); err != nil {
+		t.Fatal(err)
+	}
+	r := f.record("NEWAAA")
+	if r.Slots[1].Bot != tableroom.BotNormal || rm.Slots[1].Bot != tableroom.BotHard {
+		t.Fatal("rematch did not adopt current levels independently of its parent")
 	}
 }

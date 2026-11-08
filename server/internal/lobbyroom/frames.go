@@ -60,7 +60,7 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 			ps.UserID = &id
 			add(s.UserID, s.Name)
 		case SlotBot:
-			level := s.Bot
+			level := creationLevel(s.Bot, r.SeatCount)
 			ps.Bot = &level
 		}
 		seats = append(seats, ps)

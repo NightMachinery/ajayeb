@@ -30,14 +30,14 @@ func policyInput(r *Record, g *game, seat int) botInput {
 }
 
 func TestFixedPresetsRejectUnsupportedWork(t *testing.T) {
-	h := newTH(t, Config{BotWork: blockBots}, soloSpec(7, 501, BotHard))
+	h := newTH(t, Config{BotWork: blockBots}, soloSpec(7, 501, BotNormal))
 	base := h.record()
-	if len(base.BotPresets) != 3 || len(base.Work) != 6 {
+	if len(base.BotPresets) != 2 || len(base.Work) != 6 {
 		t.Fatal("missing frozen configuration", base.Work)
 	}
 	for _, row := range base.Work {
 		p, _ := frozenPreset(&base, row.Level)
-		if row.BotPreset != p || row.Allowance != 1 {
+		if row.BotPreset != p || row.Allowance != bot.ScholarAttempts {
 			t.Fatal("partial/divided preset", row)
 		}
 	}
@@ -47,6 +47,8 @@ func TestFixedPresetsRejectUnsupportedWork(t *testing.T) {
 		"preset version": func(r *Record) { r.Work[0].Preset++ },
 		"allowance":      func(r *Record) { r.Work[0].Allowance++ },
 		"algorithm":      func(r *Record) { r.Work[0].Algorithm = "random" },
+		"candidates":     func(r *Record) { r.Work[0].Candidates++ },
+		"sampler bound":  func(r *Record) { r.Work[0].SamplerChecks++ },
 		"quote bound":    func(r *Record) { r.Work[0].MaxQuotes++ },
 		"probe bound":    func(r *Record) { r.Work[0].MaxProbes++ },
 		"offer bound":    func(r *Record) { r.Work[0].MaxChoices++ },
@@ -87,17 +89,16 @@ func TestFixedPresetsRejectUnsupportedWork(t *testing.T) {
 	}
 }
 
-// Each room code plays its persona's policy where one exists; normal and hard
-// share Greedy until Scholar, and Random is never a room level (D46).
+// New rooms offer the two released policies; Random stays a simulator baseline.
 func TestRoomPresetMapping(t *testing.T) {
 	got := map[string]string{}
 	for _, p := range releasedPresets() {
-		if p.Policy != "haftgane-bot-2" {
+		if p.Policy != policyVersion {
 			t.Fatal("preset set", p)
 		}
 		got[p.Level] = p.Algorithm
 	}
-	want := map[string]string{BotEasy: "apprentice", BotNormal: "greedy", BotHard: "greedy"}
+	want := map[string]string{BotEasy: "apprentice", BotNormal: "scholar"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatal("room mapping", got)
 	}
@@ -106,7 +107,7 @@ func TestRoomPresetMapping(t *testing.T) {
 // Levels are checked against the table's frozen presets, not the build's:
 // a level the table never froze gets no work row and no seat.
 func TestLevelsComeFromFrozenPresets(t *testing.T) {
-	r := Record{BotPresets: releasedPresets()[:1], Seats: []SeatRecord{{Seat: 0, Kind: SeatBot, Bot: BotEasy}, {Seat: 1, Kind: SeatBot, Bot: BotHard}}}
+	r := Record{BotPresets: releasedPresets()[:1], Seats: []SeatRecord{{Seat: 0, Kind: SeatBot, Bot: BotEasy}, {Seat: 1, Kind: SeatBot, Bot: BotNormal}}}
 	if row, ok := workRow(&r, "p", 0); !ok || row.Seat != 0 || row.BotPreset != r.BotPresets[0] {
 		t.Fatal("frozen level", row)
 	}
@@ -171,9 +172,9 @@ func TestBotEveryPendingSubsetRestarts(t *testing.T) {
 	for mask := 0; mask < 64; mask++ {
 		t.Run(fmt.Sprint(mask), func(t *testing.T) {
 			hook := faults.NewWork(true)
-			sp := soloSpec(7, 812, BotHard)
+			sp := soloSpec(7, 812, BotNormal)
 			for s := 1; s < 7; s++ {
-				sp.Participants[s].Bot = []string{BotEasy, BotNormal, BotHard}[s%3]
+				sp.Participants[s].Bot = []string{BotEasy, BotNormal}[s%2]
 			}
 			h := newTH(t, Config{BotWork: hook.Run}, sp)
 			<-hook.Started()
@@ -343,7 +344,7 @@ func TestBotQueuedCancellationReleasesWaiter(t *testing.T) {
 	if err := pool.AcquireFor(context.Background(), "blocker"); err != nil {
 		t.Fatal(err)
 	}
-	h := newTH(t, Config{Pool: pool}, soloSpec(3, 913, BotHard))
+	h := newTH(t, Config{Pool: pool}, soloSpec(3, 913, BotNormal))
 	waitFor(t, "queued bot", func() bool { return pool.Waiting() == 1 })
 	h.leave(tabletest.SeatClient(0))
 	waitFor(t, "removed waiter", func() bool { return pool.Waiting() == 0 })
@@ -436,7 +437,7 @@ func TestPresetTablesAndSixBotWait(t *testing.T) {
 			reports := make(chan BotReport, 512)
 			sp := humans(7, uint64(920+count))
 			for s := 7 - count; s < 7; s++ {
-				sp.Participants[s] = Participant{Bot: []string{BotEasy, BotNormal, BotHard}[s%3]}
+				sp.Participants[s] = Participant{Bot: []string{BotEasy, BotNormal}[s%2]}
 			}
 			pool := ai.NewPool(1)
 			opened := time.Now()
@@ -449,7 +450,7 @@ func TestPresetTablesAndSixBotWait(t *testing.T) {
 			var active, poolWait time.Duration
 			for len(reports) > 0 {
 				r := <-reports
-				if r.Cancelled || r.Fallback != "" || r.Counters.Iterations != 1 {
+				if r.Cancelled || r.Fallback != "" || r.Counters.Iterations != 1 && r.Counters.Iterations != bot.ScholarAttempts {
 					t.Fatal("incomplete or fallback ordinary work", r)
 				}
 				completed++
@@ -477,9 +478,12 @@ func TestPresetTablesAndSixBotWait(t *testing.T) {
 }
 
 func TestSevenBotContinuationWithReleasedPolicies(t *testing.T) {
-	h := newTH(t, Config{Pool: ai.NewPool(1)}, soloSpec(7, 931, BotHard))
+	h := newTH(t, Config{Pool: ai.NewPool(1)}, soloSpec(7, 931, BotNormal))
+	// This waits for a whole game. Race instrumentation can exceed the short
+	// harness timeout even though every individual decision finishes promptly.
+	h.ctx = testContextFor(t, 3*time.Minute)
 	h.want(tabletest.SeatClient(0), wire.TableResign{T: "table-resign", Seq: 1, Confirm: true}, outAccepted, "last human resigns and watches")
-	h.until(tabletest.SeatClient(0), "seven-bot continuation", func(st wire.TableState) bool { return st.Status == "finished" })
+	h.untilFor(tabletest.SeatClient(0), "seven-bot continuation", 3*time.Minute, func(st wire.TableState) bool { return st.Status == "finished" })
 	if r := h.record(); len(r.BotFallbacks) != 0 || r.Seats[0].Bot != DefaultBotLevel {
 		t.Fatal("continuation policy/fallback", r.BotFallbacks)
 	}
@@ -498,8 +502,8 @@ func TestPresetSwitchKeepsPickAndFullRow(t *testing.T) {
 			t.Fatal("switch lost kept pick or full row")
 		}
 	}
-	h.want(me, toBot(1, 1, BotHard), outAccepted, "admin selects hard")
-	check(BotHard)
+	h.want(me, toBot(1, 1, BotNormal), outAccepted, "admin selects Scholar")
+	check(BotNormal)
 	h.want(me, toHuman(2, 1, userOf(1)), outAccepted, "former human returns")
 	if fr := h.latest(c1); fr.Pending == nil || fr.Pending.Key != sn.Legal[1] {
 		t.Fatal("human lost pick")
@@ -531,7 +535,7 @@ func TestReleasedRoomPoliciesAtSideAndAbilities(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				for _, level := range []string{BotEasy, BotNormal, BotHard} {
+				for _, level := range []string{BotEasy, BotNormal} {
 					sp := humans(n, seed)
 					sp.Sides = sides
 					sp.Prefix = prefix
@@ -577,7 +581,7 @@ func TestReleasedRoomPoliciesAtSideAndAbilities(t *testing.T) {
 }
 
 func TestSixBotPresetWaitMeasurements(t *testing.T) {
-	for _, level := range []string{BotEasy, BotNormal, BotHard} {
+	for _, level := range []string{BotEasy, BotNormal} {
 		t.Run(level, func(t *testing.T) {
 			reports := make(chan BotReport, 512)
 			opened := time.Now()
@@ -587,7 +591,7 @@ func TestSixBotPresetWaitMeasurements(t *testing.T) {
 			decisions := 0
 			for len(reports) > 0 {
 				r := <-reports
-				if r.Cancelled || r.Fallback != "" || r.Counters.Iterations != 1 {
+				if r.Cancelled || r.Fallback != "" || r.Counters.Iterations != 1 && r.Counters.Iterations != bot.ScholarAttempts {
 					t.Fatal("ordinary truncated/fallback work", r)
 				}
 				active += r.Active
@@ -616,7 +620,7 @@ func TestBotSchedulesAndRestartSameBatch(t *testing.T) {
 		reports := make(chan BotReport, 64)
 		sp := soloSpec(7, 950, BotNormal)
 		for seat := 1; seat < 7; seat++ {
-			sp.Participants[seat].Bot = []string{BotEasy, BotNormal, BotHard}[seat%3]
+			sp.Participants[seat].Bot = []string{BotEasy, BotNormal}[seat%2]
 		}
 		h := newTH(t, Config{BotWork: hook.Run, BotFinished: func(r BotReport) { reports <- r }}, sp)
 		me := tabletest.SeatClient(0)

@@ -159,7 +159,7 @@ func TestMixedRoomEvidence(t *testing.T) {
 							}, BotFinished: done})
 							s := newEvidenceStore(f.store, eHaft)
 							f.tables.Bind(f.m, s)
-							sp := soloSpec(7, uint64(18000+trial*100+game), BotHard)
+							sp := soloSpec(7, uint64(18000+trial*100+game), BotNormal)
 							sp.Sides = "choose"
 							p, err := f.openInproc(ctx, sp)
 							if err == nil {

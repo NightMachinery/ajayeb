@@ -1,81 +1,62 @@
 # Fixed-preset Haftgane room bots
 
-The Haftgane actor calls `haftgane/bot.Choose` directly with one permitted
-observation, the exact engine offer, policy entropy and a persisted work row.
-Duel's scheduler, bot goldens and review semaphore are unchanged. These are
-internal baseline policies; public release still waits for Scholar.
+@OpenAI, 2026-11-08. The table actor runs observation-only policies inside
+its existing pool worker. Duel's scheduler, bot goldens and review semaphore
+are unchanged.
 
 ## Levels and frozen work
 
-Each room code plays the policy its persona names, where that policy exists:
+New tables offer two levels:
 
-- `easy`, shown as Apprentice, plays the Apprentice policy (Greedy with
-  softmax noise, D46).
-- `normal`, shown as Scholar, plays deterministic Greedy as a stand-in until
-  the Scholar policy exists.
-- `hard`, shown as Master, also plays Greedy for now.
+- `easy`, shown as Apprentice, uses Greedy with fixed-point softmax noise at
+  1.5 VP (D46).
+- `normal`, shown as Scholar, uses the calibrated paired Age rollout policy:
+  two sample attempts, at most eight candidates and 1,048,576 sampler checks
+  per attempt. Every bot receives the complete row, including six-bot tables.
 
-So normal and hard are equally strong until Scholar lands, and there is no
-very weak room opponent. Random stays a simulator baseline only (D46). The
-order is still monotone: in the held-out tournament Greedy beats Apprentice
-in mixed fields at every seat count ([AI](ai.md#first-held-out-tournament)).
+Master (`hard`) is unavailable for new Haftgane tables and lobby additions.
+The shared lobby still offers Duel's hard level at two seats. A Duel hard
+bot carried into a larger lobby, or a legacy hard bot in a rematch, becomes
+Scholar for the new table; its parent table remains unchanged. Random and
+exact Greedy remain simulator baselines. [Scholar calibration](scholar-calibration.md)
+records the held-out strength evidence and measured waits.
 
-An admin explicitly chooses the level when switching a seat to a bot, and
-the switch is refused unless the table froze that level. Resignation, and a
-lobby's empty slot, use the lowest level, `easy`. A switch retains and
-confirms any existing pick. Without a pick, its bot gets the full preset.
+A new table freezes both levels under preset set `haftgane-bot-3`, including
+levels not yet seated. Both use numeric policy version 1 and preset version 1.
+Each `botPresets` row and open-point `work` row records the algorithm, level,
+allowance, maximum 217 choices, 12 probes and 2,616 quote calls. Apprentice's
+allowance 1 means one complete ranking pass; its `candidates` and
+`samplerChecks` fields are zero. Scholar's allowance 2 means two complete
+sample/comparison attempts, with `candidates: 8` and `samplerChecks: 1048576`.
 
-Each table freezes all three presets at creation, including levels not yet
-seated. Each row contains preset set `haftgane-bot-2` (the `policy` field),
-numeric policy version 1, preset version 1, algorithm, room level, allowance 1, maximum 217
-choices, 12 probes and 2,616 quote calls. Allowance 1 means one complete
-bounded pass, not one candidate. Apprentice uses the released fixed-point
-1.5 VP temperature. There is no reduced six-bot allowance or donated work.
-New points and switches copy the game's frozen row, never a default selected
-at restore time. Policy and preset versions also enter policy entropy.
+`bot.ScholarWork()` supplies the named frozen work row. `ScholarPresetVersion`
+freezes the entire recipe: Age horizon, shortlist and canonical ties, 3/4 rank
+plus 1/4 win reward (scale 3,360), four rollout preferences and key noise
+1,500. Changing the recipe needs a new version and new validation and held-out
+evidence. Tests pin the version-one constants.
 
-Table record format 2 (schema 2) added frozen `botPresets` and bounded
-`botFallbacks`; each open-point `work` row embeds its complete preset.
-Unsupported versions, algorithms, allowances or bounds fail validation.
-Older development records without supported frozen presets archive as
-`replay-failed`; their old fallback rows are never interpreted as new bots.
-A reader that predates format 2 refuses it rather than reverting an all-human
-table's future bot switches to old defaults. Replay still uses accepted keys,
-not bot reruns. Unsupported future formats remain untouched. Format 3
-(M16.haftgane-security-review) keeps format 2's presets and remembers each
-client by a bounded key; a format-2 record is re-keyed on load
-([protocol](../protocol.md), "Room files").
+An admin selects a frozen level when switching a seat to a bot. A switch
+retains and confirms an existing pick; otherwise its worker receives the full
+row. Resignation and lobby fill use Apprentice. New points, switches, restore
+and undo copy the table's frozen rows, never the latest deployed default.
+There is no reduced six-bot allowance or donated work. Policy and preset
+versions enter policy entropy.
 
-Preset set `haftgane-bot-1`, the first one, mapped `easy` to Random, `normal`
-to Apprentice and `hard` to Greedy. Set 2 changed only that mapping. The bot
-package's numeric policy and preset versions stay 1, because each policy's
-behaviour and the published tournament are unchanged. A table frozen under
-set 1 fails validation when it loads, so it archives as `replay-failed`
-and is never replayed under set 2. That includes all-human tables. Only
-development tables existed, so this was accepted before release.
+## Stored compatibility
 
-### The cost of the next preset change
+The record remains schema 2, format 3. A small supported-set registry accepts
+sets 2 and 3 by complete equality, including bounds. Unsupported versions,
+algorithms or edited rows fail closed. Set 2 remains exactly as written:
+Apprentice at `easy`, Greedy at `normal` and `hard`, one pass per seat. Its
+historical JSON lacks the two new Scholar fields; both decode as zero.
+Existing normal and hard seats continue as Greedy, and old tables retain
+all three frozen switch levels. Their entropy domain is unchanged.
 
-The frozen presets are an equality check against the build, not a second
-copy that old tables keep playing. On every restore and every commit,
-`checkWork` requires the record's presets to equal this build's. A restored
-table keeps the same bot behaviour only within one build. The next preset
-change, such as adding Scholar or retuning Apprentice, therefore archives
-every live Haftgane table, including all-human tables that never seated a
-bot, unless the slice making it changes this. That slice must choose one of
-two options:
-
-- Add a small registry of supported preset sets. An old table keeps its
-  frozen rows and plays on with its old policy under the new build, and the
-  registry drops a set only when no live table needs it.
-- Accept that every live table archives at that deploy, and say so in the
-  release notes. A softer form skips the check for all-human tables until a
-  bot seat is first needed, at the cost of the guarantee that every table's
-  presets are fixed at its start.
-
-Seat switches and seat records are already checked against the table's
-frozen presets rather than the build's, so a registry would not let a switch
-pick a level its table never froze.
+Set 1 (Random/Apprentice/Greedy) and development records without supported
+frozen presets still archive as `replay-failed`, as before. Format 2 records
+are re-keyed to format 3 without replacing their bot configuration. Older
+readers reject unsupported presets rather than reinterpreting Scholar as a
+baseline. Replay uses accepted action keys and never reruns a bot.
 
 ## Admission, cancellation and privacy
 
@@ -88,18 +69,13 @@ no fixed policy allowance and no watchdog time. No new deployment-wide
 scheduler or speculative capacity reservation is introduced; host-wide
 room-work admission belongs to the measured capacity-release slice.
 
-The dormant `bot.SampleRoot` preparation API is for this admitted worker path,
-not the actor. It accepts the same permitted observation/offer boundary and
-creates its root State only through the engine sampler. No room level selects
-it yet. A room test pauses inside sampling, proves actor responsiveness, then
-checks structural cancellation without accepting a fallback. Its sampler
-failure diagnostics are separate from exceptional watchdog fallback and do
-not change stored records. [The sampler guide](sampler.md) gives measured
-cost and cancellation results. The dormant `bot.ChooseAge` runner uses this
-same admitted-worker boundary. Its worker test pauses inside a rollout and
-checks actor responsiveness and structural cancellation. [The rollout
-guide](rollouts.md) records paired sweeps, bounded memory and whole-call poll
-gaps; released room levels and durable work rows are unchanged.
+Scholar calls `bot.ChooseAge` only after pool admission. The actor copies its
+seat's observation and exact offered choices, and derives a per-point policy
+tape. The worker alone owns sampled and simulated states. Simulated seats see
+only their projected observation and own rollout notebook. The sampler and
+rollout cancellation tests pause within that work and prove that the actor
+still handles requests. [The sampler guide](sampler.md) and
+[rollout guide](rollouts.md) describe the information boundary.
 
 A job receives neither a Game nor a State, seed, other seat's pending pick,
 wire revision or task generation. Entropy uses a domain-separated policy root,
@@ -126,7 +102,9 @@ It is separate from deterministic work. Structural cancellation accepts
 nothing. A watchdog on a still-valid point may use the released complete
 Greedy fallback, through the same legality and generation checks. Its accepted
 key stays in normal pending/batch storage; a bounded diagnostic stores only
-batch index, logical point, seat and reason `watchdog`. Undo removes diagnostics
+batch index, logical point, seat and reason `watchdog`. A deterministic
+no-world result uses Greedy with reason `no-world`; a failed or incomplete
+Scholar decision uses Greedy with reason `scholar-error`. Undo removes diagnostics
 for discarded points. None enters frames, ordinary logs or downloads.
 Ordinary acceptance workloads require zero watchdog fallbacks.
 
@@ -146,35 +124,36 @@ undo and late results. Forced queued/active cancellation and delayed cleanup
 check permits, waiters and strict per-room serialization. A watchdog fixture
 checks the exact Greedy result and the persisted safe reason.
 
-`TestSixBotPresetWaitMeasurements` reports a full real-engine game for each
-preset, including active search and pool wait. Each human-point wait includes
-serialized bots, storage and real views; ability-only work is included before
-the next human point. The first includes creation and attachment, later ones
-start before the preceding human's resolving confirmation. These are sample
-observations under the test host's load, not a capacity or latency promise.
-Run it with `make test-go GO_PKGS=./internal/tableroom
-GO_RUN=TestSixBotPresetWaitMeasurements GOFLAGS=-count=1`.
+The ordinary suite covers released policy calls and legacy set-2 continuation.
+`TestForbiddenInformationPairs` compares the complete Scholar result and
+counters at the released row across different hidden future packets, opponent
+hands, setup roots, private sales/tucks and excluded guilds. Only permitted
+observations cross the policy boundary.
 
-A non-race sample on 2026-10-24, one permit and one seven-seat game per
-preset (18 human-point waits and 109 completed decisions each), measured the
-following. It ran under preset set 1, so each item names the policy that
-played; under set 2 `easy` plays Apprentice and `normal` plays Greedy. It
-was not rerun for the remapping, which changed no policy or allowance.
+`TestScholarWorkerWatchdogMeasurements` is opt-in
+(`HAFTGANE_SCHOLAR_WORKER=1`). It plays twenty actual one-human, six-Scholar
+games through the actor, store, frames and one shared pool permit. The human
+submits the first legal choice as soon as each point is offered; the wait ends
+when the resolving batch reaches that human's outbox. Bot-only ability points
+advance naturally and have no human-pick wait. Sides cycle through day, random
+and choose; the test emits per-game and aggregate quantiles.
 
-- Random (`easy` under set 1): 38.95 ms mean wait, 63.91 ms maximum; 1.66 ms
-  total active search and 0.050 ms total pool wait.
-- Apprentice (`normal` under set 1): 36.36 ms mean, 41.00 ms maximum;
-  15.99 ms active and 0.024 ms pool wait.
-- Greedy (`hard`): 39.60 ms mean, 68.37 ms maximum; 17.33 ms active
-  and 0.032 ms pool wait.
+On 2026-11-08, Apple M2, Darwin arm64, Go 1.26.3, normal GC and
+`GOMAXPROCS=1`, with no other test rooms or synthetic CPU workers:
 
-Every ordinary decision completed one full pass, with zero watchdogs.
-These short host samples include filesystem and scheduling noise; they do
-not establish an ordering of preset latency or a mixed-load capacity limit.
-A race-instrumented run measured means of 127 to 138 ms. No policy allowance
-changed between the two runs.
+- 366 human-pick waits: p50 315.565 ms, p95 996.731 ms, p99 1,323.614 ms,
+  maximum 1,610.321 ms.
+- Twenty complete games: p50 6.697 s, p95 8.991 s, p99 and maximum 9.062 s.
+- 2,229 complete Scholar decisions; zero watchdogs and zero sample fallbacks.
 
-For the complete version/mapping contract, retained-cache and allocation
-figures, phase and mixed-Duel latency evidence, restore times and guarded
-reruns, see [internal simple-bot evidence](simple-bots-evidence.md). The Scholar
-and Master labels are not claims that those policies exist; both play Greedy.
+These are host measurements, including filesystem and scheduling noise, not a
+capacity promise for concurrent rooms. All work remains fixed. Reducing it
+would change the preset that passed the strength gate. The original baseline
+and mixed-Duel measurements remain in [simple-bot evidence](simple-bots-evidence.md).
+
+The cancellation probe includes turn one of every Age at three and seven
+seats, turn three at all counts, and a discard-build root. With one competing
+CPU worker, complete-call maximum poll-gap p99 was 46.356 ms and maximum
+55.492 ms over 176 calls. The p99 target below 50 ms passed; the maximum is
+not a hard bound. [Scholar calibration](scholar-calibration.md#room-preset-integration)
+gives the idle measurements and guarded commands.

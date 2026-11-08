@@ -113,7 +113,7 @@ func TestScholarDecisionStorageIdentity(t *testing.T) {
 			seat++
 		}
 		o, cs := g.Observe(seat), g.Legal(seat)
-		work := AgeWork{Attempts: 2, Candidates: 8, SamplerChecks: rules.MaxSamplerChecks}
+		work := ScholarWork()
 		want, err := chooseAge(context.Background(), o, cs, 81, work, sampledState, legacy)
 		if err != nil {
 			t.Fatal(err)

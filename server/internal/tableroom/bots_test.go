@@ -27,8 +27,13 @@ func soloSpec(n int, seed uint64, level string) Spec {
 // as they arrive. It never sleeps on a guess: it wakes on the outbox.
 func (h *th) until(id tabletest.ClientID, what string, ok func(wire.TableState) bool) wire.TableState {
 	h.t.Helper()
+	return h.untilFor(id, what, wait, ok)
+}
+
+func (h *th) untilFor(id tabletest.ClientID, what string, timeout time.Duration, ok func(wire.TableState) bool) wire.TableState {
+	h.t.Helper()
 	c := h.p.clients[id]
-	deadline := time.After(wait)
+	deadline := time.After(timeout)
 	for {
 		h.p.drain()
 		if fs := h.p.frames[id]; len(fs) > 0 && ok(fs[len(fs)-1]) {
@@ -159,8 +164,10 @@ func TestNoHumanPause(t *testing.T) {
 		return st.Point != nil && len(st.Point.Confirmed) == 1
 	})
 	<-work.Started() // the second bot's search holds now
-	rows := h.record().Work
-	if len(rows) != 3 || rows[0].Level != BotNormal || rows[0].Allowance != 1 || rows[0].Policy != policyVersion {
+	current := h.record()
+	rows := current.Work
+	preset, _ := frozenPreset(&current, BotNormal)
+	if len(rows) != 3 || rows[0].BotPreset != preset {
 		t.Fatalf("work rows %+v", rows)
 	}
 	f.restart()

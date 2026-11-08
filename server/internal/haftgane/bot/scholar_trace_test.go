@@ -50,7 +50,7 @@ func TestScholarPollTrace(t *testing.T) {
 		}
 		for tape := uint64(0); tape < 8; tape++ {
 			ctx := &scholarTraceContext{Context: context.Background(), last: time.Now()}
-			out, err := ChooseAge(ctx, g.Observe(seat), g.Legal(seat), tape, AgeWork{Attempts: 2, Candidates: 8, SamplerChecks: rules.MaxSamplerChecks})
+			out, err := ChooseAge(ctx, g.Observe(seat), g.Legal(seat), tape, ScholarWork())
 			if err != nil || out.Fallback {
 				t.Fatal(err, out.Counters)
 			}

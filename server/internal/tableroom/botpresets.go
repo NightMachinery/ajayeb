@@ -4,14 +4,11 @@ import (
 	"slices"
 
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/bot"
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 )
 
-// BotPreset freezes the released algorithm and all deterministic work bounds.
-// Each room code plays the policy of its persona where one exists: easy
-// (Apprentice) is Apprentice. Until the Scholar policy exists, normal
-// (Scholar) and hard (Master) both play Greedy as a stand-in. Random stays a
-// simulator baseline (D46). Every policy completes one pass.
+// BotPreset freezes the released algorithm and every deterministic work bound.
+// New tables offer Apprentice and Scholar. Scholar uses the calibrated Age row
+// in full for every seat. Legacy set 2 retains its Greedy normal/hard policies.
 type BotPreset struct {
 	Policy        string `json:"policy"`
 	PolicyVersion int    `json:"policyVersion"`
@@ -22,22 +19,38 @@ type BotPreset struct {
 	MaxChoices    int    `json:"maxChoices"`
 	MaxProbes     int    `json:"maxProbes"`
 	MaxQuotes     int    `json:"maxQuotes"`
+	Candidates    int    `json:"candidates"`
+	SamplerChecks int    `json:"samplerChecks"`
 }
 
-// policyVersion names the room's preset set. It changes whenever
-// releasedPresets does, so a work row written under another set is refused
-// by name. Version 1 mapped easy to Random and normal to Apprentice.
-const policyVersion = "haftgane-bot-2"
+// policyVersion names the room's preset set and changes whenever its mapping
+// or work changes. Version 1 mapped easy to Random and normal to Apprentice;
+// version 2 mapped easy to Apprentice and normal/hard to Greedy. Keep set 2
+// supported verbatim: restore, switches and new points use the table's rows.
+const policyVersion = "haftgane-bot-3"
 
-func releasedPresets() []BotPreset {
+func legacyPresets() []BotPreset {
 	out := []BotPreset{}
-	for _, pair := range []struct {
-		level     string
-		algorithm bot.Level
-	}{{BotEasy, bot.Apprentice}, {BotNormal, bot.Greedy}, {BotHard, bot.Greedy}} {
-		out = append(out, BotPreset{Policy: policyVersion, PolicyVersion: bot.PolicyVersion, Preset: bot.PresetVersion, Level: pair.level, Algorithm: pair.algorithm.String(), Allowance: int(bot.DefaultWork().Iterations), MaxChoices: rules.MaxTurnChoices, MaxProbes: bot.MaxProbes, MaxQuotes: bot.MaxQuoteCalls})
+	for _, pair := range []struct{ level, algorithm string }{{BotEasy, "apprentice"}, {BotNormal, "greedy"}, {BotHard, "greedy"}} {
+		out = append(out, BotPreset{Policy: "haftgane-bot-2", PolicyVersion: 1, Preset: 1, Level: pair.level, Algorithm: pair.algorithm, Allowance: 1, MaxChoices: 217, MaxProbes: 12, MaxQuotes: 2616})
 	}
 	return out
+}
+func releasedPresets() []BotPreset {
+	out := legacyPresets()[:2]
+	for i := range out {
+		out[i].Policy = policyVersion
+	}
+	p := &out[1]
+	p.Algorithm, p.Preset = "scholar", bot.ScholarPresetVersion
+	p.Allowance, p.Candidates, p.SamplerChecks = bot.ScholarAttempts, bot.ScholarCandidates, bot.ScholarSamplerChecks
+	return out
+}
+func supportedPresets(ps []BotPreset) bool {
+	return slices.Equal(ps, releasedPresets()) || slices.Equal(ps, legacyPresets())
+}
+func (p BotPreset) ageWork() bot.AgeWork {
+	return bot.AgeWork{Attempts: uint16(p.Allowance), Candidates: uint16(p.Candidates), SamplerChecks: p.SamplerChecks}
 }
 func frozenPreset(r *Record, level string) (BotPreset, bool) {
 	i := slices.IndexFunc(r.BotPresets, func(p BotPreset) bool { return p.Level == level })

@@ -97,12 +97,11 @@ func assertBotPair(t *testing.T, a, b *rules.Game, seat rules.Seat) {
 			t.Fatal("forbidden facts changed sample/fallback diagnostics", budget, ea, eb)
 		}
 	}
-	for _, budget := range []int{0, rules.MaxSamplerChecks} {
-		work := AgeWork{Attempts: 1, Candidates: 4, SamplerChecks: budget}
+	for _, work := range []AgeWork{{Attempts: 1, Candidates: 4, SamplerChecks: 0}, ScholarWork()} {
 		sa, ea := ChooseAge(context.Background(), oa, ca, 0x68756464656e, work)
 		sb, eb := ChooseAge(context.Background(), ob, cb, 0x68756464656e, work)
 		if ea != nil || eb != nil || sa != sb {
-			t.Fatal("forbidden facts changed Age ranking/counters", budget, ea, eb)
+			t.Fatal("forbidden facts changed Age ranking/counters", work, ea, eb)
 		}
 	}
 	for pref := balancedPreference; pref < numRolloutPreferences; pref++ {

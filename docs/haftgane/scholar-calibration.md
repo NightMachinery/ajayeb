@@ -3,7 +3,8 @@
 @OpenAI, 2026-11-08. Scholar passed the frozen held-out strength gate.
 The experimental row is fixed at two attempts, eight candidates and 1,048,576 sampler checks per attempt. The
 existing 3/4 rank plus 1/4 win reward, four rollout preferences and 1,500
-key-indexed policy noise are unchanged. No preset is exposed to rooms. The
+key-indexed policy noise are unchanged. New rooms now use this row as the
+version-one Scholar preset (integration evidence below). The
 offline `scholar-calibrate` command measures explicit `AgeWork` rows,
 independently of released levels. [The bot plan](bot-plan.md) defines
 the gates; [the rollout guide](rollouts.md) describes the search.
@@ -339,7 +340,8 @@ They do not change its declared p99 pass, but the observed long gaps mean
 there is no 50 ms worst-case cancellation guarantee. Across all held-out
 Scholar decisions there were zero Greedy sample fallbacks, zero budget-out
 samples and zero no-world samples. Those simulator counters do not measure
-room watchdogs; the separate shadow worker probe below does.
+room watchdogs; the original shadow worker probe below measured those.
+The integration probe now measures actual Scholar play.
 
 ## Measured rollout approximations
 
@@ -442,17 +444,18 @@ GOMAXPROCS=1 GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto \
 Scheduler tracing also perturbs timing. Diagnostic trace runs do not count
 as cancellation acceptance evidence.
 
-## Worker watchdog probe
+## Original shadow worker watchdog probe
 
-The opt-in `TestScholarWorkerWatchdogMeasurements` shadows the full `2x8`
+Before room integration, the opt-in `TestScholarWorkerWatchdogMeasurements`
+shadowed the full `2x8`
 row inside the existing admitted-worker hook, under a one-permit pool and
 the unchanged 30-second watchdog. One seven-seat table runs at a time.
-Released Greedy still chooses accepted actions after the shadow search, so
-these trajectories measure worker completion and watchdog behavior, not
+Released Greedy chose accepted actions after the shadow search, so
+these trajectories measured worker completion and watchdog behavior, not
 Scholar strength. Every shadow call must complete both attempts without
 a Greedy fallback; worker reports and durable records must contain no
-ordinary watchdog fallback. Run with `HAFTGANE_SCHOLAR_WORKER=1` through the
-guard.
+ordinary watchdog fallback. The room integration below replaces this test
+with twenty actual Scholar trajectories under the same opt-in flag.
 
 Across three seven-seat shadow games at `GOMAXPROCS=1`, all 349 calls
 completed their full work with zero watchdog or Greedy sample fallbacks.
@@ -483,6 +486,68 @@ p99 of 1.61 seconds and game-compute p99 of 11.76 seconds go to the owner
 before Scholar is offered. Keeping full work preserves the demonstrated
 strength at the measured wait. Fewer samples or different budgets by Age
 could reduce waits, but change the measured preset and require fresh
-validation and held-out evidence. No room Level or preset is enabled by
-this slice; owner review of waits and the remaining release gates come
-first.
+validation and held-out evidence. The calibration slice did not enable a room preset. The subsequent
+integration below enables the same full row; public release still depends on
+the remaining release gates.
+
+
+## Room preset integration
+
+@OpenAI, 2026-11-08. New table preset set `haftgane-bot-3` maps `easy` to
+Apprentice and `normal` to Scholar; it does not offer Master. Numeric policy
+and Scholar preset versions are both 1. Stored Scholar rows contain
+`allowance: 2` (sample attempts), `candidates: 8`, `samplerChecks: 1048576`,
+`maxChoices: 217`, `maxProbes: 12` and `maxQuotes: 2616`. The named
+`bot.ScholarWork()` and recipe test pin this row and the unchanged reward,
+preferences and noise. Set-2 tables keep their complete frozen baseline rows,
+including Greedy for existing normal and hard seats, through restore and
+future switches. [Room bots](room-bots.md) defines that compatibility contract.
+
+The expanded cancellation probe adds turn-one roots from every Age at three
+and seven seats to the original fifteen turn-three fixtures and discard root.
+Each has eight tapes: 176 complete calls per load case, normal GC,
+`GOMAXPROCS=1`, Go 1.26.3 on Apple M2 (Darwin arm64), same spinning-goroutine
+load model as calibration:
+
+- Idle: whole-call maximum poll-gap p50/p95/p99/max
+  0.019/0.069/0.255/1.428 ms. Timer-cancel-to-return p99/max 0.024/0.024 ms
+  across 43 cancelled calls; 133 calls completed before the timer.
+- One competing CPU worker: whole-call maximum poll-gap p50/p95/p99/max
+  21.510/29.616/46.356/55.492 ms. Timer-cancel-to-return p99/max
+  0.024/20.583 ms across 157 cancelled calls; 19 completed before the timer.
+
+The loaded p99 passes the unchanged target below 50 ms. The maximum exceeds
+50 ms, so this is no worst-case guarantee. The complete-call poll gap remains
+the acceptance measure; timer cancellation alone can miss completed calls.
+
+The room probe plays twenty games with one human and six actual Scholar bots,
+not shadow decisions, under one pool permit and no additional rooms or CPU
+workers. It uses normal GC and the same machine and Go settings as above.
+Seeds are fixed development fixtures; sides cycle through day/random/choose.
+Human picks are submitted immediately when offered, and their wait ends at
+the resolving batch's human outbox frame. This includes queueing, six serial
+policy calls, persistence and views; bot-only abilities have no human-pick wait.
+
+- Human-pick-to-resolution, 366 points: p50 315.565 ms, p95 996.731 ms,
+  p99 1,323.614 ms, maximum 1,610.321 ms.
+- Whole-game wall time, twenty games: p50 6.697 s, p95 8.991 s,
+  p99 and maximum 9.062 s.
+- 2,229 bot decisions completed the full two attempts, with zero watchdog
+  fallbacks and zero no-world/sample fallbacks.
+
+These room measurements include real actor and storage overhead. They differ
+from the held-out simulator's CPU service sums and use fewer development
+games; they do not supersede its strength result or establish mixed-room
+capacity. A lower-work row could shorten waits but would require a new preset
+and fresh strength evidence.
+
+Both probes remain opt-in, outside `verify-quick`. Run through the guard:
+
+```sh
+GOTOOLCHAIN=go1.26.3 GOMAXPROCS=1 HAFTGANE_SCHOLAR_MEASURE=1 \
+HAFTGANE_SCHOLAR_WORKER=1 HEAVY_NOTIFY=auto python3 tools/heavy.py run \
+  --kind test --wait 3600 -- go -C server test -count=1 -p 1 -v \
+  -timeout 20m \
+  -run '^(TestScholarCancellationMeasurements|TestScholarWorkerWatchdogMeasurements)$' \
+  ./internal/haftgane/bot ./internal/tableroom
+```

@@ -252,7 +252,7 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 		if s.UserID != "" {
 			r.Slots[i] = Slot{Kind: SlotReserved, UserID: s.UserID, Name: s.Name}
 		} else {
-			r.Slots[i] = Slot{Kind: SlotBot, Bot: s.Bot}
+			r.Slots[i] = Slot{Kind: SlotBot, Bot: creationLevel(s.Bot, len(rm.Slots))}
 		}
 	}
 	r.Code, r.Parent = code, rm.Parent

@@ -21,7 +21,7 @@ func TestOldLobbyClientIdsAreRekeyedOnLoad(t *testing.T) {
 	k := f.conn(user(0), id, "Creator")
 	code := f.create(k, 3, wire.LobbyOptions{})
 	ab := edit(code, 8, "add-bot")
-	ab.Seat, ab.Bot = ptr(2), ptr(tableroom.BotHard)
+	ab.Seat, ab.Bot = ptr(2), ptr(tableroom.BotNormal)
 	f.send(k, ab)
 	k.acked(8)
 	r := f.record(code)

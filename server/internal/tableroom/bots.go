@@ -92,12 +92,12 @@ func (a *actor) kickBots() {
 				if hook != nil {
 					err = hook(search, seat, p.ID)
 				}
-				var decision bot.Decision
+				var decision roomDecision
 				if err == nil {
 					decision, err = runBot(search, input)
 				}
 				if errors.Is(err, context.DeadlineExceeded) && ctx.Err() == nil {
-					decision, err = bot.Fallback(ctx, input.observation, input.offered)
+					decision.Decision, err = bot.Fallback(ctx, input.observation, input.offered)
 					if err == nil && decision.Complete {
 						res.fallback = "watchdog"
 					}
@@ -105,7 +105,10 @@ func (a *actor) kickBots() {
 				if err == nil && (!decision.Complete || decision.Key == "") {
 					err = bot.ErrInput
 				}
-				report.Counters, report.Fallback = decision.Counters, res.fallback
+				if res.fallback == "" {
+					res.fallback = decision.fallback
+				}
+				report.Counters, report.AgeCounters, report.Fallback = decision.Counters, decision.ageCounters, res.fallback
 				res.key = decision.Key
 			}()
 		}
@@ -242,22 +245,55 @@ type botInput struct {
 	entropy     uint64
 }
 
-func runBot(ctx context.Context, input botInput) (bot.Decision, error) {
+type roomDecision struct {
+	bot.Decision
+	ageCounters bot.AgeCounters
+	fallback    string
+}
+
+func runBot(ctx context.Context, input botInput) (roomDecision, error) {
+	if input.row.Algorithm == "scholar" {
+		// Unsupported rows are never reinterpreted as the current preset.
+		if input.row.Preset != bot.ScholarPresetVersion || input.row.ageWork() != bot.ScholarWork() {
+			return roomDecision{}, bot.ErrWork
+		}
+		d, err := bot.ChooseAge(ctx, input.observation, input.offered, input.entropy, input.row.ageWork())
+		return finishScholar(ctx, input, d, err)
+	}
 	level, err := bot.ParseLevel(input.row.Algorithm)
 	if err != nil {
-		return bot.Decision{}, err
+		return roomDecision{}, err
 	}
-	return bot.Choose(ctx, level, input.observation, input.offered, input.entropy, input.row.work())
+	d, err := bot.Choose(ctx, level, input.observation, input.offered, input.entropy, input.row.work())
+	return roomDecision{Decision: d}, err
+}
+
+// finishScholar accepts only a complete decision. Failed decisions use exact
+// Greedy; structural cancellation always wins over both the result and fallback.
+func finishScholar(ctx context.Context, input botInput, d bot.AgeDecision, err error) (roomDecision, error) {
+	if ctx.Err() != nil {
+		return roomDecision{}, ctx.Err()
+	}
+	if err != nil || !d.Complete || d.Key == "" {
+		fallback, fallbackErr := bot.Fallback(ctx, input.observation, input.offered)
+		return roomDecision{Decision: fallback, fallback: "scholar-error"}, fallbackErr
+	}
+	reason := ""
+	if d.Fallback {
+		reason = "no-world"
+	}
+	return roomDecision{Decision: bot.Decision{Key: d.Key, Complete: d.Complete, Counters: bot.Counters{Iterations: d.Counters.SampleAttempts}}, ageCounters: d.Counters, fallback: reason}, nil
 }
 
 // BotReport contains only safe diagnostics. Counters describe completed policy
 // work, not elapsed-time strength; active time includes the cancellation hook.
 type BotReport struct {
-	Seat      int
-	Point     string
-	Counters  bot.Counters
-	PoolWait  time.Duration
-	Active    time.Duration
-	Fallback  string
-	Cancelled bool
+	Seat        int
+	Point       string
+	Counters    bot.Counters
+	AgeCounters bot.AgeCounters
+	PoolWait    time.Duration
+	Active      time.Duration
+	Fallback    string
+	Cancelled   bool
 }

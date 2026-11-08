@@ -329,6 +329,16 @@ func validName(name string) bool {
 	return name != "" && len(name) <= maxNameLen && utf8.ValidString(name) && strings.TrimSpace(name) == name
 }
 
+// creationLevel translates a carried hard bot when a shared lobby changes
+// games or an old table rematches. Only a new table gets the current release
+// levels; the finished parent's frozen configuration is never changed.
+func creationLevel(level string, seats int) string {
+	if seats > 2 && level == tableroom.BotHard {
+		return tableroom.BotNormal
+	}
+	return level
+}
+
 func validLevel(level string) bool {
 	switch level {
 	case tableroom.BotEasy, tableroom.BotNormal, tableroom.BotHard:

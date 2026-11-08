@@ -706,10 +706,10 @@ func checkStart(r *Record) error {
 	return nil
 }
 
-// checkWork requires exactly one current-policy row for each required bot
+// checkWork requires exactly one supported frozen row for each required bot
 // seat of the open point, and none for anything else.
 func checkWork(r *Record, g *game) error {
-	if !slices.Equal(r.BotPresets, releasedPresets()) {
+	if !supportedPresets(r.BotPresets) {
 		return invalid("unsupported frozen bot presets")
 	}
 	p := g.Point()
@@ -717,7 +717,7 @@ func checkWork(r *Record, g *game) error {
 		return invalid("too many bot diagnostics")
 	}
 	for _, f := range r.BotFallbacks {
-		if f.At < 0 || f.At > len(r.Batches) || f.Point == "" || f.Seat < 0 || f.Seat >= len(r.Seats) || f.Reason != "watchdog" {
+		if f.At < 0 || f.At > len(r.Batches) || f.Point == "" || f.Seat < 0 || f.Seat >= len(r.Seats) || !slices.Contains([]string{"watchdog", "no-world", "scholar-error"}, f.Reason) {
 			return invalid("a bot diagnostic")
 		}
 		if f.At < len(r.Batches) {
@@ -735,8 +735,6 @@ func checkWork(r *Record, g *game) error {
 			return invalid("a work row for a seat no bot controls")
 		case rows[w.Seat] || w.Point != p.ID || !p.Required.Has(seatNum(w.Seat)):
 			return invalid("a work row for seat %d that is not for the open point", w.Seat)
-		case w.Policy != policyVersion:
-			return invalid("work row of seat %d has an unsupported policy", w.Seat)
 		}
 		if preset, ok := frozenPreset(r, r.Seats[w.Seat].Bot); !ok || w.BotPreset != preset {
 			return invalid("work row of seat %d has a bad level or allowance", w.Seat)

@@ -8,9 +8,9 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 )
 
-// AgeWork is experimental caller-specified work, not a persisted/released
-// preset. An attempt is one bounded sample and, on success, one paired sweep.
-// Candidates allows offline 8/16/all comparisons; no default is prescribed.
+// AgeWork bounds one sampled Age decision. An attempt is one bounded sample
+// and, on success, one paired sweep. ScholarWork is the released row; offline
+// experiments may supply other rows.
 type AgeWork struct {
 	Attempts      uint16
 	Candidates    uint16
@@ -42,8 +42,8 @@ type AgeDecision struct {
 
 type stateSampler func(context.Context, rules.Observation, uint64, int) (rules.State, rules.SamplerCost, bool, error)
 
-// ChooseAge is a dormant admitted-worker entry point. Neither the room actor
-// nor any released level calls it. Policies see only Project plus their own
+// ChooseAge is the admitted-worker entry point for Scholar. Policies see
+// only Project plus their own
 // rollout memory; only this runner owns the sampled root and simulated state.
 func ChooseAge(ctx context.Context, o rules.Observation, offered []rules.Choice, entropy uint64, work AgeWork) (AgeDecision, error) {
 	return chooseAge(ctx, o, offered, entropy, work, sampledState, rolloutPolicy)

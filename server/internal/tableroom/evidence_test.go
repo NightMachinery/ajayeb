@@ -282,9 +282,9 @@ func TestRoomEvidence(t *testing.T) {
 		mix, all    bool
 		kind        string
 	}{
-		{name: "six-easy", level: BotEasy}, {name: "six-normal", level: BotNormal}, {name: "six-hard", level: BotHard},
-		{name: "six-mixed-choose", level: BotHard, mix: true, kind: "sides"}, {name: "all-bot-continuation", level: BotHard, mix: true, all: true},
-		{name: "discard-build", level: BotHard, mix: true, kind: "discard-build"}, {name: "last-card", level: BotHard, mix: true, kind: "last-card"},
+		{name: "six-easy", level: BotEasy}, {name: "six-normal", level: BotNormal},
+		{name: "six-mixed-choose", level: BotNormal, mix: true, kind: "sides"}, {name: "all-bot-continuation", level: BotNormal, mix: true, all: true},
+		{name: "discard-build", level: BotNormal, mix: true, kind: "discard-build"}, {name: "last-card", level: BotNormal, mix: true, kind: "last-card"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -298,7 +298,7 @@ func TestRoomEvidence(t *testing.T) {
 			human := 0
 			if tc.mix {
 				for seat := 1; seat < 7; seat++ {
-					sp.Participants[seat].Bot = []string{BotEasy, BotNormal, BotHard}[seat%3]
+					sp.Participants[seat].Bot = []string{BotEasy, BotNormal}[seat%2]
 				}
 			}
 			if tc.kind == "sides" {
@@ -325,7 +325,7 @@ func TestRoomEvidence(t *testing.T) {
 				sp.Sides = b.sides
 				for seat := 0; seat < 7; seat++ {
 					if seat != human {
-						sp.Participants[seat] = Participant{Bot: []string{BotEasy, BotNormal, BotHard}[seat%3]}
+						sp.Participants[seat] = Participant{Bot: []string{BotEasy, BotNormal}[seat%2]}
 					}
 				}
 			}

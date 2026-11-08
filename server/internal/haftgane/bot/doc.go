@@ -6,7 +6,7 @@
 // forward-looking features are explicit fixed-point policy estimates.
 // SampleRoot prepares a private root State only through the engine sampler.
 // ChooseAge adds paired simultaneous Age sweeps; its simulated-seat policies
-// retain their observation-only boundary. Both worker entry points are dormant,
-// cancellable, and use deterministic Greedy fallback. No released level uses
-// them; calibration must freeze its own policy and work rows.
+// retain their observation-only boundary. The admitted-worker entry points are
+// cancellable and use deterministic Greedy fallback. Rooms select ChooseAge
+// with the versioned ScholarWork row frozen by calibration.
 package bot

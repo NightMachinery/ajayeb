@@ -238,7 +238,7 @@ func TestUndoOffWhenASecondHumanSits(t *testing.T) {
 		t.Fatalf("the start: %+v", fr)
 	}
 	h.want(me, toHuman(1, 1, "watcher"), outAccepted, "the spectator into a bot's seat")
-	h.want(me, toBot(2, 1, BotHard), outAccepted, "back to a bot")
+	h.want(me, toBot(2, 1, BotNormal), outAccepted, "back to a bot")
 	if fr := h.latest(me); !fr.UndoOff || !fr.AllowUndo {
 		t.Fatalf("undo after a second human sat: off %t", fr.UndoOff)
 	}

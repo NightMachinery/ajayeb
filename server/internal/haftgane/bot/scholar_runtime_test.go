@@ -54,7 +54,7 @@ func TestScholarSchedulerFloorDiagnostic(t *testing.T) {
 		o, cs := g.Observe(seat), g.Legal(seat)
 		for tape := uint64(0); tape < 8; tape++ {
 			start := time.Now()
-			out, err := ChooseAge(context.Background(), o, cs, tape, AgeWork{Attempts: 2, Candidates: 8, SamplerChecks: rules.MaxSamplerChecks})
+			out, err := ChooseAge(context.Background(), o, cs, tape, ScholarWork())
 			target = append(target, time.Since(start))
 			if err != nil || out.Fallback {
 				t.Fatal(err, out.Counters)

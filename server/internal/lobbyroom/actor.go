@@ -750,6 +750,11 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 			cand.Slots = append(cand.Slots, Slot{Kind: SlotOpen})
 		}
 		cand.SeatCount = n
+		for i := range cand.Slots {
+			if cand.Slots[i].Kind == SlotBot {
+				cand.Slots[i].Bot = creationLevel(cand.Slots[i].Bot, n)
+			}
+		}
 	case "options":
 		if f.Options == nil || !validOptions(*f.Options) {
 			return bad()
@@ -757,7 +762,7 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 		cand.Options = cloneOptions(*f.Options)
 	case "add-bot":
 		i, ok := slot()
-		if !ok || f.Bot == nil || !validLevel(*f.Bot) || (r.Slots[i].Kind != SlotOpen && (r.SeatCount != 2 || r.Slots[i].Kind != SlotBot)) {
+		if !ok || f.Bot == nil || (!validLevel(*f.Bot) || r.SeatCount != 2 && *f.Bot == tableroom.BotHard) || (r.Slots[i].Kind != SlotOpen && (r.SeatCount != 2 || r.Slots[i].Kind != SlotBot)) {
 			return bad()
 		}
 		cand.Slots[i] = Slot{Kind: SlotBot, Bot: *f.Bot}
@@ -890,7 +895,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		case SlotHuman:
 			spec.Participants = append(spec.Participants, tableroom.Participant{UserID: s.UserID, Name: s.Name, FreshClaim: s.Epoch != 0})
 		case SlotBot:
-			spec.Participants = append(spec.Participants, tableroom.Participant{Bot: s.Bot})
+			spec.Participants = append(spec.Participants, tableroom.Participant{Bot: creationLevel(s.Bot, r.SeatCount)})
 		default:
 			spec.Participants = append(spec.Participants, tableroom.Participant{Bot: tableroom.DefaultBotLevel})
 		}

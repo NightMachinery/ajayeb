@@ -2,9 +2,9 @@
 
 @Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: the rules engine, table actors and baseline bots are implemented.
-Scholar passed its frozen held-out strength gate. Paired Age rollouts remain
-dormant pending owner review of six-bot waits and the remaining release gates.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
+**Status: the rules engine, table actors, Apprentice and Scholar are implemented.
+New tables run the frozen, held-out-tested Scholar row. Master remains
+unavailable; the remaining public-release gates still apply.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
 
 ## What it is and why
 
@@ -20,17 +20,16 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 
 Current implementation guides: [the baseline bots](ai.md), [observation-only
 sampling](sampler.md), [paired Age rollouts](rollouts.md) and
-[Scholar calibration](scholar-calibration.md). The rollout runner
-remains dormant after calibration, pending owner review of waits and release
-gates; these guides distinguish measurements
-from the original design estimates.
+[Scholar calibration](scholar-calibration.md). The released room row and measured six-bot waits are in
+[room bots](room-bots.md); these guides distinguish measurements from the
+original design estimates.
 
 ## The design in one page
 
 - **Rules** ([rules.md](rules.md)). The full base game in our own words, with 30 numbered rulings where the publisher's texts leave a point open. Each turn has three steps: everyone picks a card, everyone plays it, hands pass. Payment and legality are checked against the position at the start of the turn, so simultaneous play needs no conflict resolution. A player chooses which neighbour receives their trade coins (ruling 10).
 - **Platform** ([platform-architecture.md](platform-architecture.md)). The server registers **room kinds** side by side: Duel keeps its room, file format, protocol and client exactly as they are, and Haftgane gets its own room actor and lazily loaded client. The Haftgane room runs engine-defined **decision points**: each required seat's pick is stored privately and stays changeable until the last player confirms, and that confirmation resolves the whole turn as one batch with one grouped reveal. Duel's online start and every Haftgane table begin in one shared lobby, whose seat count at Start picks the game. Admins can switch any seat between a human and a bot and seat any spectator in any seat; the creator and the humans an admin promotes are the admins, and a temporary admin stands in only while all of them are away. Files use a new schema next to Duel's, and the protocol adds Haftgane frames without changing Duel's.
 - **Engine** ([engine-architecture.md](engine-architecture.md)). New pure packages under `server/internal/haftgane/`, deterministic and integer-only like Duel's. Card **designs** (80) are the identity, so no key or view can reveal a deal position. A construction key names its payment, such as `build:aqueduct:2:0`, and only payments that no other payment beats are offered (at most 15 per card). The engines share infrastructure (the seeded generator, the digest helper, the purity checks and the catalog diff), each piece moved out of Duel with proof that Duel is unchanged. They share no rules code, because the same words name different rules in the two games. That is the answer to the owner's question about sharing code.
-- **Bots** ([bot-plan.md](bot-plan.md)). Every level sees only what its seat may know. Apprentice (Greedy with noise) comes first, in an internal milestone. Scholar and Master compare candidate moves by simulating whole simultaneous rounds over sampled hidden cards; the public release waits for Scholar and the proven sampler, and Master may follow later. Each bot gets fixed work per decision at its difficulty, so a full table is slower rather than weaker.
+- **Bots** ([bot-plan.md](bot-plan.md)). Every level sees only what its seat may know. Apprentice uses Greedy with noise. Scholar compares candidate moves by simulating simultaneous rounds over sampled hidden cards to the Age boundary. New tables offer those two levels; Master may follow later. Each bot gets fixed work per decision at its difficulty, so a full table is slower rather than weaker.
 - **Screens** ([phone-layout.md](phone-layout.md)). A phone in portrait shows the whole table: chips for distant players, two neighbour panels with trade prices and a military outlook, your own city strip, a hand that never scrolls, and a turn bar. A card sheet lists the offered payments, a confirmed pick can be changed until everyone has confirmed, and each turn ends with one grouped reveal and a recap. A private notebook of the hands you have seen carries summary statistics. Landscape and desktop rearrange the same pieces. The mockups behind it stay private, because they show unverified card values.
 - **Art** ([art-reuse.md](art-reuse.md)). 58 of the 80 card designs reuse Duel's approved paintings. 21 new paintings cover the rest, all seven wonder paintings serve both sides of their boards, and 27 new vector drawings are planned, plus the seat crests. Every hidden Age III card shows the ordinary Age III back, so a guild never gives itself away.
 
@@ -82,7 +81,7 @@ The design documents are kept as they were reviewed, so a few points are settled
 - **Hint settings:** any admin may edit them, in a Haftgane game and in a Duel game started from the lobby (D23, D60).
 - **Undo:** only in a game that started with exactly one human seat, and off for the rest of the game once a second human takes a seat.
 - **Bot strength:** equal work per bot at every table size.
-- **Bot levels:** the public release waits for Scholar. Apprentice first plays in an internal milestone, and Master may follow later.
+- **Bot levels:** new tables offer Apprentice and Scholar. Master may follow later.
 - **Screens:** crests fixed by table position, running points shown, the turn recap opening by itself with a setting, bot names by level.
 - **Draft data:** the two working notes with draft values stay private until M13. They were published after the verification, as [effects.md](effects.md) and [edition-differences.md](edition-differences.md).
 
