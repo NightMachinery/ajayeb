@@ -7,9 +7,7 @@ release coordinator. Enabling production creation is a separate deploy.
 
 ## Host and clocks
 
-The Linux amd64 host has two logical CPUs and 4,106,379,264 bytes of RAM.
-Before testing, available memory was about 1.50 GB, load average 0.05 and
-production had no established game connections. Go 1.26.3 binaries were
+Measurements used a two-CPU host with about 4 GB of memory. Go 1.26.3 binaries were
 cross-compiled locally, then run with `GOMAXPROCS=2`, normal GC and niceness
 10. The host built nothing. Scratch processes used free loopback ports and
 separate data. A bounded supervisor checked production connections and
@@ -153,6 +151,10 @@ server, without requiring or enabling `-dev` or `-dev-endpoints`. Default
 is false. Duel's two-seat lobby is unchanged. `GET /health` reports
 `haftganeCreation`; Home offers Haftgane only when it is true. Existing
 rooms still load with creation disabled.
+
+Home keeps its controls disabled until health answers or a 1.5-second
+deadline passes. Failure or timeout enables Home without the picker, and
+late responses are ignored so enabled buttons never move to make room for it.
 
 Production registers Duel, table and lobby codecs for storage, retention
 and `--check-rooms`. The installer scans a candidate before stopping and
