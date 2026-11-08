@@ -80,6 +80,7 @@ type options struct {
 	botDelay     time.Duration
 	botSearches  int
 	botPerAddr   int
+	botRooms     int
 	reviews      int
 	seedBase     uint64
 	showVersion  bool
@@ -141,7 +142,8 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.StringVar(&opts.staticDir, "static", "", "serve the web build from this `directory` instead of the embedded one")
 	fset.BoolVar(&opts.dev, "dev", false, "development mode: debug logging and loopback WebSocket origins")
 	fset.BoolVar(&opts.devEndpoints, "dev-endpoints", false, "enable the test-only /api/dev/ endpoints (requires -dev)")
-	fset.BoolVar(&opts.tables, "haftgane-tables", false, "allow creating Haftgane tables through POST /api/dev/tables and shared lobbies of three or more seats, until Haftgane ships; two-seat lobbies (Duel's online game) need no flag (requires -dev and -dev-endpoints)")
+	fset.BoolVar(&opts.tables, "haftgane-tables", false, "enable Haftgane creation through shared lobbies (default off); two-seat Duel lobbies need no flag")
+	fset.IntVar(&opts.botRooms, "haftgane-bot-rooms", 1, "maximum Haftgane bot-room workers admitted to the shared search pool at once")
 	fset.Var(listValue{&origins}, "origin", "allowed site `origin` such as https://example.org (repeatable or comma separated)")
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
@@ -168,8 +170,8 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	if opts.devEndpoints && !opts.dev {
 		return options{}, errors.New("-dev-endpoints requires -dev; refusing to start")
 	}
-	if opts.tables && !opts.devEndpoints {
-		return options{}, errors.New("-haftgane-tables requires -dev and -dev-endpoints; refusing to start")
+	if opts.botRooms < 1 {
+		return options{}, errors.New("-haftgane-bot-rooms must be at least 1")
 	}
 	// Seeds from a counter make every deal predictable: whoever recognizes
 	// one game's deal knows the hidden cards of every later one.
@@ -317,7 +319,7 @@ func seedSource(base uint64) func() uint64 {
 func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(addr string)) error {
 	seed := seedSource(opts.seedBase)
 	pool := ai.NewPoolPerKey(opts.botSearches, opts.botPerAddr)
-	tables := tableroom.New(tableroom.Config{Logger: logger, Pool: pool, Seed: seed, Creation: opts.tables})
+	tables := tableroom.New(tableroom.Config{Logger: logger, Pool: pool, RoomWork: ai.NewPool(opts.botRooms), Seed: seed, Creation: opts.tables})
 	lobbies := lobbyroom.New(lobbyroom.Config{Logger: logger, Tables: tables, Creation: opts.tables})
 	kinds, err := roomKinds(tables, lobbies)
 	if err != nil {
@@ -371,15 +373,16 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		return err
 	}
 	handler, err := httpapi.New(httpapi.Config{
-		Version:        version,
-		Dev:            opts.dev,
-		DevEndpoints:   opts.devEndpoints,
-		WebSocket:      sockets,
-		DevRooms:       rooms,
-		Seed:           seed,
-		Logs:           st,
-		Tables:         tables,
-		TrustedProxies: opts.trustProxy,
+		Version:          version,
+		Dev:              opts.dev,
+		DevEndpoints:     opts.devEndpoints,
+		WebSocket:        sockets,
+		DevRooms:         rooms,
+		Seed:             seed,
+		Logs:             st,
+		Tables:           tables,
+		HaftganeCreation: opts.tables,
+		TrustedProxies:   opts.trustProxy,
 	}, static)
 	if err != nil {
 		return err

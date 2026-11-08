@@ -23,6 +23,7 @@
   // first-launch offer, which app.html's bootstrap shows or hides before the
   // first paint, so it never moves Home; after mount the device decides.
   let deviceReady = $state(false);
+  let haftganeCreation = $state(false);
 
   // Each promise starts on demand, then retains its component and sheet state.
   let aiSheet = $state.raw<Promise<typeof import('$lib/components/screens/NewGameSheet.svelte')>>();
@@ -108,10 +109,18 @@
   // The query is dropped once read, so a reload does not open it again.
   onMount(() => {
     deviceReady = true;
+    const controller = new AbortController();
+    void fetch('/health', { cache: 'no-store', signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((health) => {
+        haftganeCreation = health?.haftganeCreation === true;
+      })
+      .catch(() => {});
     if (aiOpen) openAi();
     if (page.url.searchParams.has('play')) {
       void goto(resolve('/'), { replaceState: true, keepFocus: true, noScroll: true });
     }
+    return () => controller.abort();
   });
 
   /** Home's offer and row: a failure leaves the player on Home. */
@@ -155,7 +164,7 @@
   onPlayOnline={openOnline}
   onJoinCode={openJoin}
   onSettings={openSettings}
-  onNewTable={openTable}
+  onNewTable={haftganeCreation ? openTable : undefined}
   tutorialOffer={!deviceReady || offersTutorial(tips.value.tutorial, rooms.list.length)}
   tutorialDone={deviceReady && tips.value.tutorial.done}
   onTutorial={tutorialFromHome}

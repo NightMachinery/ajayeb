@@ -56,6 +56,8 @@ type Config struct {
 	// download serves a table's ajayeb-log/2, and with DevEndpoints, POST
 	// /api/dev/tables creates a table. Nil leaves both to Duel alone.
 	Tables Tables
+	// HaftganeCreation advertises the release switch to the Home picker.
+	HaftganeCreation bool
 
 	// TrustedProxies are the reverse proxies whose X-Forwarded-For the
 	// per-address limit of the log download believes, as for /ws.
@@ -85,7 +87,7 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /health", healthHandler(cfg.Version))
+	mux.Handle("GET /health", healthHandler(cfg.Version, cfg.HaftganeCreation))
 	mux.HandleFunc("/api", apiNotFound)
 	mux.HandleFunc("/api/", apiNotFound)
 	if cfg.DevEndpoints {
@@ -127,13 +129,15 @@ func withCommonHeaders(policy securityPolicy, next http.Handler) http.Handler {
 }
 
 type healthBody struct {
-	OK      bool   `json:"ok"`
-	Version string `json:"version"`
+	OK               bool   `json:"ok"`
+	Version          string `json:"version"`
+	HaftganeCreation bool   `json:"haftganeCreation"`
 }
 
-func healthHandler(version string) http.Handler {
-	body := healthBody{OK: true, Version: version}
+func healthHandler(version string, creation bool) http.Handler {
+	body := healthBody{OK: true, Version: version, HaftganeCreation: creation}
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
 		writeJSON(w, http.StatusOK, body)
 	})
 }

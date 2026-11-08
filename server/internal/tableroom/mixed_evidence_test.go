@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -134,7 +136,8 @@ func TestMixedRoomEvidence(t *testing.T) {
 				e = eMixed
 			}
 			t.Run(fmt.Sprintf("%d/%s", trial, label), func(t *testing.T) {
-				pool := ai.NewPool(1)
+				pool := ai.NewPool(capacityEnv("HAFTGANE_CAPACITY_POOL", 1))
+				roomWork := ai.NewPool(capacityEnv("HAFTGANE_CAPACITY_ROOMS", 1))
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 				defer cancel()
 				duels := make([]*evidenceDuel, 0, duelRooms)
@@ -142,43 +145,45 @@ func TestMixedRoomEvidence(t *testing.T) {
 					duels = append(duels, newEvidenceDuel(t, pool, e, trial, index))
 				}
 				var background sync.WaitGroup
-				haftErr := make(chan error, 1)
+				haftErr := make(chan error, capacityEnv("HAFTGANE_CAPACITY_TABLES", 1))
 				if mixed {
-					background.Add(1)
-					started := make(chan struct{})
-					var once sync.Once
-					go func() {
-						defer background.Done()
-						var runErr error
-						defer func() { haftErr <- runErr }()
-						for game := 0; ctx.Err() == nil; game++ {
-							work, done := eHaft.hooks()
-							f := newFixture(t, Config{Pool: pool, BotWork: func(c context.Context, seat int, point string) error {
-								once.Do(func() { close(started) })
-								return work(c, seat, point)
-							}, BotFinished: done})
-							s := newEvidenceStore(f.store, eHaft)
-							f.tables.Bind(f.m, s)
-							sp := soloSpec(7, uint64(18000+trial*100+game), BotNormal)
-							sp.Sides = "choose"
-							p, err := f.openInproc(ctx, sp)
-							if err == nil {
-								err = evidencePlay(ctx, &th{t: t, ctx: ctx, f: f, p: p}, eHaft, s)
-							}
-							f.close()
-							if err != nil {
-								if ctx.Err() == nil {
-									runErr = err
+					for worker := 0; worker < capacityEnv("HAFTGANE_CAPACITY_TABLES", 1); worker++ {
+						background.Add(1)
+						started := make(chan struct{})
+						var once sync.Once
+						go func() {
+							defer background.Done()
+							var runErr error
+							defer func() { haftErr <- runErr }()
+							for game := 0; ctx.Err() == nil; game++ {
+								work, done := eHaft.hooks()
+								f := newFixture(t, Config{Pool: pool, RoomWork: roomWork, BotWork: func(c context.Context, seat int, point string) error {
+									once.Do(func() { close(started) })
+									return work(c, seat, point)
+								}, BotFinished: done})
+								s := newEvidenceStore(f.store, eHaft)
+								f.tables.Bind(f.m, s)
+								sp := soloSpec(7, uint64(18000+trial*100+worker*1000+game), BotNormal)
+								sp.Sides = "choose"
+								p, err := f.openInproc(ctx, sp)
+								if err == nil {
+									err = evidencePlay(ctx, &th{t: t, ctx: ctx, f: f, p: p}, eHaft, s)
 								}
-								return
+								f.close()
+								if err != nil {
+									if ctx.Err() == nil {
+										runErr = err
+									}
+									return
+								}
+								eHaft.add("completed_background_games", 1)
 							}
-							eHaft.add("completed_background_games", 1)
+						}()
+						select {
+						case <-started:
+						case <-ctx.Done():
+							t.Fatal("background table did not start")
 						}
-					}()
-					select {
-					case <-started:
-					case <-ctx.Done():
-						t.Fatal("background table did not start")
 					}
 				}
 				results := make(chan error, duelRooms)
@@ -194,8 +199,10 @@ func TestMixedRoomEvidence(t *testing.T) {
 				cancel()
 				background.Wait()
 				if mixed {
-					if err := <-haftErr; err != nil && !errors.Is(err, context.Canceled) {
-						t.Fatal(err)
+					for range capacityEnv("HAFTGANE_CAPACITY_TABLES", 1) {
+						if err := <-haftErr; err != nil && !errors.Is(err, context.Canceled) {
+							t.Fatal(err)
+						}
 					}
 				}
 				for _, d := range duels {
@@ -222,4 +229,12 @@ func TestMixedRoomEvidence(t *testing.T) {
 	eBaseline.log(t, "duel-only")
 	eMixed.log(t, "mixed-duel")
 	eHaft.log(t, "mixed-haftgane-background")
+}
+
+func capacityEnv(name string, fallback int) int {
+	n, err := strconv.Atoi(os.Getenv(name))
+	if err != nil || n < 1 {
+		return fallback
+	}
+	return n
 }

@@ -73,6 +73,9 @@ type Config struct {
 	// address of the player whose point it is, actor.poolKey). Nil: no
 	// bound.
 	Pool *ai.Pool
+	// RoomWork bounds Haftgane workers before they acquire a shared search
+	// permit. A waiting table holds no Duel permit. Nil defaults to one.
+	RoomWork *ai.Pool
 	// Seed returns a new table's seed. Default: crypto/rand.
 	Seed func() uint64
 	// Creation allows creating tables directly (CreateTable). It is off
@@ -139,6 +142,9 @@ type Tables struct {
 
 // New returns the table kind with cfg's defaults filled in.
 func New(cfg Config) *Tables {
+	if cfg.RoomWork == nil {
+		cfg.RoomWork = ai.NewPool(1)
+	}
 	if cfg.Clock == nil {
 		cfg.Clock = room.SystemClock{}
 	}

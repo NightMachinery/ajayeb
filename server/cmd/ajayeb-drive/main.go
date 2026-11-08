@@ -82,7 +82,7 @@ type options struct {
 	serverPID   int
 }
 
-var modes = []string{"online", "hotseat", "ai"}
+var modes = []string{"online", "hotseat", "ai", "haftgane"}
 var botLevels = []string{"easy", "normal", "hard"}
 
 func parseFlags(args []string, stderr io.Writer) (options, error) {

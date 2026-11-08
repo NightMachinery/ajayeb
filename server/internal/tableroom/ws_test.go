@@ -72,11 +72,16 @@ func (l *lockedBuffer) String() string {
 }
 
 func newStack(t *testing.T, dir string) *stack {
+	return newStackConfig(t, dir, tableroom.Config{Creation: true})
+}
+
+func newStackConfig(t *testing.T, dir string, cfg tableroom.Config) *stack {
 	t.Helper()
 	baseline := runtime.NumGoroutine()
 	s := &stack{t: t, dir: dir, logs: &lockedBuffer{}}
 	logger := slog.New(slog.NewJSONHandler(s.logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	s.tables = tableroom.New(tableroom.Config{Logger: logger, Creation: true})
+	cfg.Logger = logger
+	s.tables = tableroom.New(cfg)
 	s.lobbies = lobbyroom.New(lobbyroom.Config{Logger: logger, Tables: s.tables, Creation: true})
 	kinds, err := room.NewKinds(room.DuelKind(), s.tables.Kind(), s.lobbies.Kind())
 	if err != nil {
@@ -88,7 +93,7 @@ func newStack(t *testing.T, dir string) *stack {
 	if s.secret, err = ident.LoadSecret(dir); err != nil {
 		t.Fatal(err)
 	}
-	s.m, err = room.NewManager(room.Config{Store: s.st, Kinds: kinds, KindOf: s.st.Game, Logger: logger, Claims: s.secret})
+	s.m, err = room.NewManager(room.Config{Store: s.st, Kinds: kinds, KindOf: s.st.Game, Logger: logger, Claims: s.secret, BotPool: cfg.Pool})
 	if err != nil {
 		t.Fatal(err)
 	}

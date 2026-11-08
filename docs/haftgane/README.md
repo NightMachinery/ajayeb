@@ -4,7 +4,9 @@
 
 **Status: the rules engine, table actors, Apprentice and Scholar are implemented.
 New tables run the frozen, held-out-tested Scholar row. Master remains
-unavailable; the remaining public-release gates still apply.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
+unavailable. [Host capacity and release safety](capacity.md) records the
+accepted waits and one-worker limit. Creation stays behind a default-off
+release switch until deployment.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
 
 ## What it is and why
 

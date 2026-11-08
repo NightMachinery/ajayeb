@@ -211,6 +211,9 @@ func maxVersion(conns []*client) int {
 // playGame dispatches to the driver for mode. gameIndex only derives the
 // synthetic per-connection address (fakeAddr); it is not the seed.
 func playGame(ctx context.Context, wsURL, mode string, seed uint64, bot wire.BotLevel, gameIndex int) (gameSummary, error) {
+	if mode == "haftgane" {
+		return playHaftgane(ctx, wsURL, seed, bot, gameIndex)
+	}
 	switch mode {
 	case "online":
 		return playOnline(ctx, wsURL, seed, gameIndex)

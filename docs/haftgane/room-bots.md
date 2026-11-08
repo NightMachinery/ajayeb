@@ -44,7 +44,7 @@ versions enter policy entropy.
 
 ## Stored compatibility
 
-The record remains schema 2, format 3. A small supported-set registry accepts
+The record remains schema 2, format 6. A small supported-set registry accepts
 sets 2 and 3 by complete equality, including bounds. Unsupported versions,
 algorithms or edited rows fail closed. Set 2 remains exactly as written:
 Apprentice at `easy`, Greedy at `normal` and `hard`, one pass per seat. Its
@@ -66,8 +66,9 @@ required seat whose human player has a connection, else the table creator's,
 else the smallest attached human participant's (the protocol's Limits). It
 searches one seat, releases, then queues the next seat. Queue waiting consumes
 no fixed policy allowance and no watchdog time. No new deployment-wide
-scheduler or speculative capacity reservation is introduced; host-wide
-room-work admission belongs to the measured capacity-release slice.
+scheduler or speculative capacity reservation is introduced. Host-wide
+room-work admission is limited to one worker before shared-pool acquisition,
+as measured in [release capacity](capacity.md).
 
 Scholar calls `bot.ChooseAge` only after pool admission. The actor copies its
 seat's observation and exact offered choices, and derives a per-point policy

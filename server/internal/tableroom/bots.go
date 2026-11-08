@@ -63,6 +63,7 @@ func (a *actor) kickBots() {
 	a.botPoint = p.ID
 	key := a.poolKey()
 	pool, hook, observer := a.t.cfg.Pool, a.t.cfg.BotWork, a.t.cfg.BotFinished
+	roomWork := a.t.cfg.RoomWork
 	watchdog := a.t.cfg.BotWatchdog
 	if watchdog <= 0 {
 		watchdog = 30 * time.Second
@@ -73,8 +74,13 @@ func (a *actor) kickBots() {
 		res := msgBotResult{owner: a, gen: gen, point: p.ID, seat: seat}
 		report := BotReport{Seat: seat, Point: p.ID}
 		waitStart := time.Now()
-		var err error
-		if pool != nil {
+		err := roomWork.Acquire(ctx)
+		report.RoomWorkWait = time.Since(waitStart)
+		if err == nil {
+			defer roomWork.Release()
+		}
+		waitStart = time.Now()
+		if err == nil && pool != nil {
 			err = pool.AcquireFor(ctx, key)
 		}
 		report.PoolWait = time.Since(waitStart)
@@ -82,6 +88,8 @@ func (a *actor) kickBots() {
 			// Cancellation can race admission. Release exactly the permit acquired,
 			// including a grant that won a race with the context's cancellation.
 			func() {
+				hold := time.Now()
+				defer func() { report.PoolHold = time.Since(hold) }()
 				if pool != nil {
 					defer pool.ReleaseFor(key)
 				}
@@ -288,12 +296,14 @@ func finishScholar(ctx context.Context, input botInput, d bot.AgeDecision, err e
 // BotReport contains only safe diagnostics. Counters describe completed policy
 // work, not elapsed-time strength; active time includes the cancellation hook.
 type BotReport struct {
-	Seat        int
-	Point       string
-	Counters    bot.Counters
-	AgeCounters bot.AgeCounters
-	PoolWait    time.Duration
-	Active      time.Duration
-	Fallback    string
-	Cancelled   bool
+	Seat         int
+	Point        string
+	Counters     bot.Counters
+	AgeCounters  bot.AgeCounters
+	PoolWait     time.Duration
+	PoolHold     time.Duration
+	RoomWorkWait time.Duration
+	Active       time.Duration
+	Fallback     string
+	Cancelled    bool
 }

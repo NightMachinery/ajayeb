@@ -51,13 +51,12 @@ type evidenceTask struct {
 type evidenceStats struct {
 	mu        sync.Mutex
 	values    map[string][]int64
-	starts    map[evidenceTask]time.Time
 	fallbacks int
 	cancelled int
 }
 
 func newEvidenceStats() *evidenceStats {
-	return &evidenceStats{values: map[string][]int64{}, starts: map[evidenceTask]time.Time{}}
+	return &evidenceStats{values: map[string][]int64{}}
 }
 func (e *evidenceStats) add(name string, x int64) {
 	e.mu.Lock()
@@ -65,10 +64,13 @@ func (e *evidenceStats) add(name string, x int64) {
 	e.values[name] = append(e.values[name], x)
 }
 func (e *evidenceStats) hooks() (func(context.Context, int, string) error, func(BotReport)) {
+	// Each hook pair belongs to one room: point/seat alone is not unique
+	// across simultaneously measured rooms.
+	starts := map[evidenceTask]time.Time{}
 	return func(_ context.Context, seat int, point string) error {
 			now := time.Now()
 			e.mu.Lock()
-			e.starts[evidenceTask{point, seat}] = now
+			starts[evidenceTask{point, seat}] = now
 			e.mu.Unlock()
 			return nil
 		}, func(r BotReport) {
@@ -93,10 +95,12 @@ func (e *evidenceStats) hooks() (func(context.Context, int, string) error, func(
 			}
 			e.values["active_ns."+kind] = append(e.values["active_ns."+kind], int64(r.Active))
 			e.values["pool_wait_ns."+kind] = append(e.values["pool_wait_ns."+kind], int64(r.PoolWait))
+			e.values["pool_hold_ns."+kind] = append(e.values["pool_hold_ns."+kind], int64(r.PoolHold))
+			e.values["room_work_wait_ns."+kind] = append(e.values["room_work_wait_ns."+kind], int64(r.RoomWorkWait))
 			key := evidenceTask{r.Point, r.Seat}
-			if start, ok := e.starts[key]; ok {
+			if start, ok := starts[key]; ok {
 				e.values["pool_hold_bracket_ns."+kind] = append(e.values["pool_hold_bracket_ns."+kind], int64(now.Sub(start)))
-				delete(e.starts, key)
+				delete(starts, key)
 			}
 		}
 }
@@ -287,6 +291,9 @@ func TestRoomEvidence(t *testing.T) {
 		{name: "discard-build", level: BotNormal, mix: true, kind: "discard-build"}, {name: "last-card", level: BotNormal, mix: true, kind: "last-card"},
 	}
 	for _, tc := range cases {
+		if os.Getenv("HAFTGANE_CAPACITY") == "1" && tc.name == "six-easy" {
+			continue
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			e := newEvidenceStats()
 			work, done := e.hooks()
@@ -326,6 +333,13 @@ func TestRoomEvidence(t *testing.T) {
 				for seat := 0; seat < 7; seat++ {
 					if seat != human {
 						sp.Participants[seat] = Participant{Bot: []string{BotEasy, BotNormal}[seat%2]}
+					}
+				}
+			}
+			if os.Getenv("HAFTGANE_CAPACITY") == "1" {
+				for seat := range sp.Participants {
+					if sp.Participants[seat].Bot != "" {
+						sp.Participants[seat].Bot = BotNormal
 					}
 				}
 			}

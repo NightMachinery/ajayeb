@@ -21,7 +21,7 @@ func TestParseFlagsDefaults(t *testing.T) {
 		opts.botPerAddr != ai.DefaultPerKey {
 		t.Errorf("defaults = %+v", opts)
 	}
-	if opts.dev || opts.devEndpoints || opts.staticDir != "" || opts.seedBase != 0 {
+	if opts.dev || opts.devEndpoints || opts.tables || opts.botRooms != 1 || opts.staticDir != "" || opts.seedBase != 0 {
 		t.Errorf("unexpected non-zero defaults: %+v", opts)
 	}
 	if opts.origins == nil || opts.trustProxy == nil {
@@ -70,8 +70,7 @@ func TestParseFlagsValues(t *testing.T) {
 func TestParseFlagsRejects(t *testing.T) {
 	for name, args := range map[string][]string{
 		"dev endpoints without dev": {"--dev-endpoints"},
-		"tables without endpoints":  {"--dev", "--haftgane-tables"},
-		"tables without dev":        {"--dev-endpoints", "--haftgane-tables"},
+		"no table workers":          {"--haftgane-bot-rooms", "0"},
 		"negative bot delay":        {"--bot-delay", "-1s"},
 		"no bot searches":           {"--bot-searches", "0"},
 		"no bot searches per addr":  {"--bot-searches-per-address", "0"},

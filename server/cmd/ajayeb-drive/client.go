@@ -46,6 +46,7 @@ type client struct {
 	frames   chan any
 	errc     chan error // the reader goroutine's reason for stopping, sent once
 	lastSend time.Time  // for pacing; zero until the first send
+	protocol int
 }
 
 // decodeServerFrame peeks a server frame's "t" and strictly decodes it into
@@ -68,6 +69,18 @@ func decodeServerFrame(raw []byte) (any, error) {
 	case "state":
 		var m wire.State
 		return m, json.Unmarshal(raw, &m)
+	case "lobby-state":
+		var m wire.LobbyState
+		return m, json.Unmarshal(raw, &m)
+	case "lobby-reject":
+		var m wire.LobbyReject
+		return m, json.Unmarshal(raw, &m)
+	case "table-state":
+		var m wire.TableState
+		return m, json.Unmarshal(raw, &m)
+	case "table-reject":
+		var m wire.TableReject
+		return m, json.Unmarshal(raw, &m)
 	case "reject":
 		var m wire.Reject
 		return m, json.Unmarshal(raw, &m)
@@ -88,6 +101,10 @@ func decodeServerFrame(raw []byte) (any, error) {
 // server started with --trust-proxy naming this process's own address, for
 // a true many-games-at-once memory sweep from one driver.
 func dial(ctx context.Context, wsURL, name, xff string) (*client, error) {
+	return dialVersion(ctx, wsURL, name, xff, wire.ProtocolVersion)
+}
+
+func dialVersion(ctx context.Context, wsURL, name, xff string, version int) (*client, error) {
 	var opts *websocket.DialOptions
 	if xff != "" {
 		opts = &websocket.DialOptions{HTTPHeader: map[string][]string{"X-Forwarded-For": {xff}}}
@@ -103,6 +120,7 @@ func dial(ctx context.Context, wsURL, name, xff string) (*client, error) {
 		return nil, fmt.Errorf("new token: %w", err)
 	}
 	c := &client{
+		protocol: version,
 		ws:       conn,
 		token:    token,
 		clientID: fmt.Sprintf("drive-%s-%d", name, time.Now().UnixNano()),
@@ -272,7 +290,7 @@ func (c *client) untilAck(ctx context.Context, seq int) (wire.State, error) {
 }
 
 func (c *client) hello(ctx context.Context) error {
-	if err := c.send(ctx, wire.NewHello(wire.ProtocolVersion, c.token, c.name, c.clientID)); err != nil {
+	if err := c.send(ctx, wire.NewHello(c.protocol, c.token, c.name, c.clientID)); err != nil {
 		return err
 	}
 	f, err := c.next(ctx)
@@ -283,8 +301,8 @@ func (c *client) hello(ctx context.Context) error {
 	if !ok {
 		return fmt.Errorf("%s: hello: want welcome, got %#v", c.name, f)
 	}
-	if w.V != wire.ProtocolVersion {
-		return fmt.Errorf("%s: server speaks protocol v%d, this driver speaks v%d", c.name, w.V, wire.ProtocolVersion)
+	if w.V != c.protocol {
+		return fmt.Errorf("%s: server speaks protocol v%d, this driver speaks v%d", c.name, w.V, c.protocol)
 	}
 	return nil
 }

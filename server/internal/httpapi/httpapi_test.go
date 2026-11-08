@@ -87,6 +87,23 @@ func TestHealth(t *testing.T) {
 	}
 }
 
+func TestHealthAdvertisesReleaseSwitchWithoutDevEndpoints(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		h, err := New(Config{HaftganeCreation: enabled}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rec := do(t, h, http.MethodGet, "/health", nil)
+		var body healthBody
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil || body.HaftganeCreation != enabled {
+			t.Fatalf("health: %s %v", rec.Body.String(), err)
+		}
+		if rec := do(t, h, http.MethodPost, "/api/dev/tables", nil); rec.Code != http.StatusNotFound {
+			t.Fatal("release exposed development API")
+		}
+	}
+}
+
 func TestAppRoutesFallBackToIndex(t *testing.T) {
 	h := newTestHandler(t)
 	for _, target := range []string{"/", "/play/ABC", "/play/K7QX2M", "/play/ABC/", "/settings", "/index.html"} {
