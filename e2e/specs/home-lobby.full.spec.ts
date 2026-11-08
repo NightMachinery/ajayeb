@@ -22,6 +22,21 @@ async function named(context: BrowserContext, name: string): Promise<Page> {
 }
 
 test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, () => {
+  test('Home hides creation when the server reports the release off', async ({ page }) => {
+    await page.route('**/health', (route) =>
+      route.fulfill({ json: { ok: true, version: 'test', haftganeCreation: false } })
+    );
+    const health = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/health'
+    );
+    await page.goto('/');
+    await health;
+    await expect(page.locator('main[data-home-loading]')).toHaveCount(0);
+    await expect(page.locator('[data-act="home-mode:ai"]')).toBeVisible();
+    await expect(page.locator('[data-act="home-game:haftgane"]')).toHaveCount(0);
+    await expect(page.locator('[data-act="home-new-table"]')).toHaveCount(0);
+  });
+
   test('friends, bots, spectators, roles and settings reach the table session', async ({
     browser
   }, info) => {

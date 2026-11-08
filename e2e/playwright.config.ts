@@ -67,6 +67,9 @@ const chromiumUse = {
 const CI = !!process.env.CI;
 const PORT = 38954;
 const PROD_BASE_URL = process.env.E2E_BASE_URL;
+// Exercise @prod flows against a local ordinary server with the release
+// switch on, without development mode, fixture endpoints or predictable deals.
+const RELEASE_SERVER = process.env.E2E_RELEASE_SERVER === '1';
 if (webkitRequested && PROD_BASE_URL) {
   throw new Error('WebKit smoke requires the local test server; unset E2E_BASE_URL.');
 }
@@ -90,11 +93,11 @@ const serverCommand = [
   `--addr 127.0.0.1:${PORT}`,
   '--data ../.cache/e2e/data',
   '--static ../web/build',
-  '--dev --dev-endpoints',
+  ...(RELEASE_SERVER ? [] : ['--dev --dev-endpoints']),
   // Haftgane tables and shared lobbies (specs/haftgane-table.spec.ts).
   '--haftgane-tables',
   '--bot-delay 0',
-  '--seed-base 1000'
+  ...(RELEASE_SERVER ? [] : ['--seed-base 1000'])
 ].join(' ');
 
 export default defineConfig({
