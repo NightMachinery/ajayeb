@@ -2,7 +2,7 @@
 
 ## Trademark disclaimer
 
-Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark.
+Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala, and of 7 Wonders (second edition) by Antoine Bauza, both published by Repos Production. It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders and 7 Wonders Duel are their trademarks.
 
 If you enjoy Ajayeb, please buy the real game: <https://www.rprod.com/en/games/7-wonders-duel>.
 

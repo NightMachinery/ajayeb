@@ -4,6 +4,8 @@ Ajayeb (Persian عجایب, "wonders") is a browser version of a two-player card
 
 If you like it, please buy the real game from its publisher: <https://www.rprod.com/en/games/7-wonders-duel>.
 
+Its second game, **Haftgane** (Persian هفتگانه, "the seven"), plays the base game of 7 Wonders (second edition) for 3 to 7 players, with any mix of friends and bots at one table. It is open to everyone on the public instance since 2026-11-08; see [docs/haftgane/](docs/haftgane/README.md).
+
 All three game modes are implemented, with original art, a guided tutorial, in-game rules, hints and replay downloads. It reached v1 on 2026-10-20, when the last review round found no serious problem; [docs/dev/roadmap.md](docs/dev/roadmap.md) has the milestones and what is left after v1. The public instance is <https://ajayeb.lilf.ir>.
 
 ## Modes
@@ -83,4 +85,4 @@ Code is MIT ([LICENSE](LICENSE)). Original art is CC BY 4.0. See [NOTICE.md](NOT
 
 ---
 
-Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark. [Buy the real game](https://www.rprod.com/en/games/7-wonders-duel).
+Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala, and of 7 Wonders (second edition) by Antoine Bauza, both published by Repos Production. It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders and 7 Wonders Duel are their trademarks. Buy the real games: [7 Wonders Duel](https://www.rprod.com/en/games/7-wonders-duel) and [7 Wonders](https://www.rprod.com/en/games/7-wonders).

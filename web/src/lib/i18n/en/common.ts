@@ -27,7 +27,7 @@ export const common = {
   // sits in a right-to-left isolate (U+2067 ... U+2069).
   'app.wordmarkTip': 'Ajayeb, from the Persian \u2067عجایب\u2069: “wonders”',
   'app.legal':
-    'Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark.',
+    'Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala, and of 7 Wonders (second edition) by Antoine Bauza, both published by Repos Production. It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders and 7 Wonders Duel are their trademarks.',
   'app.getGame': 'Get the original game from its publisher',
   'app.foss': 'Ajayeb itself is free and open-source software, released under the MIT License.',
   'app.source': 'Source code on GitHub',

@@ -61,9 +61,9 @@ describes trimming, loudness matching, encoding and content hashes.
 
 The README footer and the footer of the app's Home screen carry this disclaimer:
 
-> Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark.
+> Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala, and of 7 Wonders (second edition) by Antoine Bauza, both published by Repos Production. It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders and 7 Wonders Duel are their trademarks.
 
-Both places link to the publisher's page so people can buy the real game: <https://www.rprod.com/en/games/7-wonders-duel>. The Home footer also says that Ajayeb itself is free and open-source software under the MIT License and links to its source code: <https://github.com/NightMachinery/ajayeb>.
+Both places link to the publisher's page so people can buy the real game: <https://www.rprod.com/en/games/7-wonders-duel>; the README also links 7 Wonders: <https://www.rprod.com/en/games/7-wonders>. The Home footer also says that Ajayeb itself is free and open-source software under the MIT License and links to its source code: <https://github.com/NightMachinery/ajayeb>.
 
 Rules we follow around the name:
 
