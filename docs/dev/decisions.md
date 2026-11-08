@@ -731,6 +731,8 @@ Source: the owner's answers of 2026-11-08; the M22 platform audit.
 
 **Relation.** Supersedes the own-seat-only rule in `tableroom/links.go`. Extends D14's claims to the lobby. Duel's link rules stay as they are (D60).
 
+**Refinements at implementation (2026-11-08).** Links exist only for the users a room remembers (seated and reserved humans, admins, retired admins, former players); plain spectators have none, which keeps records bounded. A temporary admin may not copy the creator's or a real admin's link, because the copied link would outlive the temporary role and make its holder that admin for good (a coordinator ruling on the security review; the owner may reverse it). At a two-seat Start, an unseated lobby link ends, since Duel admits only seated claims; seated links carry. A user's consecutive self-resets share one log entry, so they cannot push a copy entry out of the bounded log.
+
 Source: the owner's answers of 2026-11-08.
 
 ## D66. The too-small-window notice can be dismissed

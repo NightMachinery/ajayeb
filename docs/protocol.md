@@ -884,8 +884,9 @@ it again with the same `seq`.
   a later reconnect or reload. Try again later.
 - `bad-claim`: a `join` carried a claim that is not one of this room's
   (malformed, made for another room, or revoked by a `relink`); or, sent on
-  its own, the device link this connection joined with was just reset, and
-  the connection has left the room. A join without the claim, or with a
+  its own, the device link this connection joined with was just reset, or
+  (with `msg: "lobby-link-ended"`) its unseated lobby link ended at a
+  two-seat Start, and the connection has left the room. A join without the claim, or with a
   fresh link, may follow.
 
 ## Protocol 2: table and shared lobby
@@ -926,7 +927,8 @@ There is no new negotiation error or room-info operation.
 `join`, `leave`, `resync`, `link`, `relink` and `rematch` route by the room's
 actual registered kind and authenticated membership. Neither a family nor a
 request can choose a Go package or codec. Link/relink keep their existing
-names and fields, with seats 0 through 6 available on v2 for non-Duel rooms;
+names and fields, plus an optional `userId` (see Device links), with seats
+0 through 6 available on v2 for non-Duel rooms;
 Duel keeps its historical 0/1 validation and default. The private `linked`
 answer has the same `t`, `code`, `seat`, `claim` fields, with the wider seat
 range in `PlatformLinked`. A rematch's successor code arrives in `created`.
@@ -1091,11 +1093,13 @@ bot's level in place; `remove-bot`, `remove-human`, `release` and
 `open-reservation` open one. `seats` changes the count: slots past a
 smaller count go, and their humans watch. Roles follow `table-role`'s
 policy, temporary admin included, and the lobby's `roomLog` records the
-role changes; its seats show everything else. `link`, `relink` and
-`rematch` answer `bad-request` in a lobby: a lobby has no device links of
-its own, and its rematch is the game's. A connection that joins with a
-claim the rematch handed out (below) acts as that claim's user, in the
-lobby and in the game it starts.
+role changes; its seats show everything else. `link` and `relink` work in
+a lobby as at a table (see Device links), and `rematch` answers
+`bad-request`: a lobby's rematch is the game's. A connection that joins
+with a lobby claim, from a device link or a rematch, acts as that claim's
+user in the lobby. A connection joined with a claim for a user who holds no
+slot watches: it never takes an opening slot by itself and never renames
+the user on join.
 
 `canStart` tells the viewer whether they may start now: a seated admin, real
 or temporary, at two to seven seats, at most `maxSeats`, with no reserved
@@ -1115,6 +1119,11 @@ their levels. `firstPlayer` picks who moves first, and `hints` gives the
 initial hint settings. Every connection is handed over with its claim: its
 next frame is the Duel game's first `state`, the sender's included in place
 of an `ack`, sent on its version 2 connection under the Duel contract above.
+Duel admits claims for seats only, so a connection joined with the claim of
+a user who holds no slot is not handed over: once the swap has succeeded it
+receives `error` `bad-claim` with `msg: "lobby-link-ended"`, which the
+client shows as its own message (a failed Start leaves it attached).
+Seated claims and unclaimed spectators are handed over as before.
 The client then hands the room to its version 1 Duel session, which joins the
 same code, and every later join of the code is an ordinary Duel join.
 
@@ -1134,7 +1143,11 @@ is the table's first, the sender's included, which acknowledges Start in
 place of an `ack`. The table's seats follow the lobby's slots under
 `seating: lobby`, and are drawn at random otherwise; its side rule is the
 effective one, day when the lobby's options name none. Its roles, promoters
-and temporary status are the lobby's.
+and temporary status are the lobby's. It keeps the lobby's claim epochs,
+its issued spectator links, its retired admins and its public log (entries
+of slots removed before Start lose their seat; the others follow the
+seating), and its first public revision follows the lobby's last, so every
+lobby link keeps working and every later table epoch is newer.
 
 A finished table has at most one rematch. Any human who held a seat at
 Start may ask for it with `rematch`, also after leaving that seat. The
@@ -1235,7 +1248,12 @@ Both snapshots use these fixed metadata shapes:
 - A seat is `{seat, kind}` with kind `open`, `reserved`, `human` or `bot`,
   plus optional `userId` or `bot` as appropriate.
 - A human is `{userId, name, nameNo, connected, creator, admin, temporary}`
-  and optional `promotedBy`. Real admins, their promotion ownership and
+  and optional `promotedBy` and `linkable`. `linkable: true` marks a user
+  the room remembers (one of the bounded name population: seated or
+  reserved humans, admins, retired admins and former players), whose device
+  link the viewer may request; absent means no link is offered. It depends
+  on the viewer: a temporary admin's frames omit it for the creator and the
+  real admins. It is a display hint, and the server rechecks every request. Real admins, their promotion ownership and
   temporary status persist. A returning real admin removes temporary status;
   selection of a temporary admin follows the five-minute absence policy.
 - `you` is `{userId}` with optional current `seat`. Only an admin's own
@@ -1251,7 +1269,9 @@ Both snapshots use these fixed metadata shapes:
   own frames only, on every tab and device.
 - `roomLog` is the bounded public log, with entries `{kind, at, by}` and
   optional `userId`, `seat`, `control`, `role`. Kind is `seat`, `role`,
-  `resign` or `link`; `at` is a completed batch count (zero in the lobby),
+  `resign`, `link` (a link reset, naming its target `userId`) or
+  `link-copy` (an admin requested another user's device link: `by` the
+  admin, `userId` the target, `seat` when the target is seated); `at` is a completed batch count (zero in the lobby),
   `by` the acting user; control is `human`/`bot`, role
   `admin`/`temporary`/`human`. Every seat switch and role change is public.
   Entries disclose no claims, private picks, observations or seeds.
@@ -1351,36 +1371,54 @@ check is constant-time.
 - **Revocable.** `relink` raises the epoch, which revokes every claim made
   before it and detaches the connections using one.
 
-In a Haftgane table (protocol 2), seats 0 through 6 have links. A seat's
-epoch is the table's public revision when its current human took it or last
-relinked it, and 0 for the seats filled at Start, so one user's claims for
-two seatings never coincide. Only the seat's own user may `link` or `relink`
-it (else `reject not-admin`), and `linked` goes to the sender alone. No
-admin, real or temporary, has another seat's link at a table: a claim lets
-a device play as the seat's user, seeing its hand and pending pick, and
-getting one changed nothing anyone could see, while every seat switch is in
-everyone's log. An admin who needs another seat seats someone there with
-`table-seat`, publicly. (Before M16.haftgane-security-review an admin could;
-the creator, or a seated player made temporary admin while the real admins
-were away, could then watch another player's hand unseen.)
-A relink adds a `link` entry to the room log. A switch or a resignation that
-takes the seat from its user revokes that user's claims for it in the same
-way: each connection using one receives `error` with `bad-claim` and is
-detached. A connection that relinks the seat it joined with a claim for
-keeps its place under the new claim. A lobby has no `link` or `relink`; its
-only claims are those a rematch hands out, with epoch 0, which the slot
-reserved for their user accepts, and so does the table it starts. In a Duel
-game started from a shared lobby, only a seat's own user may `link` or
-`relink` it; its seats keep the epochs their lobby slots had, so the claims
-the lobby accepted still work there.
+In a Haftgane table and a shared lobby (protocol 2), a link belongs to a
+user, not only to a seat. A seated human's claim uses the seat's epoch: the
+table's public revision (the lobby's revision) when the human took the seat
+or last relinked it, and 0 for seats filled at Start, so one user's claims
+for two seatings never coincide. A remembered user without a seat (an
+admin who watches, a retired admin, a former player) may also have a link;
+the room stores only that user's id and epoch, never the claim, and the
+list is bounded by the name population. Plain spectators have none.
+
+- **Requests.** `link` and `relink` name a seat, as on protocol 1, or carry
+  an optional `userId` with `seat: -1` (any other seat with `userId` is
+  refused, so there are never two targets). A user-targeted `linked`
+  answer echoes `userId` and `seat: -1`; a seat-targeted one keeps its seat
+  and omits `userId`. Refusals use seq 0.
+- **Who may ask.** Anyone may ask for their own link. A real admin may ask
+  for any remembered user's link; a temporary admin for any but the
+  creator's and the real admins', whose powers would outlive the temporary
+  role. Anything else answers `reject not-admin`. Authority is rechecked
+  when the request arrives.
+- **Public when copied.** A claim lets a device act as its user, seeing a
+  seated user's hand. So an admin's request for someone else's link first
+  saves a public `link-copy` entry naming both, and the claim goes to the
+  sender only after that write succeeds; a failed write releases nothing. (D65
+  replaced the earlier rule, from M16.haftgane-security-review, that no
+  admin could have another seat's link.)
+- **Reset.** `relink` moves the target's epoch to the current revision,
+  which revokes every older claim: each connection using one receives
+  `error` `bad-claim` and is detached, and a connection that resets its own
+  link keeps its place under the new claim. A reset logs a `link` entry;
+  a user's consecutive resets of their own link share one entry, so resets
+  cannot push a `link-copy` out of the bounded log.
+- **Seating.** A user taking a seat keeps the epoch of a link already
+  issued to them, so the device that opened it stays attached and plays the
+  seat. A switch or a resignation that takes the seat from its user revokes
+  that user's claims for it.
+
+In a Duel game started from a shared lobby, only a seat's own user may
+`link` or `relink` it; its seats keep the epochs their lobby slots had, so
+the seated claims the lobby accepted still work there.
 
 **Security.** A device link is a password for that seat in that room:
 whoever holds it plays as that player there (as the admin too, for the
 admin's seat), until the seat's link is reset. It gives nothing outside the
 room. Share it like a password, and reset it when it may have leaked. Only
 the seat's own user and the game's admin may see or reset a seat's link (in
-a Duel game started from a shared lobby, and at a Haftgane table, only the
-seat's own user).
+a Duel game started from a shared lobby, only the seat's own user; at a
+Haftgane table and in a shared lobby, as listed above, every copy by
+someone else being public).
 
 ## Limits
 
