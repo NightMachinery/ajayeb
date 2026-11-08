@@ -72,7 +72,7 @@ type Record struct {
 	Options   wire.LobbyOptions `json:"options"`
 	// Slots are the lobby's slots in lobby order, SeatCount of them.
 	Slots []Slot `json:"slots"`
-	// Names is the room-lifetime display-name ledger, including departed users.
+	// Names retains bounded authority assignments and name history.
 	Names namenum.Ledger `json:"names"`
 	// Roles are the lobby's roles (package roles), carried into the game.
 	Roles roles.Roles `json:"roles"`
@@ -177,7 +177,9 @@ func (r *Record) encode() ([]byte, error) {
 	if c.RoomLog == nil {
 		c.RoomLog = []wire.PlatformLogEntry{}
 	}
-	data, err := json.MarshalIndent(&c, "", "  ")
+	// Compact JSON keeps the bounded ledger and worst-case authority history
+	// inside the existing store-size safety margin.
+	data, err := json.Marshal(&c)
 	if err != nil {
 		return nil, err
 	}
@@ -273,8 +275,13 @@ func invalid(format string, args ...any) error {
 // seat count and slots, the options, the roles, the bounded lists and the
 // seq acknowledgements, each user's at most acks clients.
 func validate(r *Record, acks int) error {
-	if r.Names.Valid() != nil {
+	if r.Names.Valid() != nil || len(r.Names.Users) > maxNameUsers || len(r.Names.Names) > maxNameCounters {
 		return invalid("the name ledger")
+	}
+	for _, a := range r.Names.Users {
+		if !r.remembersName(a.UserID) {
+			return invalid("spectator name assignment")
+		}
 	}
 	if r.SeatCount < MinSeats || r.SeatCount > MaxSeats || len(r.Slots) != r.SeatCount {
 		return invalid("seat count %d with %d slots", r.SeatCount, len(r.Slots))

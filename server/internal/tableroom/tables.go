@@ -306,7 +306,7 @@ type Participant struct {
 // the creator (if any) is the one admin. Prefix, for tests and development
 // only, starts the table with these complete batches already resolved.
 type Spec struct {
-	// Names is the lobby ledger carried at Start, including observers and departed users.
+	// Names is the lobby ledger carried at Start, including retained authority holders.
 	Names         *namenum.Ledger `json:"-"`
 	Sides         string          `json:"sides"` // day (default), random, or choose
 	Participants  []Participant   `json:"participants"`
@@ -483,6 +483,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 		base.Seats[s] = sr
 	}
 	openPoint(&base, &g)
+	base.syncNames(nil)
 	if err := validate(&base, &g, t.bounds()); err != nil {
 		t.log.Error("table create invalid", "err", err)
 		return Record{}, game{}, ErrSpec

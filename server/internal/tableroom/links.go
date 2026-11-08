@@ -4,6 +4,7 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -13,9 +14,11 @@ import (
 // joined with and the user that claim makes it act as (both "" without
 // one).
 type Member struct {
-	Client *room.Client
-	Claim  string
-	User   string
+	// Assignment carries a connected spectator identity without persisting it.
+	Assignment namenum.Assignment
+	Client     *room.Client
+	Claim      string
+	User       string
 }
 
 // link answers link, or with reset relink, in the protocol's order:
@@ -113,6 +116,7 @@ func (a *actor) afterRevoke(gone []string) {
 // the bots kept), the options and the requester, its creator and only
 // admin.
 type Rematch struct {
+	Names       []namenum.Assignment
 	Sides       string
 	Parent      string
 	Creator     string
@@ -195,7 +199,13 @@ func (a *actor) rematch(c *room.Client) string {
 		r = &a.st.rec
 	}
 	code := r.Reserved
-	err := succ.Rematch(a.m, code, Rematch{Parent: a.code, Creator: r.Rematcher, Slots: slices.Clone(r.Start),
+	names := []namenum.Assignment{}
+	for _, s := range r.Start {
+		if x := a.assignment(s.UserID); x.UserID != "" {
+			names = append(names, x)
+		}
+	}
+	err := succ.Rematch(a.m, code, Rematch{Names: names, Parent: a.code, Creator: r.Rematcher, Slots: slices.Clone(r.Start),
 		Sides: r.Setup.Sides, LobbyOrder: !r.Setup.RandomSeating, AllowUndo: r.AllowUndo, FinalReveal: !r.Setup.HideAtEnd})
 	switch {
 	case errors.Is(err, ErrCodeTaken):

@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -255,6 +256,12 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 			r.Slots[i] = Slot{Kind: SlotBot, Bot: creationLevel(s.Bot, len(rm.Slots))}
 		}
 	}
+	for _, x := range rm.Names {
+		if slotOf(&r, x.UserID, SlotReserved) >= 0 {
+			r.Names.Import(x, maxNameCounters)
+			r.Slots[slotOf(&r, x.UserID, SlotReserved)].Name = x.Name
+		}
+	}
 	r.Code, r.Parent = code, rm.Parent
 	return l.saveRematch(m, code, r)
 }
@@ -276,6 +283,7 @@ func (l *Lobbies) RematchDuel(m *room.Manager, code string, rm room.DuelRematch)
 	for i, s := range rm.Seats {
 		if s.Kind == store.SeatKindHuman {
 			r.Slots[i] = Slot{Kind: SlotReserved, UserID: s.UserID, Name: s.Name}
+			r.Names.Import(namenum.Assignment{UserID: s.UserID, Name: s.Name, Number: s.NameNo}, maxNameCounters)
 		} else {
 			r.Slots[i] = Slot{Kind: SlotBot, Bot: string(s.Bot)}
 		}

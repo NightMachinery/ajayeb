@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -23,6 +24,7 @@ type state struct {
 
 // actor runs one table. Everything below is touched only on its goroutine.
 type actor struct {
+	visitors    []namenum.Assignment
 	viewHash    string
 	engineViews map[int]*roleView
 	t           *Tables
@@ -117,6 +119,17 @@ func (t *Tables) newActor(m *room.Manager, st *state, members []Member) (*room.H
 		a.conns = append(a.conns, mb.Client)
 		if mb.Claim != "" {
 			a.claims[mb.Client] = claimed{claim: mb.Claim, user: mb.User}
+		}
+	}
+	for _, mb := range members {
+		user := a.userOf(mb.Client)
+		if a.assignment(user).UserID != "" {
+			continue
+		}
+		if mb.Assignment.UserID == user && validName(mb.Assignment.Name) {
+			a.visitors = append(a.visitors, mb.Assignment)
+		} else if validName(mb.Client.Name) {
+			a.visit(user, mb.Client.Name)
 		}
 	}
 	a.ctx, a.cancel = context.WithCancel(m.Context())
@@ -316,7 +329,7 @@ func (a *actor) connected(userID string) bool {
 
 // nameOf is a connected user's display name.
 func (a *actor) nameOf(userID string) string {
-	if assigned := a.st.rec.Names.Get(userID); assigned.UserID != "" {
+	if assigned := a.assignment(userID); assigned.UserID != "" {
 		return assigned.Name
 	}
 	for _, c := range a.conns {
@@ -377,9 +390,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		}
 	}
 	nameChanged := false
-	if claim == nil && validName(c.Name) {
+	if claim == nil && validName(c.Name) && a.st.rec.Status != store.StatusArchived && a.st.rec.remembersName(user) {
 		cand := a.st.rec.clone()
-		if cand.rename(user, c.Name) {
+		if cand.rename(user, c.Name, a.visitors) {
 			if a.st.rec.Names.Get(user).UserID != "" {
 				bumpPublic(&cand)
 			}
@@ -388,6 +401,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 			}
 			nameChanged = true
 		}
+	}
+	if claim == nil && validName(c.Name) && !a.st.rec.remembersName(user) {
+		nameChanged = a.visit(user, c.Name) || nameChanged
 	}
 	if !already {
 		a.conns = append(a.conns, c)
@@ -419,6 +435,7 @@ func (a *actor) detach(c *room.Client) {
 	delete(a.claims, c)
 	delete(a.shown, c)
 	if !a.connected(user) {
+		a.visitors = slices.DeleteFunc(a.visitors, func(x namenum.Assignment) bool { return x.UserID == user })
 		a.broadcastExcept(a.newBroadcast(false), nil)
 		a.checkRoles()
 	}
@@ -1174,7 +1191,10 @@ func syncWork(r *Record, g *game) {
 // completes a point is paid for at that point and the next one starts
 // full.
 func (a *actor) commit(op string, cand Record, g game, by *room.Client) error {
-	cand.Updated = a.now()
+	if op != "name" {
+		cand.Updated = a.now()
+	}
+	cand.syncNames(a.visitors)
 	// The candidate must restore after a restart: the same checks, on the
 	// engine value this transaction produced instead of a replay.
 	if err := validate(&cand, &g, a.t.bounds()); err != nil {
@@ -1189,6 +1209,7 @@ func (a *actor) commit(op string, cand Record, g game, by *room.Client) error {
 		a.t.log.Warn("table write failed", "room", a.code, "op", op, "err", err)
 		return err
 	}
+	a.retainVisitors(&a.st.rec, &cand)
 	a.st = &state{rec: cand, game: g}
 	if by != nil {
 		a.budget.Charge(a.userOf(by), a.now())

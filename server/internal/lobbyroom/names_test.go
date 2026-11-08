@@ -1,14 +1,20 @@
 package lobbyroom
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
+	"github.com/NightMachinery/ajayeb/server/internal/room/roomtest"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -92,6 +98,19 @@ func TestNameNumbersSurviveLobbyStart(t *testing.T) {
 			y := f.conn(user(0), "y", "River")
 			f.join(y, code)
 			wantNameNo(t, y.last().Humans, user(0), 3)
+			if seats == 3 {
+				third := f.conn(user(2), "third", "River")
+				f.join(third, code)
+				third.last()
+				gone := f.conn(user(10), "gone", "River")
+				f.join(gone, code)
+				gone.last()
+				watcher := f.conn(user(11), "stay", "River")
+				f.join(watcher, code)
+				wantNameNo(t, watcher.last().Humans, user(11), 6)
+				f.m.Leave(gone.c, code)
+				f.settle(code)
+			}
 			f.send(y, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1, FillBots: true})
 			if seats == 2 {
 				duelFrame(y)
@@ -106,6 +125,10 @@ func TestNameNumbersSurviveLobbyStart(t *testing.T) {
 				st := y.until("table", func(v any) bool { _, ok := v.(wire.TableState); return ok }).(wire.TableState)
 				wantNameNo(t, st.Humans, user(0), 3)
 				wantNameNo(t, st.Humans, user(1), 2)
+				wantNameNo(t, st.Humans, user(11), 6)
+				if f.tableRecord(code).Names.Get(user(11)).UserID != "" {
+					t.Fatal("Start persisted spectator")
+				}
 			}
 		})
 	}
@@ -151,19 +174,129 @@ func TestLobbyNameWriteFailure(t *testing.T) {
 	a := f.conn(user(0), "a", "River")
 	code := f.create(a, 2, wire.LobbyOptions{})
 	f.failSaves(code, 0, 1)
-	b := f.conn(user(1), "b", "river")
+	b := f.conn(user(0), "b", "river-new")
 	if err := f.m.Join(f.ctx(), b.c, code); !errors.Is(err, room.ErrStorage) {
 		t.Fatalf("join: %v", err)
 	}
 	r := f.record(code)
-	if r.Names.Get(user(1)).UserID != "" {
+	if r.Names.Get(user(0)).Name != "River" {
 		t.Fatal("failed assignment was published")
 	}
 	f.join(b, code)
-	wantNameNo(t, b.last().Humans, user(1), 2)
+	wantNameNo(t, b.last().Humans, user(0), 0)
 	// The encoder is shared by actor saves, creation, and rematch creation.
 	r.Names.Users[0].Name = strings.Repeat("x", store.MaxFileBytes)
 	if _, err := r.encode(); !errors.Is(err, store.ErrTooLarge) {
 		t.Fatalf("oversize: %v", err)
+	}
+}
+
+func TestFullLobbyNameLedgerStillStarts(t *testing.T) {
+	f := newFixture(t, nil)
+	a := f.conn(user(0), "creator", "River")
+	code := f.create(a, 3, wire.LobbyOptions{})
+	b := f.conn(user(1), "second", "River")
+	f.join(b, code)
+	b.last()
+	c := f.conn(user(2), "third", "River")
+	f.join(c, code)
+	c.last()
+	before := f.record(code)
+	for i := range 300 {
+		w := f.conn(user(1000+i), fmt.Sprint("watch", i), strings.Repeat("x", 60))
+		f.join(w, code)
+		w.last()
+		f.m.Leave(w.c, code)
+		f.settle(code)
+	}
+	if after := f.record(code); len(after.Names.Users) != len(before.Names.Users) || len(after.Names.Names) != len(before.Names.Names) {
+		t.Fatal("spectators consumed name history")
+	}
+	for i := range maxNameCounters + 10 {
+		k := f.conn(user(1), fmt.Sprint("rename", i), fmt.Sprint("Name", i))
+		f.join(k, code)
+		k.last()
+		f.m.Leave(k.c, code)
+		f.settle(code)
+	}
+	r := f.record(code)
+	if len(r.Names.Names) != maxNameCounters {
+		t.Fatalf("history: %d", len(r.Names.Names))
+	}
+	name := r.Names.Get(user(1))
+	k := f.conn(user(1), "frozen", "Overflow")
+	f.join(k, code)
+	k.last()
+	if got := f.record(code).Names.Get(user(1)); got != name {
+		t.Fatalf("rename at capacity: %+v", got)
+	}
+	f.send(a, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1, FillBots: true})
+	st := a.until("table", func(v any) bool { _, ok := v.(wire.TableState); return ok }).(wire.TableState)
+	wantNameNo(t, st.Humans, user(1), name.Number)
+}
+
+func TestLobbyNameRetention(t *testing.T) {
+	clk := roomtest.NewFakeClock(time.Date(2026, 11, 8, 10, 0, 0, 0, time.UTC))
+	f := newFixture(t, clk)
+	a := f.conn(user(0), "a", "River")
+	code := f.create(a, 2, wire.LobbyOptions{})
+	old := f.record(code).Updated
+	clk.Advance(time.Minute)
+	b := f.conn(user(0), "b", "Brook")
+	f.join(b, code)
+	b.last()
+	if r := f.record(code); !r.Updated.Equal(old) || r.Names.Get(user(0)).Name != "Brook" {
+		t.Fatal("rename refreshed retention", r.Updated)
+	}
+	actor := f.lobbies.lookup(code)
+	if err := actor.call(f.ctx(), func() { actor.rec.Status = store.StatusArchived }); err != nil {
+		t.Fatal(err)
+	}
+	before, _, err := f.st.PeekGame(code, Game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := f.conn(user(0), "c", "Archived rename")
+	f.join(c, code)
+	c.last()
+	after, _, err := f.st.PeekGame(code, Game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(before, after) || f.record(code).Names.Get(user(0)).Name != "Brook" {
+		t.Fatal("archived record renamed")
+	}
+}
+
+func TestRematchNameAssignments(t *testing.T) {
+	for _, duel := range []bool{false, true} {
+		t.Run(fmt.Sprint(duel), func(t *testing.T) {
+			f := newFixture(t, nil)
+			code := "NEWAAA"
+			assigned := []namenum.Assignment{{UserID: user(0), Name: "River", Number: 5}, {UserID: user(1), Name: "River", Number: 2}}
+			if duel {
+				rm := room.DuelRematch{Parent: "PRNAAA", Creator: user(0)}
+				for i, x := range assigned {
+					rm.Seats[i] = store.Seat{Kind: store.SeatKindHuman, UserID: x.UserID, Name: x.Name, NameNo: x.Number}
+				}
+				if err := f.lobbies.RematchDuel(f.m, code, rm); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				rm := tableroom.Rematch{Parent: "PRNAAA", Creator: user(0), Names: assigned, Slots: []tableroom.StartSlot{{UserID: user(1), Name: "Stale"}, {Bot: tableroom.BotEasy}, {UserID: user(0), Name: "Stale"}}}
+				if err := f.lobbies.Rematch(f.m, code, rm); err != nil {
+					t.Fatal(err)
+				}
+			}
+			for _, x := range assigned {
+				k := f.conn(x.UserID, "tab", x.Name)
+				f.join(k, code)
+				wantNameNo(t, k.last().Humans, x.UserID, x.Number)
+			}
+			f.restart()
+			k := f.conn(user(0), "reload", "River")
+			f.join(k, code)
+			wantNameNo(t, k.last().Humans, user(0), 5)
+		})
 	}
 }

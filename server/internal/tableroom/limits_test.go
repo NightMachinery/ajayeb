@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
@@ -149,6 +150,7 @@ func TestLargestRecordFitsTheStore(t *testing.T) {
 			}
 			r.Pending = append(r.Pending, slot)
 		}
+		fullNameLedger(&r)
 		if err := validate(&r, &g, defaultBounds); err != nil {
 			t.Fatalf("the largest record is not one restore accepts: %v", err)
 		}
@@ -183,3 +185,29 @@ const (
 	maxStoredKey = 96
 	maxPointID   = 96
 )
+
+// fullNameLedger includes every permitted retained user and the worst encoded
+// key and counter lengths, including historical keys no current user holds.
+func fullNameLedger(r *Record) {
+	r.Names = namenum.Ledger{}
+	r.assignSeatNames()
+	users := append(authorities(r), r.Retired...)
+	for _, p := range r.Previous {
+		users = append(users, p.UserID)
+	}
+
+	for _, u := range users {
+		if r.Names.Get(u).UserID == "" {
+			r.Names.Assign(u, strings.Repeat("<", 64))
+		}
+	}
+	for i := range r.Names.Users {
+		r.Names.Users[i].Number = (1 << 53) - 2 - i
+	}
+	for i := range r.Names.Names {
+		r.Names.Names[i].Next = (1 << 53) - 1
+	}
+	for i := 0; len(r.Names.Names) < maxNameCounters; i++ {
+		r.Names.Names = append(r.Names.Names, namenum.Counter{Key: fmt.Sprintf("%064x", i), Next: (1 << 53) - 1})
+	}
+}

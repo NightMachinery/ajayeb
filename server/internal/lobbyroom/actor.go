@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -18,10 +19,11 @@ import (
 // actor runs one lobby. Everything below mu is touched only on its
 // goroutine.
 type actor struct {
-	l    *Lobbies
-	m    *room.Manager
-	h    *room.Handle
-	code string
+	visitors []namenum.Assignment
+	l        *Lobbies
+	m        *room.Manager
+	h        *room.Handle
+	code     string
 
 	// mu guards the detaches the Manager delivers and, after Start, the
 	// table's detach hook they go to instead: a detach is never lost
@@ -270,7 +272,7 @@ func (a *actor) connected(u string) bool {
 }
 
 func (a *actor) nameOf(u string) string {
-	if assigned := a.rec.Names.Get(u); assigned.UserID != "" {
+	if assigned := a.assignment(u); assigned.UserID != "" {
 		return assigned.Name
 	}
 	for _, c := range a.conns {
@@ -316,9 +318,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		}
 	}
 	nameChanged := false
-	if claim == nil && validName(c.Name) {
+	if claim == nil && validName(c.Name) && a.rec.Status != store.StatusArchived && a.rec.remembersName(user) {
 		cand := a.rec.clone()
-		if cand.rename(user, c.Name) {
+		if cand.rename(user, c.Name, a.visitors) {
 			if a.rec.Names.Get(user).UserID != "" {
 				cand.Revision++
 			}
@@ -327,6 +329,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 			}
 			nameChanged = true
 		}
+	}
+	if claim == nil && validName(c.Name) && !a.rec.remembersName(user) {
+		nameChanged = a.visit(user, c.Name) || nameChanged
 	}
 	if !already {
 		a.conns = append(a.conns, c)
@@ -388,6 +393,7 @@ func (a *actor) detach(c *room.Client) {
 	a.conns = slices.Delete(a.conns, i, i+1)
 	delete(a.claims, c)
 	if !a.connected(user) {
+		a.visitors = slices.DeleteFunc(a.visitors, func(x namenum.Assignment) bool { return x.UserID == user })
 		a.broadcastExcept(nil)
 		a.checkRoles()
 	}
@@ -557,7 +563,10 @@ func (a *actor) publishIdle() {
 // commit writes cand durably, then swaps it in. A failed write leaves the
 // committed record as it was.
 func (a *actor) commit(op string, cand Record) error {
-	cand.Updated = a.now()
+	if op != "name" {
+		cand.Updated = a.now()
+	}
+	cand.syncNames(a.visitors)
 	if err := validate(&cand, a.l.cfg.SeqClients); err != nil {
 		a.l.log.Error("lobby candidate invalid", "room", a.code, "op", op, "err", err)
 		return err
@@ -570,6 +579,7 @@ func (a *actor) commit(op string, cand Record) error {
 		a.l.log.Warn("lobby write failed", "room", a.code, "op", op, "err", err)
 		return err
 	}
+	a.retainVisitors(&a.rec, &cand)
 	a.rec = cand
 	return nil
 }
@@ -935,7 +945,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	}
 	members := make([]tableroom.Member, 0, len(a.conns))
 	for _, o := range a.conns {
-		mb := tableroom.Member{Client: o}
+		mb := tableroom.Member{Client: o, Assignment: a.assignment(a.userOf(o))}
 		if cl, ok := a.claims[o]; ok {
 			mb.Claim, mb.User = cl.claim, cl.user
 		}

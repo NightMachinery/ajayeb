@@ -3,6 +3,8 @@
 package namenum
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"slices"
 	"strings"
@@ -17,17 +19,15 @@ type Assignment struct {
 	Number int    `json:"number"`
 }
 
-// Counter remembers every name ever used, including names no current user
-// has. Next is the next unused ordinal (the unnumbered name uses ordinal 1).
+// Counter identifies a normalized name by SHA-256, with bounded storage even
+// for JSON-escaped names. Next is the next unused ordinal (the first uses 1).
 type Counter struct {
 	Key  string `json:"key"`
 	Next int    `json:"next"`
 }
 
-// Ledger retains users after departure and counters after renaming. Never
-// prune either: that would reuse a suffix or renumber a returning user.
-// The containing record's byte cap bounds growth; a failed write must discard
-// its candidate ledger together with the rest of the transaction.
+// Ledger stores retained authority holders and bounded name history. Actors keep
+// spectator assignments separately, only while connected.
 type Ledger struct {
 	Users []Assignment `json:"users"`
 	Names []Counter    `json:"names"`
@@ -54,39 +54,34 @@ func (l Ledger) Get(user string) Assignment {
 // Assign records a new name, changing only this user's assignment. A
 // cosmetic change of case or outer spaces keeps the existing number.
 func (l *Ledger) Assign(user, name string) bool {
+	return l.AssignBounded(user, name, int(^uint(0)>>1))
+}
+
+// AssignBounded freezes an existing user's rename when history is full. New
+// authority holders can always enter: Import evicts an unused historical key.
+func (l *Ledger) AssignBounded(user, name string, capacity int, present ...Assignment) bool {
 	i := slices.IndexFunc(l.Users, func(a Assignment) bool { return a.UserID == user })
 	if i >= 0 && l.Users[i].Name == name {
 		return false
 	}
-	key := Key(name)
-	if i >= 0 && Key(l.Users[i].Name) == key {
+	key := counterKey(name)
+	if i >= 0 && counterKey(l.Users[i].Name) == key {
 		l.Users[i].Name = name
 		return true
 	}
-	j := slices.IndexFunc(l.Names, func(c Counter) bool { return c.Key == key })
-	number := 0
-	if j < 0 {
-		l.Names = append(l.Names, Counter{Key: key, Next: 2})
-	} else {
-		number = l.Names[j].Next
-		l.Names[j].Next++
+	if i >= 0 && len(l.Names) >= capacity {
+		return false
 	}
-	a := Assignment{UserID: user, Name: name, Number: number}
-	if i < 0 {
-		l.Users = append(l.Users, a)
-	} else {
-		l.Users[i] = a
-	}
+	a := l.Preview(user, name, present)
+	l.Import(a, capacity)
 	return true
 }
 
-// Valid rejects malformed or ambiguous persisted assignments. Names are at
-// most the hello protocol's 64 bytes; lowercasing can expand their keys.
+// Valid rejects malformed or ambiguous persisted assignments.
 func (l Ledger) Valid() error {
-	const maxOrdinal = 1<<53 - 1
 	names := map[string]int{}
 	for _, c := range l.Names {
-		if c.Key == "" || len(c.Key) > 3*64 || !utf8.ValidString(c.Key) || Key(c.Key) != c.Key || c.Next < 2 || c.Next > maxOrdinal || names[c.Key] != 0 {
+		if !validCounterKey(c.Key) || c.Next < 2 || c.Next > maxOrdinal || names[c.Key] != 0 {
 			return errors.New("invalid name counter")
 		}
 		names[c.Key] = c.Next
@@ -98,12 +93,106 @@ func (l Ledger) Valid() error {
 	}
 	numbers := map[used]bool{}
 	for _, a := range l.Users {
-		key := Key(a.Name)
+		key := counterKey(a.Name)
 		k := used{key, a.Number}
-		if a.UserID == "" || len(a.UserID) > 64 || !utf8.ValidString(a.UserID) || users[a.UserID] || key == "" || len(a.Name) > 64 || !utf8.ValidString(a.Name) || a.Number < 0 || a.Number == 1 || a.Number >= names[key] || numbers[k] {
+		if a.UserID == "" || len(a.UserID) > 64 || !utf8.ValidString(a.UserID) || users[a.UserID] || Key(a.Name) == "" || len(a.Name) > 64 || !utf8.ValidString(a.Name) || a.Number < 0 || a.Number == 1 || a.Number >= names[key] || numbers[k] {
 			return errors.New("invalid name assignment")
 		}
 		users[a.UserID], numbers[k] = true, true
 	}
 	return nil
+}
+
+const maxOrdinal = 1<<53 - 1
+
+// Preview allocates without consuming persistent history, avoiding every
+// retained and currently connected holder of the same name.
+func (l Ledger) Preview(user, name string, present []Assignment) Assignment {
+	key := counterKey(name)
+	next := 1
+	for _, c := range l.Names {
+		if c.Key == key {
+			next = c.Next
+		}
+	}
+	for _, a := range append(append([]Assignment{}, l.Users...), present...) {
+		if counterKey(a.Name) == key {
+			n := a.Number
+			if n == 0 {
+				n = 1
+			}
+			if n >= next {
+				next = n + 1
+			}
+		}
+	}
+	// A valid imported record can already have exhausted the JSON-safe ordinal
+	// range. Reuse the lowest unoccupied ordinal instead of blocking admission.
+	if next >= maxOrdinal-1 {
+		next = 1
+		all := append(append([]Assignment{}, l.Users...), present...)
+		for {
+			occupied := slices.ContainsFunc(all, func(a Assignment) bool {
+				n := a.Number
+				if n == 0 {
+					n = 1
+				}
+				return counterKey(a.Name) == key && n == next
+			})
+			if !occupied {
+				break
+			}
+			next++
+		}
+	}
+	if next == 1 {
+		next = 0
+	}
+	return Assignment{UserID: user, Name: name, Number: next}
+}
+
+// Import preserves a live or rematch assignment. At capacity it forgets the
+// oldest historical key with no retained holder, never a current holder's key.
+// Capacity must exceed the containing actor's bounded authority population.
+func (l *Ledger) Import(a Assignment, capacity int) {
+	key := counterKey(a.Name)
+	i := slices.IndexFunc(l.Users, func(x Assignment) bool { return x.UserID == a.UserID })
+	if i < 0 {
+		l.Users = append(l.Users, a)
+	} else {
+		l.Users[i] = a
+	}
+	j := slices.IndexFunc(l.Names, func(c Counter) bool { return c.Key == key })
+	if j < 0 {
+		if len(l.Names) >= capacity {
+			j = slices.IndexFunc(l.Names, func(c Counter) bool {
+				return !slices.ContainsFunc(l.Users, func(x Assignment) bool { return counterKey(x.Name) == c.Key })
+			})
+			l.Names = slices.Delete(l.Names, j, j+1)
+		}
+		l.Names = append(l.Names, Counter{Key: key, Next: 2})
+		j = len(l.Names) - 1
+	}
+	n := a.Number
+	if n == 0 {
+		n = 1
+	}
+	if l.Names[j].Next <= n {
+		l.Names[j].Next = n + 1
+	}
+}
+
+// Retain removes assignments whose users have left the bounded authority set.
+func (l *Ledger) Retain(keep func(string) bool) {
+	l.Users = slices.DeleteFunc(l.Users, func(a Assignment) bool { return !keep(a.UserID) })
+}
+
+func counterKey(name string) string {
+	sum := sha256.Sum256([]byte(Key(name)))
+	return hex.EncodeToString(sum[:])
+}
+
+func validCounterKey(key string) bool {
+	b, err := hex.DecodeString(key)
+	return err == nil && len(b) == sha256.Size && strings.ToLower(key) == key
 }

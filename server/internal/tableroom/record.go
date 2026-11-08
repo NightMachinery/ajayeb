@@ -62,7 +62,7 @@ type Record struct {
 	// are empty once Successor is set.
 	Reserved  string `json:"reserved"`
 	Rematcher string `json:"rematcher"`
-	// Names is the room-lifetime display-name ledger, including departed users.
+	// Names retains bounded authority assignments and name history.
 	Names namenum.Ledger `json:"names"`
 	// Roles are the table's roles (package roles), carried on from the
 	// lobby at Start.
@@ -322,7 +322,9 @@ func (r *Record) encode() ([]byte, error) {
 	if c.Start == nil {
 		c.Start = []StartSlot{}
 	}
-	data, err := json.MarshalIndent(&c, "", "  ")
+	// Compact JSON keeps the bounded ledger and worst-case authority history
+	// inside the existing store-size safety margin.
+	data, err := json.Marshal(&c)
 	if err != nil {
 		return nil, err
 	}
@@ -538,8 +540,13 @@ func restore(r *Record, b seqBounds) (*state, bool, error) {
 // and every write on the value its transaction produced, so nothing is
 // saved that would not restore.
 func validate(r *Record, g *game, b seqBounds) error {
-	if r.Names.Valid() != nil {
+	if r.Names.Valid() != nil || len(r.Names.Users) > maxNameUsers || len(r.Names.Names) > maxNameCounters {
 		return invalid("the name ledger")
+	}
+	for _, a := range r.Names.Users {
+		if !r.remembersName(a.UserID) {
+			return invalid("spectator name assignment")
+		}
 	}
 	n := r.Setup.Seats
 	if n < MinSeats || n > MaxSeats {

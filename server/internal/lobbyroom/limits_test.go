@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
@@ -78,7 +79,7 @@ func TestLargestLobbyFitsTheStore(t *testing.T) {
 			n++
 		}
 	}
-	r.assignSlotNames()
+	fullNameLedger(&r)
 	if err := validate(&r, defaultSeqClients); err != nil {
 		t.Fatalf("the largest lobby is not one a restart accepts: %v", err)
 	}
@@ -89,5 +90,28 @@ func TestLargestLobbyFitsTheStore(t *testing.T) {
 	t.Logf("the largest lobby record: %d bytes, %.2f of the store's cap of %d", len(data), float64(len(data))/store.MaxFileBytes, store.MaxFileBytes)
 	if len(data) > store.MaxFileBytes*3/4 {
 		t.Errorf("the largest lobby record takes %d bytes, more than three quarters of the store's cap of %d", len(data), store.MaxFileBytes)
+	}
+}
+
+// fullNameLedger includes every permitted retained user and the worst encoded
+// key and counter lengths, including historical keys no current user holds.
+func fullNameLedger(r *Record) {
+	r.Names = namenum.Ledger{}
+	r.assignSlotNames()
+	users := append(authorities(r), r.Retired...)
+
+	for _, u := range users {
+		if r.Names.Get(u).UserID == "" {
+			r.Names.Assign(u, strings.Repeat("<", 64))
+		}
+	}
+	for i := range r.Names.Users {
+		r.Names.Users[i].Number = (1 << 53) - 2 - i
+	}
+	for i := range r.Names.Names {
+		r.Names.Names[i].Next = (1 << 53) - 1
+	}
+	for i := 0; len(r.Names.Names) < maxNameCounters; i++ {
+		r.Names.Names = append(r.Names.Names, namenum.Counter{Key: fmt.Sprintf("%064x", i), Next: (1 << 53) - 1})
 	}
 }

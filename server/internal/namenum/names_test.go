@@ -66,3 +66,36 @@ func TestRejectInvalidLedger(t *testing.T) {
 		}
 	}
 }
+
+func TestBoundedNameHistory(t *testing.T) {
+	var l Ledger
+	l.AssignBounded("a", "River", 4)
+	visitor := l.Preview("watch", "Brook", nil)
+	l.AssignBounded("a", "Brook", 4, visitor)
+	if l.Get("a").Number != 2 {
+		t.Fatal("rename collided with visitor")
+	}
+	l.AssignBounded("a", "Third", 4)
+	l.AssignBounded("a", "Fourth", 4)
+	old := l.Get("a")
+	if l.AssignBounded("a", "Fifth", 4) || l.Get("a") != old {
+		t.Fatal("full ledger did not freeze rename")
+	}
+	l.AssignBounded("b", "New authority", 4)
+	if len(l.Names) != 4 || l.Get("b").Name != "New authority" {
+		t.Fatal("full history blocked new authority")
+	}
+	if l.Valid() != nil {
+		t.Fatal("invalid bounded ledger", l)
+	}
+}
+
+func TestExhaustedOrdinalStillAdmitsAuthority(t *testing.T) {
+	var l Ledger
+	l.AssignBounded("a", "River", 4)
+	l.Names[0].Next = maxOrdinal
+	l.AssignBounded("b", "River", 4)
+	if l.Get("b").Number != 2 || l.Valid() != nil {
+		t.Fatal("exhausted ordinal blocked admission", l)
+	}
+}
