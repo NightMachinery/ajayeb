@@ -185,3 +185,28 @@ func TestScholarFallbackAndCancellation(t *testing.T) {
 		t.Fatal("structural cancel accepted fallback", d, err)
 	}
 }
+
+func TestBaselinePresetsMatchSupportedWork(t *testing.T) {
+	g, err := newGame(makeDaySetup(1826, 3, false, false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, presets := range [][]BotPreset{legacyPresets(), releasedPresets()} {
+		for _, preset := range presets {
+			if preset.Algorithm == "scholar" {
+				continue
+			}
+			if preset.work() != bot.DefaultWork() {
+				t.Fatal("stored baseline work no longer supported; keep versioned dispatch", preset, bot.DefaultWork())
+			}
+			level, err := bot.ParseLevel(preset.Algorithm)
+			if err != nil {
+				t.Fatal(err)
+			}
+			d, err := bot.Choose(context.Background(), level, g.Observe(0), g.Legal(0), 1, preset.work())
+			if err != nil || !d.Complete {
+				t.Fatal("baseline frozen row rejected", preset, err)
+			}
+		}
+	}
+}

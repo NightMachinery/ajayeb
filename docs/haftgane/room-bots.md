@@ -125,6 +125,15 @@ check permits, waiters and strict per-room serialization. A watchdog fixture
 checks the exact Greedy result and the persisted safe reason.
 
 The ordinary suite covers released policy calls and legacy set-2 continuation.
+Broad controller/persistence sweeps use Apprentice under the race detector;
+focused worker tests still execute actual Scholar decisions. The full normal
+wait measurement is opt-in with `HAFTGANE_SCHOLAR_WORKER=1`.
+`TestFrozenBotDecisionGolden` pins keys and counters at five small development
+positions for Scholar, Greedy and Apprentice under both tape domains. It runs
+without race instrumentation and updates only with
+`UPDATE_HAFTGANE_BOT_GOLDEN=1` after versioning any changed policy and retaining
+the implementation needed by stored rooms. Baseline work compatibility also
+has a direct test against what `bot.Choose` accepts.
 `TestForbiddenInformationPairs` compares the complete Scholar result and
 counters at the released row across different hidden future packets, opponent
 hands, setup roots, private sales/tucks and excluded guilds. Only permitted
@@ -154,6 +163,8 @@ and mixed-Duel measurements remain in [simple-bot evidence](simple-bots-evidence
 The cancellation probe includes turn one of every Age at three and seven
 seats, turn three at all counts, and a discard-build root. With one competing
 CPU worker, complete-call maximum poll-gap p99 was 46.356 ms and maximum
-55.492 ms over 176 calls. The p99 target below 50 ms passed; the maximum is
-not a hard bound. [Scholar calibration](scholar-calibration.md#room-preset-integration)
+55.492 ms over 176 calls. The p99 pass is marginal: only 3.6 ms below
+the 50 ms target. With 176 calls, nearest-rank p99 is the second-largest
+value, so scheduler noise may move a repeat run across the target. The
+maximum is not a hard bound. [Scholar calibration](scholar-calibration.md#room-preset-integration)
 gives the idle measurements and guarded commands.

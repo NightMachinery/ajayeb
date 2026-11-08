@@ -1,0 +1,1382 @@
+[
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 1,
+      "seat": 1
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 15583889304755222357,
+    "key": "sell:clay-pool",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 20,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 96,
+      "PolicyChoices": 272,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 5
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 1,
+      "seat": 1
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 16099622156449130138,
+    "key": "build:altar:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 13,
+      "Previews": 13,
+      "Quotes": 98,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 1,
+      "seat": 1
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 10999574018724763141,
+    "key": "build:theater:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 13,
+      "Previews": 13,
+      "Quotes": 98,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 1,
+      "seat": 1
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 12310126312234109353,
+    "key": "build:altar:0:0",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 20,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 96,
+      "PolicyChoices": 272,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 5
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 1,
+      "seat": 1
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 7783406600494936275,
+    "key": "build:altar:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 13,
+      "Previews": 13,
+      "Quotes": 98,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 1,
+      "seat": 1
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 6865741625049235847,
+    "key": "build:altar:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 13,
+      "Previews": 13,
+      "Quotes": 98,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 3,
+      "seat": 1
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 9362380692982010479,
+    "key": "build:apothecary:0:2",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 34,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 64,
+      "PolicyChoices": 176,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 7
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 3,
+      "seat": 1
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 1014896609916701448,
+    "key": "build:apothecary:0:2",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 15,
+      "Previews": 15,
+      "Quotes": 144,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 3,
+      "seat": 1
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 17634483314484353144,
+    "key": "build:scriptorium:2:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 15,
+      "Previews": 15,
+      "Quotes": 144,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 3,
+      "seat": 1
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 6803536599916647020,
+    "key": "build:scriptorium:2:0",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 34,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 64,
+      "PolicyChoices": 176,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 7
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 3,
+      "seat": 1
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 12328227104987980335,
+    "key": "build:apothecary:0:2",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 15,
+      "Previews": 15,
+      "Quotes": 144,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 1971,
+      "sides": "day",
+      "turn": 3,
+      "seat": 1
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 16656590172347847985,
+    "key": "sell:loom-age-1",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 15,
+      "Previews": 15,
+      "Quotes": 144,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 1,
+      "seat": 5
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 2463559420321530016,
+    "key": "build:tavern:0:0",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 12,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 96,
+      "PolicyChoices": 656,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 6
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 1,
+      "seat": 5
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 50002010076982536,
+    "key": "build:tavern:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 14,
+      "Previews": 14,
+      "Quotes": 120,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 1,
+      "seat": 5
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 14150196209132514902,
+    "key": "sell:tree-farm",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 14,
+      "Previews": 14,
+      "Quotes": 120,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 1,
+      "seat": 5
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 5310615387306154811,
+    "key": "build:tavern:0:0",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 12,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 96,
+      "PolicyChoices": 656,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 6
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 1,
+      "seat": 5
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 8033688100217284564,
+    "key": "build:tavern:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 14,
+      "Previews": 14,
+      "Quotes": 120,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 1,
+      "seat": 5
+    },
+    "point": "age-1-turn-1",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 7544688635819371478,
+    "key": "build:tavern:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 14,
+      "Previews": 14,
+      "Quotes": 120,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 3,
+      "seat": 5
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 5308707647719719919,
+    "key": "build:guard-tower:0:0",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 40,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 64,
+      "PolicyChoices": 432,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 1
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 3,
+      "seat": 5
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 4542451450953937004,
+    "key": "build:well:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 9,
+      "Previews": 9,
+      "Quotes": 80,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 3,
+      "seat": 5
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 9993885415538619992,
+    "key": "sell:well",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 9,
+      "Previews": 9,
+      "Quotes": 80,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 3,
+      "seat": 5
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 18415563920631291991,
+    "key": "build:guard-tower:0:0",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 40,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 16,
+      "Batches": 64,
+      "PolicyChoices": 432,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 1
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 3,
+      "seat": 5
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 16797999003423002197,
+    "key": "build:well:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 9,
+      "Previews": 9,
+      "Quotes": 80,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 7,
+      "seed": 814,
+      "sides": "day",
+      "turn": 3,
+      "seat": 5
+    },
+    "point": "age-1-turn-3",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 4506626857619748585,
+    "key": "build:well:0:0",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 9,
+      "Previews": 9,
+      "Quotes": 80,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 941,
+      "sides": "choose",
+      "turn": 0,
+      "seat": 2
+    },
+    "point": "sides",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 5391363969149980497,
+    "key": "side:night",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 18,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 4,
+      "Batches": 29,
+      "PolicyChoices": 81,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 941,
+      "sides": "choose",
+      "turn": 0,
+      "seat": 2
+    },
+    "point": "sides",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 4775202643810839630,
+    "key": "side:night",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 2,
+      "Previews": 2,
+      "Quotes": 12,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 941,
+      "sides": "choose",
+      "turn": 0,
+      "seat": 2
+    },
+    "point": "sides",
+    "preset": {
+      "policy": "haftgane-bot-2",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 4331152920637725076,
+    "key": "side:night",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 2,
+      "Previews": 2,
+      "Quotes": 12,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 941,
+      "sides": "choose",
+      "turn": 0,
+      "seat": 2
+    },
+    "point": "sides",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    },
+    "entropy": 9981243382585051337,
+    "key": "side:day",
+    "counters": {
+      "Iterations": 2,
+      "Ranked": 0,
+      "Previews": 0,
+      "Quotes": 0,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 2,
+      "Worlds": 2,
+      "SamplerChecks": 18,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 2,
+      "Comparisons": 4,
+      "Batches": 28,
+      "PolicyChoices": 80,
+      "GreedyRankings": 1,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 941,
+      "sides": "choose",
+      "turn": 0,
+      "seat": 2
+    },
+    "point": "sides",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "greedy",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 18162463293989420994,
+    "key": "side:night",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 2,
+      "Previews": 2,
+      "Quotes": 12,
+      "RandomDraws": 0
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  },
+  {
+    "fixture": {
+      "seats": 3,
+      "seed": 941,
+      "sides": "choose",
+      "turn": 0,
+      "seat": 2
+    },
+    "point": "sides",
+    "preset": {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    "entropy": 6259666794589661840,
+    "key": "side:night",
+    "counters": {
+      "Iterations": 1,
+      "Ranked": 2,
+      "Previews": 2,
+      "Quotes": 12,
+      "RandomDraws": 1
+    },
+    "ageCounters": {
+      "SampleAttempts": 0,
+      "Worlds": 0,
+      "SamplerChecks": 0,
+      "NoWorldSamples": 0,
+      "BudgetOutSamples": 0,
+      "CompletedSweeps": 0,
+      "Comparisons": 0,
+      "Batches": 0,
+      "PolicyChoices": 0,
+      "GreedyRankings": 0,
+      "GreedyFallbacks": 0,
+      "Excluded": 0
+    }
+  }
+]

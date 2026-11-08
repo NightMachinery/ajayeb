@@ -29,6 +29,9 @@ type BotPreset struct {
 // supported verbatim: restore, switches and new points use the table's rows.
 const policyVersion = "haftgane-bot-3"
 
+// Keep historical versions literal, rather than silently adopting new defaults.
+// TestBaselinePresetsMatchSupportedWork fails if Choose stops accepting these
+// rows: a version bump must retain dispatch for stored baseline policies.
 func legacyPresets() []BotPreset {
 	out := []BotPreset{}
 	for _, pair := range []struct{ level, algorithm string }{{BotEasy, "apprentice"}, {BotNormal, "greedy"}, {BotHard, "greedy"}} {

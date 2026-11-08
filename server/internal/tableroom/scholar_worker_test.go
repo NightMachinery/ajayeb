@@ -65,8 +65,16 @@ func TestScholarWorkerWatchdogMeasurements(t *testing.T) {
 				if r.Cancelled {
 					t.Fatal("ordinary worker cancelled", r)
 				}
+				calls++
 				if r.Fallback == "watchdog" {
 					watchdogs++
+					// Keep collecting so the final named watchdog total is
+					// reported; fallback has no completed Scholar attempts.
+					continue
+				}
+				if r.Fallback != "" && r.Fallback != "no-world" {
+					t.Errorf("Scholar decision fallback: %s", r.Fallback)
+					continue
 				}
 				if r.Fallback == "no-world" {
 					sampleFallbacks++
@@ -74,7 +82,6 @@ func TestScholarWorkerWatchdogMeasurements(t *testing.T) {
 				if r.AgeCounters.SampleAttempts != bot.ScholarAttempts {
 					t.Fatal("reduced preset", r)
 				}
-				calls++
 			}
 			if pool.InUse() != 0 || pool.Waiting() != 0 {
 				t.Fatal("permit leak")

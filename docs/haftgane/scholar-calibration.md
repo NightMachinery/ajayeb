@@ -516,7 +516,9 @@ load model as calibration:
   21.510/29.616/46.356/55.492 ms. Timer-cancel-to-return p99/max
   0.024/20.583 ms across 157 cancelled calls; 19 completed before the timer.
 
-The loaded p99 passes the unchanged target below 50 ms. The maximum exceeds
+The loaded p99 passes the unchanged target below 50 ms by a marginal 3.6 ms.
+Nearest-rank p99 over 176 calls is the second-largest value; scheduler noise
+can move a repeat run across the target. The maximum exceeds
 50 ms, so this is no worst-case guarantee. The complete-call poll gap remains
 the acceptance measure; timer cancellation alone can miss completed calls.
 
