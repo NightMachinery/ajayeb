@@ -8,8 +8,8 @@ for these measurements.
 
 ## Frozen identities and visible names
 
-The released Random, Apprentice and Greedy all use policy version 1 and preset
-version 1. Policy version fixes the input/tape contract, action grouping,
+At this internal milestone, Random, Apprentice and Greedy used policy
+version 1 and preset version 1. Policy version fixes the input/tape contract, action grouping,
 ranking and deterministic decision procedure. Preset version fixes evaluation
 constants, softmax temperature and fixed work. Apprentice's temperature is
 1,500 milli-VP. Every decision completes one pass with at most 217 offered
@@ -25,17 +25,18 @@ constant or mapping change cannot silently take over an existing game's rows.
 Rules version 1 and table record format 2 are separate compatibility identities.
 Unsupported development records archive rather than acquire current defaults.
 
-The internal wire levels, under preset set 2, are:
+Current new rooms use set 3 with Apprentice and Scholar; see
+[release evidence](bot-evidence.md). The historical internal wire levels,
+under preset set 2, were:
 
 - `easy`, visible persona Apprentice: Apprentice.
 - `normal`, visible persona Scholar: Greedy, a stand-in until Scholar.
 - `hard`, visible persona Master: Greedy, a stand-in until Scholar.
 
-The Apprentice label now plays the policy of that name. This milestone
-implements neither a Scholar policy nor a Master policy, so those labels
-play Greedy and are equally strong for now. Random is a simulator baseline
-only (D46) and no room level. Public release remains gated on the sampler and
-Scholar. The order is supported by the published held-out results: replacing
+The Apprentice label then played the policy of that name. That milestone
+implemented neither Scholar nor Master, so those labels played Greedy and
+were equally strong. Random was a simulator baseline only (D46), with no
+room level. The public release still needed the sampler and Scholar. The order is supported by the published held-out results: replacing
 Apprentice with Greedy improves paired rank in mixed fields with the complete
 interval above zero. The complete means, intervals, inverse comparisons and
 self-play checks remain in [AI](ai.md#first-held-out-tournament). The room
@@ -44,8 +45,8 @@ row uses the same full policy work as that tournament.
 Preset set 1 (`haftgane-bot-1`) mapped `easy` to Random, `normal` to
 Apprentice and `hard` to Greedy. The room measurements below ran under set 1
 and were not rerun for set 2. Set 2 changed only the room mapping, not any
-policy, allowance or bound, and the tournament results are unchanged. So the
-evidence still covers every live preset: set 1 already measured six-Apprentice
+policy, allowance or bound, and the tournament results are unchanged. At
+that milestone the evidence covered every live preset: set 1 already measured six-Apprentice
 and six-Greedy tables with the same allowance and bounds. A table
 frozen under set 1 archives as `replay-failed` when it loads
 ([room bots](room-bots.md#levels-and-frozen-work)).
@@ -56,11 +57,19 @@ Run one command at a time and wait for its completion notification. These
 opt-in tests write safe aggregate JSON lines, never views, submitted keys,
 observations, fingerprints or player data. Keep captured logs outside the repo.
 
-For every room-case figure below, including its phase breakdown, allocations,
-serialization, finished cold load and fallback count:
+The following entry points still run, but use current frozen room mappings.
+`TestRoomEvidence` now runs six-Apprentice, six-Scholar and mixed
+Apprentice/Scholar cases; `TestMixedRoomEvidence` now adds Scholar to Duel.
+They do not reproduce the historical set-1 cohort or its timing distributions.
+There is no current switch to restore that cohort. Reproducing it requires the
+historical harness/policies from `6e88b11f` with the current guard, not merely
+changing an environment flag.
+
+For current room-case phase breakdowns, allocations, serialization, finished
+cold load and fallback counts:
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
   env M17_ROOM_EVIDENCE=1 go -C server test -count=1 -v -timeout 20m \
   -run '^TestRoomEvidence$' ./internal/tableroom
 ```
@@ -68,15 +77,15 @@ HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
 For the complete pending-subset cold-start distribution:
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
   env M17_ROOM_EVIDENCE=1 go -C server test -count=1 -v \
   -run '^TestBotEveryPendingSubsetRestarts$' ./internal/tableroom
 ```
 
-For all mixed-load figures:
+For a current mixed-load measurement (Scholar background, unlike below):
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
   env M17_ROOM_EVIDENCE=1 go -C server test -count=1 -v -timeout 20m \
   -run '^TestMixedRoomEvidence$' ./internal/tableroom
 ```
@@ -84,7 +93,7 @@ HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
 For the eight-role retained-cache figure and the exceptional fallback check:
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test --wait 3600 -- \
   go -C server test -count=1 -v \
   -run '^TestEngineContractFinishedMemory$|^TestBotWatchdogHasDurableSafeReason$' \
   ./internal/tableroom
@@ -153,11 +162,12 @@ milliseconds. Pool wait p95 is in microseconds. Hold and serialization figures
 use their explicitly defined brackets above. A case's final cold load is one
 observation. These observations do not establish a policy latency ordering.
 
-These cases ran under preset set 1, when the first three were named for the
-policy their level played. They are now named for their levels: `six-easy`
-plays Apprentice, and `six-normal` and `six-hard` play Greedy. The mixed
-cases rotate the three levels across seats, so under set 1 they included
-Random seats; under set 2 every seat is Apprentice or Greedy.
+These published cases ran under preset set 1 and are named below for the
+policy actually measured. Set 2 later renamed the harness cases by level,
+with Apprentice at easy and Greedy at normal/hard. Today the harness has
+`six-easy` (Apprentice) and `six-normal` (Scholar), without a hard case. Its
+mixed cases alternate Apprentice/Scholar. Those changes do not relabel or
+remeasure the historical results below.
 
 - `six-random`: 108 ordinary bot decisions; active 0.029/0.081/0.220 ms.
   Pool wait p95 7.292 microseconds;

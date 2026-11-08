@@ -35,8 +35,8 @@ private pile looks. Its support, nonuniform distribution, work bound and
 measurements are documented in [sampler.md](sampler.md). `bot.SampleRoot` now
 prepares a cancellable sampled root or exact Greedy fallback, with per-call
 diagnostics. `bot.ChooseAge` adds paired root sweeps and observation-limited
-simultaneous policies through the current Age. Both worker APIs remain
-dormant until calibration: no baseline policy or room level consumes samples.
+simultaneous policies through the current Age. The baseline policies never
+consume samples. Scholar now uses `ChooseAge` in new rooms at its frozen calibrated row; see [release evidence](bot-evidence.md).
 [The rollout guide](rollouts.md) covers partial failures, memory, paired noise,
 work/allocations and whole-call cancellation measurements. The sampler guide
 records the constrained sampling costs and stated CPU-load conditions.
@@ -118,10 +118,10 @@ The opt-in development smoke and allocation benchmark also go through the
 guard (detach long runs with `HEAVY_NOTIFY=auto`):
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
   env M17_BOT_SMOKE=1 \
   go -C server test ./internal/haftgane/bot -run '^TestStrengthSmoke$' -v
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind bench -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind bench -- \
   go -C server test ./internal/haftgane/bot -run '^$' \
   -bench '^BenchmarkSevenSeatPolicy$' -benchmem
 ```
@@ -234,7 +234,7 @@ development check:
 ```sh
 report_dir="${AJAYEB_RUN_DIR:-$HOME/tmp/agents/ajayeb}/logs/haftgane-tournaments"
 command mkdir -p "$report_dir"
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
   go -C server run ./cmd/ajayeb-sim tournament -game haftgane \
   -partition development -blocks 2 -suite all \
   -out "$report_dir/development.jsonl.gz" \
@@ -246,7 +246,7 @@ notification before starting the next. Change `0/5` and `release-0` below
 to `1/5` through `4/5` and `release-1` through `release-4`:
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
   go -C server run ./cmd/ajayeb-sim tournament -game haftgane \
   -partition release -blocks 100 -suite all -shard 0/5 \
   -out "$report_dir/release-0.jsonl.gz"
@@ -255,7 +255,7 @@ HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
 After every shard completes, validate and tally the complete set:
 
 ```sh
-HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
   go -C server run ./cmd/ajayeb-sim tournament-tally -game haftgane \
   -check-gates -summary "$report_dir/release-summary.json" \
   "$report_dir"/release-{0,1,2,3,4}.jsonl.gz
@@ -328,8 +328,8 @@ a room latency claim.
 Maximum heap allocation sampled after a block was 17,610,736 bytes. The five
 gzip reports totalled 33670927 bytes and stay in private experiment storage;
 no large measured-data fixture is committed. Header/source/binary and report
-digests retain the reproduction inputs. The sampler, Scholar and
-capacity-release gates remain later work in the
-bot plan. [Internal room evidence](simple-bots-evidence.md) records frozen
-version meanings, the actual easy/normal/hard mapping, full-table and
-mixed-load measurements, limits and guarded rerun commands.
+digests retain the reproduction inputs. These are baseline measurements;
+[release evidence](bot-evidence.md) records the completed sampler/Scholar gates
+and remaining public-release limits. [Internal room evidence](simple-bots-evidence.md)
+retains the historical level mappings, full-table and mixed-load measurements,
+limits and guarded rerun commands.

@@ -2,6 +2,11 @@
 
 @OpenAI, 2026-10-21. Revised M12 design against the platform revision and engine design sections 11 and 16. This is design only. Timing, memory and strength claims below are proposed checks or explicitly illustrative estimates, not measurements. Duel's bots and presets stay unchanged. The sections headed "Draft decision" were accepted on 2026-10-21 as D44 to D48 and D50 of [decisions.md](../dev/decisions.md), whose entries are the ones in force.
 
+Implementation status and measurements are collected in [release bot evidence](bot-evidence.md):
+Apprentice and Scholar are implemented, Master remains unavailable, and public
+release still needs the capacity and deployment gates. The design below
+retains its proposed checks and illustrative estimates.
+
 ## Recommendation and scope
 
 Offer Apprentice, Scholar and Master with game-specific presets: noisy Greedy, sampled simultaneous play to the Age's end, and full-game rollouts respectively. Random and deterministic Greedy are simulator baselines. Observation-only Greedy and Apprentice first pass their strength, privacy and latency gates as an internal milestone. The public release waits for the sampler and Scholar, as the owner chose on 2026-10-21; Master may follow later.

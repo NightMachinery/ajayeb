@@ -261,6 +261,13 @@ The sequence in each line is p50 / p95 / p99 / maximum:
 - Whole one-human-table game compute, including engine and harness
   (100 games): 6.281 / 11.029 / 11.765 / 19.847 seconds.
 
+Across those seven-seat fields, phase-specific decision p50/p95/p99 was
+45.688/163.672/247.570 ms for ordinary turns (189,000 calls),
+19.254/134.262/212.468 ms for discard-build (1,677 calls), and
+3.066/6.023/10.115 ms for last-card (1,288 calls). Tournament sides are
+assigned before play, so there is no side-selection timing distribution.
+These are simulator service clocks, not actor pool wait or delivery times.
+
 Whole-game bot service is derived by summing actual Scholar decisions in
 each saved game, not multiplying a slow seat by six. The game-compute clock
 also includes the instant Greedy proxy and engine/harness overhead. Neither

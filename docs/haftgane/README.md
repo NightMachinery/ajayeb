@@ -18,6 +18,9 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 - **Decided:** the base game only, with cheap extension points for expansions.
 - **Decided:** one shared online lobby of 2 to 7 seats; two seats at Start make a Duel game, three to seven a Haftgane game (D60).
 
+Start with [release bot evidence](bot-evidence.md) for frozen versions, strength
+intervals, measured waits, remaining gates and guarded reruns.
+
 Current implementation guides: [the baseline bots](ai.md), [observation-only
 sampling](sampler.md), [paired Age rollouts](rollouts.md) and
 [Scholar calibration](scholar-calibration.md). The released room row and measured six-bot waits are in

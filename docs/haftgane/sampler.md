@@ -1,7 +1,9 @@
 # Haftgane observation-only sampler
 
 Implemented by @OpenAI for M21.haftgane-sampler. This engine facility does not
-enable a bot level or change the observation-only policies.
+enable a bot level or change the observation-only baseline policies. Scholar
+now consumes it through paired Age rollouts; [release evidence](bot-evidence.md)
+records the frozen integration and current measurements.
 
 `rules.Determinize(o, rng)` accepts a seated engine observation and a caller-owned
 random tape. It returns an opaque `World` and a success flag. `World.State()`
@@ -152,9 +154,10 @@ no-world or budget-out result it invokes the existing exact Greedy once, with
 separate attempts, worlds, checks, no-world fallback and budget fallback
 counters. Cancellation returns no root state or replacement key. No released
 policy, frozen preset, stored game or frame changes in this integration slice.
-The dormant `ChooseAge` runner now supplies paired Age comparisons;
+The then-dormant `ChooseAge` runner supplied paired Age comparisons;
 [the rollout guide](rollouts.md) explains multi-sample failure aggregation and
-its remaining calibration gates. No level is enabled.
+its original calibration gates. That integration slice enabled no level;
+Scholar is now integrated under the frozen row documented in release evidence.
 
 The room worker hook test pauses inside sampling while the actor serves a
 request, then changes the bot's controller and verifies physical cancellation,

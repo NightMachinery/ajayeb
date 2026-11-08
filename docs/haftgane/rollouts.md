@@ -1,15 +1,17 @@
 # Paired simultaneous Age rollouts
 
-@OpenAI. Implemented in M21.simultaneous-age-rollouts. `bot.ChooseAge` is an
-experimental worker entry point for later Scholar calibration. No released
-level calls it, and no policy/preset version, stored game, frame, Duel module
-or web asset changes. [The bot plan](bot-plan.md) defines the release gates.
+@OpenAI. Implemented in M21.simultaneous-age-rollouts. `bot.ChooseAge` is a
+worker entry point now used by the frozen Scholar room preset. The
+measurements below describe the earlier rollout slice before calibration,
+which changed no released level, stored game, frame, Duel module or web asset.
+[Release evidence](bot-evidence.md) collects the current versions and gates.
 
 ## Work and failure
 
 The input is one seated `Observation`, its exact engine offers, independent
 policy entropy and explicit `AgeWork`: sampling attempts, candidate cap and
-sampler checks per attempt. There is no default or calibrated work row.
+sampler checks per attempt. The worker has no default work row; the released caller supplies the frozen
+Scholar row documented in [release evidence](bot-evidence.md).
 The allowance is per bot; there is no bot-count input or division by table
 size. Zero attempts or zero sampler checks can exercise deterministic fallback.
 
@@ -68,8 +70,8 @@ points and Babylon's kept cards. Side policies receive no future hand.
 Every seat draws one persistent preference per sweep: balanced, economic,
 science or military. Each ranks its own estimated gain using the existing
 evaluator, with extra weight on the preference's features. Uniform additive
-noise uses the existing Apprentice milli-VP scale. This exploratory mixture
-is neither the released Apprentice policy nor a calibrated Scholar preset.
+noise uses the existing Apprentice milli-VP scale. This mixture differs from the released Apprentice policy. It was exploratory
+in this slice and was later frozen as part of the calibrated Scholar preset.
 It is independently self-interested, without a coalition or human-targeting
 term.
 
@@ -179,8 +181,8 @@ The few benchmark repetitions and host scheduling limit precision. Rebuilding
 keys once per policy/shortlist reduced temporary allocation without changing
 tapes or measured paired rewards. Calibration later cut the eight-candidate
 row to 13,992 B/op and 50 allocations/op without changing any choice
-([scholar-calibration.md](scholar-calibration.md)); calibration must assess full-table waits, quality and memory before freezing
-any preset. Work is never reduced because more bots sit at the table.
+([scholar-calibration.md](scholar-calibration.md)); calibration subsequently assessed full-table waits, quality and memory before
+freezing that preset. Work is never reduced because more bots sit at the table.
 
 ## Reproduce
 
@@ -196,5 +198,6 @@ HEAVY_NOTIFY=auto HAFTGANE_ROLLOUT_GAMES=10 HAFTGANE_ROLLOUT_MEASURE=1 \
 ```
 
 The simulated-seat mixture, evaluator, reward blend, shortlist and work bounds
-must be calibrated and versioned together in M21.scholar-calibration. This
-slice supplies the comparison engine and diagnostics, not those release rows.
+were calibrated and versioned together in M21.scholar-calibration. This
+page retains the earlier comparison-engine measurements; release evidence
+records the resulting frozen row.
