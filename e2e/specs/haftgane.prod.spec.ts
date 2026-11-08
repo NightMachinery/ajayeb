@@ -23,6 +23,30 @@ async function turn(page: Page): Promise<void> {
   await choose(page, 'confirm');
 }
 
+async function leaveCreatedRoom(page: Page): Promise<void> {
+  if (page.isClosed()) return;
+  try {
+    const frame = await page.evaluate(() => window.__ajayebTable?.latest());
+    if (frame?.status === 'playing' && frame.you.seat !== undefined) {
+      await choose(page, 'resign');
+      await expect.poll(async () => (await latest(page)).you.seat).toBeUndefined();
+    } else if (await page.locator('[data-lobby]').isVisible()) {
+      const seat = await page.evaluate(() => window.__ajayebTable?.lobby()?.you.seat);
+      if (seat !== undefined) {
+        const release = page.locator('[data-act="lobby-release"]');
+        if (!(await release.isVisible()))
+          await page.locator(`[data-act="lobby-seat-menu:${seat}"]`).click();
+        await release.click();
+        await lobbyReady(page);
+      }
+    }
+  } finally {
+    // Detach the original participant after resignation too, so an all-bot
+    // continuation cannot keep searching after this smoke test finishes.
+    await page.goto('/');
+  }
+}
+
 test.describe('Haftgane production', { tag: ['@prod', '@mobile'] }, () => {
   test.beforeEach(async ({ request }) => {
     const response = await request.get('/health');
@@ -33,29 +57,33 @@ test.describe('Haftgane production', { tag: ['@prod', '@mobile'] }, () => {
 
   test('a creator plays several turns with six Scholar bots', async ({ page }) => {
     const problems = watchHygiene(page);
-    await createTableFromHome(page);
-    await page.locator('[data-act="lobby-seats"]').selectOption('7');
-    await lobbyReady(page);
-    await scholars(page, 1, 7);
-    await choose(page, 'lobby-start');
-    await expect(page.locator('[data-table-screen]')).toBeVisible();
-    for (let i = 0; i < 3; i++) {
-      const before = await latest(page);
-      expect(before.seats.filter((s) => s.kind === 'bot')).toHaveLength(6);
-      for (const seat of before.seats.filter((s) => s.kind === 'bot'))
-        expect(seat.bot).toBe('normal');
-      await turn(page);
-      await expect.poll(async () => (await latest(page)).batch).toBeGreaterThan(before.batch);
+    try {
+      await createTableFromHome(page);
+      await page.locator('[data-act="lobby-seats"]').selectOption('7');
+      await lobbyReady(page);
+      await scholars(page, 1, 7);
+      await choose(page, 'lobby-start');
+      await expect(page.locator('[data-table-screen]')).toBeVisible();
+      for (let i = 0; i < 3; i++) {
+        const before = await latest(page);
+        expect(before.seats.filter((s) => s.kind === 'bot')).toHaveLength(6);
+        for (const seat of before.seats.filter((s) => s.kind === 'bot'))
+          expect(seat.bot).toBe('normal');
+        await turn(page);
+        await expect.poll(async () => (await latest(page)).batch).toBeGreaterThan(before.batch);
+      }
+      expect(problems).toEqual([]);
+    } finally {
+      await leaveCreatedRoom(page);
     }
-    expect(problems).toEqual([]);
   });
 
   test('two browsers play with bots and change a confirmed pick', async ({ browser }, info) => {
     const aContext = await newDeviceContext(browser, info);
     const bContext = await newDeviceContext(browser, info);
+    const a = await aContext.newPage(),
+      b = await bContext.newPage();
     try {
-      const a = await aContext.newPage(),
-        b = await bContext.newPage();
       const problemsA = watchHygiene(a),
         problemsB = watchHygiene(b);
       await createTableFromHome(a);
@@ -89,8 +117,16 @@ test.describe('Haftgane production', { tag: ['@prod', '@mobile'] }, () => {
       expect(problemsA).toEqual([]);
       expect(problemsB).toEqual([]);
     } finally {
-      await aContext.close();
-      await bContext.close();
+      try {
+        try {
+          await leaveCreatedRoom(a);
+        } finally {
+          await leaveCreatedRoom(b);
+        }
+      } finally {
+        await aContext.close();
+        await bContext.close();
+      }
     }
   });
 });
