@@ -6,6 +6,7 @@ import shlex
 import socket
 import ssl
 import subprocess
+import tarfile
 import tempfile
 import threading
 import unittest
@@ -1504,6 +1505,19 @@ class PrebuiltBinaryTests(unittest.TestCase):
 
 
 class SwapInBinaryTests(unittest.TestCase):
+    def test_rollback_stages_the_scanned_previous_binary_before_backup(self):
+        for move in (False, True):
+            with self.subTest(move=move), tempfile.TemporaryDirectory() as tmp:
+                _, originals = self._with_bin_dir(tmp)
+                try:
+                    self_host.BIN_PATH.write_bytes(b"current")
+                    self_host.BIN_PREV_PATH.write_bytes(b"reviewed-rollback")
+                    self_host.swap_in_binary(self_host.BIN_PREV_PATH, move=move)
+                    self.assertEqual(self_host.BIN_PATH.read_bytes(), b"reviewed-rollback")
+                    self.assertEqual(self_host.BIN_PREV_PATH.read_bytes(), b"current")
+                finally:
+                    self._restore(originals)
+
     def _with_bin_dir(self, tmp):
         bin_dir = Path(tmp) / "bin"
         bin_dir.mkdir(parents=True)
@@ -3041,6 +3055,34 @@ class PollHostVersionTests(unittest.TestCase):
 
 
 class CandidateRoomCheckTests(unittest.TestCase):
+    def test_schema2_and_format_incompatible_rollbacks_never_force(self):
+        # The real Go CLI tests create schema-2, format-6 table and lobby
+        # records and exercise old/future readers. The installer must refuse
+        # their error reports identically when the executable is ajayeb.prev.
+        for errors, schema_errors in ((2, 2), (2, 0)):
+            result = subprocess.CompletedProcess([], 1, stdout=json.dumps(
+                self.report(playing=0, playable=0, refreshableHashes=0,
+                            errors=errors, schemaErrors=schema_errors)))
+            with self.subTest(schema_errors=schema_errors), \
+                 mock.patch.object(self_host.subprocess, "run", return_value=result), \
+                 self.assertRaisesRegex(RuntimeError, "read/schema/operational"):
+                self_host.check_candidate_rooms(Path("ajayeb.prev"), True)
+
+    def test_backups_preserve_duel_table_and_lobby_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data, backups = Path(tmp) / "data", Path(tmp) / "backups"
+            rooms = data / "rooms"
+            rooms.mkdir(parents=True)
+            payloads = {"ABCDEF": b'{"schema":1,"game":"duel"}',
+                        "BCDEFG": b'{"schema":2,"format":6,"game":"haftgane"}',
+                        "CDEFGH": b'{"schema":2,"format":6,"game":"lobby"}'}
+            for code, raw in payloads.items(): (rooms / f"{code}.json").write_bytes(raw)
+            with mock.patch.multiple(self_host, DATA_DIR=data, BACKUPS_DIR=backups):
+                archive = self_host.archive_rooms()
+            with tarfile.open(archive, "r:gz") as backup:
+                for code, raw in payloads.items():
+                    self.assertEqual(backup.extractfile(f"rooms/{code}.json").read(), raw)
+
     def report(self, **updates):
         report = dict(format="ajayeb-room-check/1", rules=1, rooms=2, lobby=0,
                       playing=2, finished=0, archived=0, playable=2, wouldArchive=0,

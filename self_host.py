@@ -624,8 +624,6 @@ def swap_in_binary(source: Path, *, move: bool = False) -> None:
     residual copy.
     """
     BIN_DIR.mkdir(parents=True, exist_ok=True)
-    if BIN_PATH.exists():
-        shutil.copy2(BIN_PATH, BIN_PREV_PATH)
     source = Path(source)
     if source.resolve() != BIN_NEW_PATH.resolve():
         if BIN_NEW_PATH.exists():
@@ -638,6 +636,10 @@ def swap_in_binary(source: Path, *, move: bool = False) -> None:
                 source.unlink()
         else:
             shutil.copy2(source, BIN_NEW_PATH)
+    # Stage first: --prebuilt may name ajayeb.prev for a rollback. Backing
+    # up first would overwrite the candidate that passed the room scans.
+    if BIN_PATH.exists():
+        shutil.copy2(BIN_PATH, BIN_PREV_PATH)
     BIN_NEW_PATH.chmod(0o755)
     BIN_NEW_PATH.replace(BIN_PATH)
 
