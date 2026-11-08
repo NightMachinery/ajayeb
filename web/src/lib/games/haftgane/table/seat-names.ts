@@ -9,14 +9,14 @@ import { ht } from '../i18n/messages.svelte';
 import { humanAt } from './model';
 
 /** A bot level's persona name. */
-export function persona(level: string | undefined): string {
+export function persona(level: string | undefined, compact = false): string {
   switch (level) {
     case 'easy':
-      return t('game.persona.easy');
+      return t(compact ? 'game.persona.compact.easy' : 'game.persona.easy');
     case 'normal':
-      return t('game.persona.normal');
+      return t(compact ? 'game.persona.compact.normal' : 'game.persona.normal');
     case 'hard':
-      return t('game.persona.hard');
+      return t(compact ? 'game.persona.compact.hard' : 'game.persona.hard');
     default:
       return ht('hg.screen.botName');
   }
@@ -35,6 +35,7 @@ export function humanName(h: { name: string; nameNo: number }): string {
 /** Generated bot identity, kept separate from its full accessible name. */
 export interface BotName {
   label: string;
+  compactLabel: string;
   suffix: string;
 }
 
@@ -42,7 +43,11 @@ export function botName(frame: TableState, seat: number): BotName | null {
   const p = frame.seats[seat];
   if (p?.kind !== 'bot') return null;
   const n = frame.seats.filter((s) => s.seat <= seat && s.kind === 'bot' && s.bot === p.bot).length;
-  return { label: persona(p.bot), suffix: n > 1 ? formatNumber(n) : '' };
+  return {
+    label: persona(p.bot),
+    compactLabel: persona(p.bot, true),
+    suffix: n > 1 ? formatNumber(n) : ''
+  };
 }
 
 /** A seat's display name. Bots of one level share a persona name, so each

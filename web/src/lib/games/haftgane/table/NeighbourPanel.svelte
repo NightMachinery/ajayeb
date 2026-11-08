@@ -173,7 +173,7 @@
 
 {#snippet who()}
   <SeatCrest seat={seat.seat} tip={crestTip} {bot} botTip={ht('hg.screen.botBadge')} size="md" />
-  <span class="name" dir="auto"><SeatName {name} generated={generatedName} /></span>
+  <span class="name" dir="auto"><SeatName {name} generated={generatedName} compact /></span>
 {/snippet}
 
 <style>

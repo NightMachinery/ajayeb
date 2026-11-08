@@ -329,9 +329,9 @@ This catches clipped resource options even when the page itself has no overflow.
 
 Generated bot labels carry their persona and ordinal as separate display facts,
 derived from the frame's bot levels and seat order. Narrow seat labels and city
-tabs truncate only the persona, leaving its ordinal visible. They do not parse
-the full display name. Human labels retain ordinary truncation and a full-name
-tooltip; the selected city's heading wraps.
+tabs use translated compact personas, leaving the persona and its ordinal
+visible. They do not parse the full display name. Human labels retain ordinary
+truncation and a full-name tooltip; the selected city's heading wraps.
 
 End-of-Age conflict panels keep the physical left neighbour on the left in
 either locale. Each panel's text follows the locale independently of that grid.

@@ -114,6 +114,9 @@ export const game = {
   'game.persona.easy': 'شاگرد',
   'game.persona.normal': 'دانشمند',
   'game.persona.hard': 'استاد',
+  'game.persona.compact.easy': 'شاگ',
+  'game.persona.compact.normal': 'دان',
+  'game.persona.compact.hard': 'است',
 
   // The game menu in the top bar.
   'game.sound.turnOff': 'خاموش کردن صدا',

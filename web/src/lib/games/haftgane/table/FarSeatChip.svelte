@@ -70,7 +70,7 @@
       {bot}
       botTip={ht('hg.screen.botBadge')}
     />
-    <span class="name" dir="auto"><SeatName {name} generated={generatedName} /></span>
+    <span class="name" dir="auto"><SeatName {name} generated={generatedName} compact /></span>
     {#if role}<RoleTag {role} {name} compact />{/if}
   </span>
   <span class="stats">
@@ -129,8 +129,8 @@
     background: var(--panel-sunken);
   }
   .head {
-    /* Leave the hanging status badge its own space above the name. */
-    padding-inline-end: 1.25rem;
+    /* Put the row below the hanging badge so compact names get its full width. */
+    padding-block-start: 0.625rem;
     display: flex;
     align-items: center;
     gap: 0.3rem;

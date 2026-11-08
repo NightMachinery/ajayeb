@@ -57,7 +57,8 @@
       {@attach tooltip({ text: tab.tip, actionable: true })}
     >
       <SeatCrest seat={tab.seat} tip={tab.tip} bot={tab.bot} {botTip} />
-      <span class="name" dir="auto"><SeatName name={tab.name} generated={tab.generatedName} /></span
+      <span class="name" dir="auto"
+        ><SeatName name={tab.name} generated={tab.generatedName} compact /></span
       >
     </button>
   {/each}

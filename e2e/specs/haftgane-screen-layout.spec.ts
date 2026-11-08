@@ -1,11 +1,11 @@
 import { expect } from '@playwright/test';
 import { test } from '../fixtures/base';
-import { openBotTable } from '../fixtures/table';
+import { latest, openBotTable } from '../fixtures/table';
 
 for (const locale of ['en', 'fa'] as const) {
   test.describe(`Haftgane screen layout ${locale}`, () => {
     test.use({ appLocale: locale });
-    test('generated bot numbers stay visible in seats and city tabs @mobile', async ({ page }) => {
+    test('compact bot personas and numbers fit seats and city tabs @mobile', async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await openBotTable(page, 7, 'Human 42');
       const suffixes = page.locator('[data-table-screen] [data-bot-suffix]');
@@ -31,10 +31,39 @@ for (const locale of ['en', 'fa'] as const) {
         );
       }
       expect(await clipped(suffixes)).toBe(0);
+      const frame = await latest(page);
+      const compact = locale === 'en' ? 'App' : 'شاگ';
+      const full = locale === 'en' ? 'Apprentice' : 'شاگرد';
+      const digits = new Intl.NumberFormat(locale);
+      const far = page.locator('[data-table-screen] [data-relation="other"]');
+      await expect(far).toHaveCount(4);
+      for (const chip of await far.all()) {
+        const seat = Number(await chip.getAttribute('data-seat'));
+        const n = frame.seats.filter(
+          (s) => s.kind === 'bot' && s.bot === 'easy' && s.seat <= seat
+        ).length;
+        const suffix = n > 1 ? digits.format(n) : '';
+        await expect(chip.locator('[data-bot-label="compact"]')).toHaveText(compact);
+        await expect(chip.locator('.identity')).toHaveText(
+          suffix ? `${compact} ${suffix}` : compact
+        );
+        await expect(chip.locator('[data-act^="city:"]')).toHaveAttribute(
+          'aria-label',
+          new RegExp(`${full}${suffix ? ` ${suffix}` : ''}`)
+        );
+      }
+      async function expectPersonaFits(scope: typeof suffixes): Promise<void> {
+        expect(
+          await scope.evaluateAll((els) => els.every((el) => el.scrollWidth <= el.clientWidth + 1))
+        ).toBe(true);
+      }
+      await expectPersonaFits(far.locator('[data-bot-label]'));
+      await expect(page.locator('[data-relation="self"] .identity')).toHaveText('Human 42');
       await page.locator('[data-relation="left"] [data-act^="city:"]').first().click();
       const tabs = page.locator('[data-city-sheet] [data-bot-suffix]');
       await expect(tabs).toHaveCount(5);
       expect(await clipped(tabs)).toBe(0);
+      await expectPersonaFits(page.locator('[data-city-sheet] [data-bot-label]'));
       const heading = page.locator('#hg-city-title');
       expect(await heading.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
       await expect(heading).toHaveAttribute('dir', 'auto');

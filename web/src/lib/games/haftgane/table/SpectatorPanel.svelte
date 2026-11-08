@@ -87,7 +87,8 @@
           bot={bots.includes(s.seat)}
           botTip={ht('hg.screen.botBadge')}
         />
-        <span class="name" dir="auto"><SeatName {name} generated={botNames[s.seat]} /></span>
+        <span class="name" dir="auto"><SeatName {name} generated={botNames[s.seat]} compact /></span
+        >
       </button>
     {/each}
   </div>

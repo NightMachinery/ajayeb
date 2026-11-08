@@ -138,6 +138,9 @@ export const game = {
   'game.persona.easy': 'Apprentice',
   'game.persona.normal': 'Scholar',
   'game.persona.hard': 'Master',
+  'game.persona.compact.easy': 'App',
+  'game.persona.compact.normal': 'Sch',
+  'game.persona.compact.hard': 'Mst',
 
   'game.sound.turnOff': 'Turn sound off',
   'game.sound.turnOn': 'Turn sound on',

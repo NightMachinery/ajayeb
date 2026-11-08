@@ -11,9 +11,21 @@ describe('generated bot display parts', () => {
         { seat: 2, kind: 'bot', bot: 'easy' }
       ]
     });
-    expect(botName(frame, 0)).toEqual({ label: persona('easy'), suffix: '' });
-    expect(botName(frame, 1)).toEqual({ label: persona('hard'), suffix: '' });
-    expect(botName(frame, 2)).toEqual({ label: persona('easy'), suffix: '2' });
+    expect(botName(frame, 0)).toEqual({
+      label: persona('easy'),
+      compactLabel: persona('easy', true),
+      suffix: ''
+    });
+    expect(botName(frame, 1)).toEqual({
+      label: persona('hard'),
+      compactLabel: persona('hard', true),
+      suffix: ''
+    });
+    expect(botName(frame, 2)).toEqual({
+      label: persona('easy'),
+      compactLabel: persona('easy', true),
+      suffix: '2'
+    });
     expect(seatName(frame, 2)).toBe(`${persona('easy')} 2`);
   });
   it('leaves a numbered human name as user text', () => {
