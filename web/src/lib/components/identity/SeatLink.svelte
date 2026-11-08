@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '$lib/ui/clipboard';
   // The device link of one seat, where the room page shows it (the strips,
   // the city panels, the lobby): the compact button beside the name, and
   // its sheet. It shows for the player's own seat, and for every player's
@@ -9,7 +10,7 @@
   //
   // Opening it asks the server for the seat's claim (Session.requestLink),
   // builds the link (/play/<code>#claim=<claim>) and copies it at once,
-  // with the Clipboard API; when that fails the link is selected in the
+  // with the shared clipboard helper; when that fails the link is selected in the
   // sheet to copy by hand. Reset asks for a fresh claim, which stops every
   // earlier link.
   import { resolve } from '$app/paths';
@@ -71,12 +72,7 @@
 
   async function copy(): Promise<void> {
     if (!link) return;
-    try {
-      await navigator.clipboard.writeText(link);
-      copied = 'copied';
-    } catch {
-      copied = 'failed';
-    }
+    copied = (await copyText(link)) ? 'copied' : 'failed';
   }
 
   async function openSheet(): Promise<void> {

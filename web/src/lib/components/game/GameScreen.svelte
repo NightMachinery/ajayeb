@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '$lib/ui/clipboard';
   // The game screen (UX design sections 3, 5 and 6): one board markup whose
   // CSS grid areas switch with the viewport class (lib/layout/breakpoints),
   // with every sheet, the wonder-first pick mode, undo, the pending and slow
@@ -848,10 +849,9 @@
   }
 
   async function copyInvite(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
+    if (await copyText(inviteLink)) {
       toasts.show(t('online.lobby.copied'), { kind: 'success', duration: 2500 });
-    } catch {
+    } else {
       toasts.show(t('online.lobby.copyFailed'), { kind: 'warning' });
     }
   }

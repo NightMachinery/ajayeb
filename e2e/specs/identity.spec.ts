@@ -104,6 +104,37 @@ async function finishDraft(a: GameDriver, b: GameDriver): Promise<void> {
 
 test.describe('who is who', () => {
   test(
+    'a device link copies when the Clipboard API is absent',
+    { tag: ['@mobile'] },
+    async ({ browser }, testInfo) => {
+      const context = await newDeviceContext(browser, testInfo, { clipboard: true });
+      try {
+        // Retain only read access for verification. The application sees the
+        // missing API that browsers expose on a plain-HTTP intranet origin.
+        await context.addInitScript(() => {
+          const readText = navigator.clipboard.readText.bind(navigator.clipboard);
+          Object.defineProperty(window, '__readCopiedText', { value: readText });
+          Object.defineProperty(navigator, 'clipboard', { value: undefined });
+        });
+        const page = await context.newPage();
+        await createLegacyOnlineGame(page, 'Player', 'Sun');
+        await page.locator('[data-lobby] [data-control="device-link"][data-seat="0"]').click();
+        const sheet = linkSheet(page, 0);
+        await expect(sheet.locator('[data-device-link-status]')).toHaveAttribute(
+          'data-device-link-status',
+          'copied'
+        );
+        const shown = await sheet.locator('input[data-device-link]').inputValue();
+        const copied = await page.evaluate(() =>
+          (window as unknown as { __readCopiedText: () => Promise<string> }).__readCopiedText()
+        );
+        expect(copied).toBe(shown);
+      } finally {
+        await context.close();
+      }
+    }
+  );
+  test(
     'a device link moves a seat, the admin copies and resets it',
     { tag: ['@mobile'] },
     async ({ browser }, testInfo) => {

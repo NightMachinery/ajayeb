@@ -213,10 +213,11 @@ What it costs:
   them, so an invite made over `http://` sends guests to `http://`; to move a
   seat to the other scheme, change `http` or `https` in its device link
   before opening it.
-- Features that need a secure context are missing over HTTP. The Share
-  button does not appear, and copying a link to the clipboard can fail: the
-  device link sheet then selects the link for copying by hand, and the
-  lobby's Copy invite shows a warning.
+- Features that need a secure context are missing over HTTP, including the
+  Share button. Copy buttons fall back to copying selected text when the
+  Clipboard API is unavailable or rejected. If the browser also blocks that
+  fallback, the device link sheet selects the link for copying by hand and
+  the lobby's Copy invite shows a warning.
 - The redirect block answers with a permanent redirect (301), which browsers
   cache. A browser that was redirected before the switch keeps going to
   `https://` on its own until its cache is cleared; a private window does

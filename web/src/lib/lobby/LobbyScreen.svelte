@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { copyText } from '$lib/ui/clipboard';
   // The lobby renders public roster and role metadata. The actor owns every
   // permission, option and seat change, including concurrent edits and Start.
   import type { Attachment } from 'svelte/attachments';
@@ -83,12 +84,7 @@
     else change();
   }
   async function copy(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(url);
-      copied = 'done';
-    } catch {
-      copied = 'failed';
-    }
+    copied = (await copyText(url)) ? 'done' : 'failed';
   }
   async function share(): Promise<void> {
     try {

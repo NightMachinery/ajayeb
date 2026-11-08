@@ -325,3 +325,28 @@ describe('no cascade layer named in a component style block', () => {
     ).toEqual([]);
   });
 });
+
+// A single helper owns the secure-context API and the plain-HTTP fallback.
+describe('clipboard access goes through the shared helper', () => {
+  it('finds no direct navigator.clipboard access elsewhere under src/', () => {
+    const root = fileURLToPath(new URL('..', import.meta.url));
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (
+          /\.(svelte|[cm]?[jt]s)$/.test(entry.name) &&
+          !entry.name.endsWith('.test.ts') &&
+          relative(root, path) !== 'lib/ui/clipboard.ts'
+        ) {
+          const source = readFileSync(path, 'utf8');
+          if (/navigator\s*(?:\?\.|\.)\s*clipboard\b/.test(source))
+            offenders.push(relative(root, path));
+        }
+      }
+    };
+    walk(root);
+    expect(offenders, 'Use copyText from $lib/ui/clipboard for plain HTTP support.').toEqual([]);
+  });
+});
