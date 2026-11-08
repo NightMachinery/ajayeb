@@ -50,7 +50,7 @@ func TestAdminLinksArePublic(t *testing.T) {
 		t.Fatalf("a player's link of their own seat: %s", out)
 	}
 
-	// The temporary admin, a player, gets no other seat's link either.
+	// The temporary admin may recover another ordinary player's link.
 	h.on(func(a *actor) { a.st.rec.Roles.History = []string{userOf(1)} })
 	h.leave(admin, spec)
 	clk.Advance(5 * time.Minute)

@@ -26,6 +26,13 @@ func (r *Record) pruneLinks() {
 		return slotOf(r, l.UserID, SlotHuman) >= 0 || slotOf(r, l.UserID, SlotReserved) >= 0 || r.Names.Get(l.UserID).UserID == ""
 	})
 }
+
+// mayLink rechecks authority on arrival. Temporary authority cannot recover
+// a real admin's identity, whose powers would outlive the temporary role.
+func (a *actor) mayLink(user, target string) bool {
+	return user == target || a.isAdmin(user) && (a.rec.Roles.Real(user) || !a.rec.Roles.Real(target))
+}
+
 func (a *actor) link(c *room.Client, seat int, target *string, reset bool) string {
 	op := "link"
 	if reset {
@@ -44,7 +51,7 @@ func (a *actor) link(c *room.Client, seat int, target *string, reset bool) strin
 	if cl == nil || r.Names.Get(*target).UserID == "" {
 		return a.refuse(c, 0, op, outBad)
 	}
-	if user != *target && !a.isAdmin(user) {
+	if !a.mayLink(user, *target) {
 		return a.refuse(c, 0, op, outNotAdmin)
 	}
 	seat = slotOf(r, *target, SlotHuman)
@@ -72,7 +79,13 @@ func (a *actor) link(c *room.Client, seat int, target *string, reset bool) strin
 			entry.Seat = &seat
 		}
 		if reset || user != *target {
-			appendLog(&cand, entry)
+			last := len(cand.RoomLog) - 1
+			if reset && user == *target && last >= 0 && cand.RoomLog[last].Kind == "link" && cand.RoomLog[last].By == user && cand.RoomLog[last].UserID != nil && *cand.RoomLog[last].UserID == user {
+				// Repeated self-resets update one entry, retaining disclosures.
+				cand.RoomLog[last] = entry
+			} else {
+				appendLog(&cand, entry)
+			}
 		}
 		if !a.affords(c) {
 			return a.refuse(c, 0, op, outRate)

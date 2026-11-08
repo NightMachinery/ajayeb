@@ -293,7 +293,7 @@ func (a *actor) userOf(c *room.Client) string {
 	return c.UserID
 }
 
-// claimHolder returns the user of the human seat claim was made for.
+// claimHolder checks seated and remembered spectator epochs without early exit.
 // Every seat is checked, in constant time each, whatever the first says.
 // Without device links nothing is a claim.
 func (a *actor) claimHolder(r *Record, claim string) (string, bool) {
@@ -1002,8 +1002,12 @@ func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
 		if a.seatOf(target) >= 0 || !a.connected(target) {
 			return a.refuse(c, f.Seq, "seat", f.Seat, outBad)
 		}
+		epoch := cand.Public + 1
+		if current, issued := r.linkEpoch(target); issued {
+			epoch = current
+		}
 		cand.Seats[f.Seat] = SeatRecord{Seat: f.Seat, Kind: SeatHuman, UserID: target, Name: a.nameOf(target),
-			Taken: cand.Public + 1, Epoch: cand.Public + 1}
+			Taken: cand.Public + 1, Epoch: epoch}
 		entry.UserID = &target
 		secondHuman(&cand, target)
 	default:

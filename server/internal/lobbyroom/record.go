@@ -102,9 +102,10 @@ type Record struct {
 // epoch of its user's device links: 0 for a rematch's reservation and the
 // human who takes it (the claim a rematch hands out, carried into the
 // table at Start), and the revision of the change for every other
-// seating, so a claim revoked when its user lost a slot stays revoked
-// when they are seated again. The creator's first slot is epoch 0 too:
-// nothing hands out a claim for it.
+// seating unless the human already has an issued spectator link, whose
+// current epoch carries into the slot. A claim revoked by an earlier reset
+// stays revoked when its owner is seated again. The creator's first slot
+// starts at epoch 0 too.
 type Slot struct {
 	Kind   string `json:"kind"`
 	UserID string `json:"userId"`

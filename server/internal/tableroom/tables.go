@@ -293,8 +293,6 @@ type Participant struct {
 	Bot    string `json:"bot"`
 	// Epoch carries a lobby human's claim epoch unchanged at Start.
 	Epoch int `json:"-"`
-	// FreshClaim is retained for older direct callers; lobby Start uses Epoch.
-	FreshClaim bool `json:"-"`
 }
 
 // Spec is a new table: its participants in lobby order and its options.
@@ -497,9 +495,6 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 		p := spec.Participants[order[s]]
 		base.Assignment[s] = int(order[s])
 		sr := SeatRecord{Seat: s, Kind: SeatHuman, UserID: p.UserID, Name: p.Name, Epoch: p.Epoch}
-		if p.FreshClaim {
-			sr.Epoch = base.Public
-		}
 		if p.Bot != "" {
 			sr = SeatRecord{Seat: s, Kind: SeatBot, Bot: p.Bot}
 		} else {

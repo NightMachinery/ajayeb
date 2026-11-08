@@ -18,6 +18,13 @@ func (a *actor) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
 	st.Options = cloneOptions(r.Options)
 	st.Seats, st.Humans = a.meta()
 	user := a.userOf(c)
+	if a.isAdmin(user) && !r.Roles.Real(user) {
+		for i := range st.Humans {
+			if !a.mayLink(user, st.Humans[i].UserID) {
+				st.Humans[i].Linkable = nil
+			}
+		}
+	}
 	st.You = wire.PlatformYou{UserID: user}
 	if i := slotOf(r, user, SlotHuman); i >= 0 {
 		st.You.Seat = &i

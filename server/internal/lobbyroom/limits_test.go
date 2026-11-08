@@ -94,8 +94,22 @@ func largestLobbyFitsTheStore(t *testing.T, glyph string) {
 		}
 	}
 	fullNameLedger(&r, glyph)
+	for _, user := range r.Names.Users {
+		if slotOf(&r, user.UserID, SlotHuman) < 0 {
+			r.Links = append(r.Links, tableroom.LinkEpoch{UserID: user.UserID, Epoch: math.MaxInt64})
+		}
+	}
+	if len(r.Links) != maxNameUsers-MaxSeats {
+		t.Fatalf("missing eligible spectator links: %d", len(r.Links))
+	}
 	if err := validate(&r, defaultSeqClients); err != nil {
 		t.Fatalf("the largest lobby is not one a restart accepts: %v", err)
+	}
+	// The cap includes seated users who cannot also have spectator rows.
+	// After validating the reachable maximum, encode the entire nominal bound.
+	r.Links = nil
+	for i := range maxNameUsers {
+		r.Links = append(r.Links, tableroom.LinkEpoch{UserID: strings.Repeat("<", 32) + id(10, i), Epoch: math.MaxInt64})
 	}
 	data, err := r.encode()
 	if err != nil {

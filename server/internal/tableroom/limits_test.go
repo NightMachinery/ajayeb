@@ -162,8 +162,23 @@ func largestRecordFitsTheStore(t *testing.T, glyph string) {
 			r.Pending = append(r.Pending, slot)
 		}
 		fullNameLedger(&r, glyph)
+		for _, user := range r.Names.Users {
+			if seatIn(&r, user.UserID) < 0 {
+				r.Links = append(r.Links, LinkEpoch{UserID: user.UserID, Epoch: r.Public})
+			}
+		}
+		if len(r.Links) != maxNameUsers-MaxSeats {
+			t.Fatalf("missing eligible spectator links: %d", len(r.Links))
+		}
 		if err := validate(&r, &g, defaultBounds); err != nil {
 			t.Fatalf("the largest record is not one restore accepts: %v", err)
+		}
+		// The nominal link-list cap cannot coexist with a full seated roster:
+		// validate the reachable maximum above, then conservatively encode the
+		// whole bound with longest ids, just as for batches/work below.
+		r.Links = nil
+		for i := range maxNameUsers {
+			r.Links = append(r.Links, LinkEpoch{UserID: strings.Repeat("<", 32) + hexUser(10, i), Epoch: math.MaxInt64})
 		}
 		// The batches and work rows cannot coexist with this open point;
 		// add their largest encoding on top.

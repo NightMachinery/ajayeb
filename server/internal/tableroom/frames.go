@@ -80,6 +80,14 @@ func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck, withHistory boo
 	}
 	st.Seats, st.Humans = b.seats, b.humans
 	user := a.userOf(c)
+	if a.isAdmin(user) && !r.Roles.Real(user) {
+		st.Humans = slices.Clone(st.Humans)
+		for i := range st.Humans {
+			if !a.mayLink(user, st.Humans[i].UserID) {
+				st.Humans[i].Linkable = nil
+			}
+		}
+	}
 	st.You = wire.PlatformYou{UserID: user}
 	if role >= 0 {
 		seat := role

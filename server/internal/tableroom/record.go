@@ -183,8 +183,9 @@ const (
 // SeatRecord is one seat's current controller: a human or a bot. Taken
 // is the public revision when its human took it (0 at Start), which ranks
 // the candidates for the temporary admin. Epoch is the epoch of the
-// seat's device-link claims (package ident): the public revision of the
-// last time a human took the seat or its link was reset, 0 at Start. Two
+// seat's device-link claims (package ident): the latest reset or issuance
+// revision, inherited from the lobby or an existing spectator link when
+// seated, otherwise the revision when the human took the seat. Two
 // claims for one user never share an epoch, so a reset or a switch
 // revokes every claim made before it. (Records of the dev path before the
 // lobby may hold open seats; restore refuses them.)

@@ -47,6 +47,12 @@ func (r *Record) pruneLinks() {
 	})
 }
 
+// mayLink rechecks authority on arrival. Temporary authority cannot recover
+// a real admin's identity, whose powers would outlive the temporary role.
+func (a *actor) mayLink(user, target string) bool {
+	return user == target || a.isAdmin(user) && (a.st.rec.Roles.Real(user) || !a.st.rec.Roles.Real(target))
+}
+
 // link retains the historical seat-targeted API; user links also cover remembered spectators.
 func (a *actor) link(c *room.Client, seat int, reset bool) string {
 	if seat < 0 || seat >= len(a.st.rec.Seats) || a.st.rec.Seats[seat].Kind != SeatHuman {
@@ -69,7 +75,7 @@ func (a *actor) linkUser(c *room.Client, target string, reset, byUser bool) stri
 		return a.refuse(c, 0, op, seat, outBad)
 	}
 	user := a.userOf(c)
-	if user != target && !a.isAdmin(user) {
+	if !a.mayLink(user, target) {
 		return a.refuse(c, 0, op, seat, outNotAdmin)
 	}
 	epoch, issued := r.linkEpoch(target)
@@ -94,7 +100,13 @@ func (a *actor) linkUser(c *room.Client, target string, reset, byUser bool) stri
 			entry.Seat = &seat
 		}
 		if reset || user != target {
-			appendLog(&cand, entry)
+			last := len(cand.RoomLog) - 1
+			if reset && user == target && last >= 0 && cand.RoomLog[last].Kind == "link" && cand.RoomLog[last].By == user && cand.RoomLog[last].UserID != nil && *cand.RoomLog[last].UserID == user {
+				// Repeated self-resets update one entry, retaining disclosures.
+				cand.RoomLog[last] = entry
+			} else {
+				appendLog(&cand, entry)
+			}
 		}
 		if !a.affords(c) {
 			return a.refuse(c, 0, op, seat, outRate)

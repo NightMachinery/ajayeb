@@ -247,11 +247,8 @@ func (a *actor) userOf(c *room.Client) string {
 	return c.UserID
 }
 
-// claimHolder returns the user of the human or reserved slot claim was
-// made for, at the slot's claim epoch (Slot.Epoch): the only claims a
-// lobby honours are a rematch's, of epoch 0, while their user has held
-// the reservation or the slot it became without a break. Every slot is
-// checked, in constant time each.
+// claimHolder checks seated, reserved and remembered spectator epochs without
+// early exit. Every issued claim is scoped to this room and its user's epoch.
 func (a *actor) claimHolder(claim string) (string, bool) {
 	cl := a.m.Claims()
 	if cl == nil {
@@ -376,6 +373,9 @@ func (a *actor) takeSlot(user, name string, claimed bool) bool {
 	cand := r.clone()
 	cand.Revision++
 	epoch := cand.Revision
+	if current, issued := r.linkEpoch(user); issued {
+		epoch = current
+	}
 	switch {
 	case i >= 0:
 		if claimed || !validName(name) {
@@ -814,7 +814,11 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 			slotOf(r, *f.UserID, SlotHuman) >= 0 || slotOf(r, *f.UserID, SlotReserved) >= 0 {
 			return bad()
 		}
-		cand.Slots[i] = Slot{Kind: SlotHuman, UserID: *f.UserID, Name: a.nameOf(*f.UserID), Taken: cand.Revision + 1, Epoch: cand.Revision + 1}
+		epoch := cand.Revision + 1
+		if current, issued := r.linkEpoch(*f.UserID); issued {
+			epoch = current
+		}
+		cand.Slots[i] = Slot{Kind: SlotHuman, UserID: *f.UserID, Name: a.nameOf(*f.UserID), Taken: cand.Revision + 1, Epoch: epoch}
 		cand.Unseated = slices.DeleteFunc(cand.Unseated, func(u string) bool { return u == *f.UserID })
 		target, control := *f.UserID, "human"
 		appendLog(&cand, wire.PlatformLogEntry{Kind: "seat", By: user, Seat: &i, UserID: &target, Control: &control})
