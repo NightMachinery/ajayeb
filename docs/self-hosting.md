@@ -81,10 +81,11 @@ server) if the preferred port is busy, and the chosen ports are written to
 and `start` choose the ports only after stopping the running server (waiting
 up to 5 seconds for its socket to close), so a redeploy keeps the server's
 port and leaves the Caddyfile alone instead of moving to the next free port.
-`go tool air`'s
-entrypoint is fixed by `server/.air.toml` to the server's default address, so
-in dev mode the Go server itself always binds 38951; only the Vite dev
-server's port is reselected when busy.
+In dev mode, the chosen server address is passed through Air to the backend;
+Caddy and Vite use the same port. `dev-start` waits up to 90 seconds for the
+backend's `/health` on that port before starting Vite and printing the site URL.
+If the backend does not become healthy, it exits nonzero without announcing
+the site as ready.
 
 ## Configuration file
 

@@ -1,7 +1,8 @@
 # Live reload for the Go server during development. Run from server/ as
 # `go tool air` (the bare `air` name may be shadowed by a shell function).
 # The Vite dev server serves the web client; this process serves /api, /ws
-# and /health on 127.0.0.1:38951.
+# and /health. self_host.py passes --addr after -- to use its allocated port;
+# a plain `go tool air` uses the backend default, 127.0.0.1:38951.
 root = "."
 tmp_dir = "tmp"
 

@@ -1119,11 +1119,10 @@ def start_server_prod(ports: Ports, site: Site) -> None:
 
 
 def start_server_dev(ports: Ports) -> None:
-    # go tool air rebuilds ./cmd/ajayeb on save (server/.air.toml, frozen and
-    # not owned by this slice); its entrypoint binds the default address, so
-    # the dev server port tracks DEFAULT_SERVER_PORT rather than the
-    # allocated one. We still record the allocated port for status/config.
-    tmuxnew(DEV_SERVER_SESSION, "go tool air", cwd=SERVER_DIR, env_args=tmux_env_args())
+    # Air appends arguments after -- to the configured backend entrypoint.
+    command = f"go tool air -- --addr 127.0.0.1:{ports.server}"
+    env_args = tmux_env_args() + ["-e", f"GOTOOLCHAIN={GO_TOOLCHAIN}"]
+    tmuxnew(DEV_SERVER_SESSION, command, cwd=SERVER_DIR, env_args=env_args)
 
 
 def web_dev_command(ports: Ports) -> tuple[str, dict[str, str]]:
@@ -1939,6 +1938,11 @@ def command_dev_start(url: str | None, both_schemes: bool | None = None, caddyfi
     save_config(config)
     apply_caddyfile_safely(config.site, Mode.DEV, config.ports, config.both_schemes)
     start_server_dev(config.ports)
+    if not poll_health(config.ports.server, timeout=STARTUP_HEALTH_POLL_TIMEOUT, progress=True):
+        raise RuntimeError(
+            f"development game server startup could not be verified on port {config.ports.server}: "
+            f"/health did not respond within {STARTUP_HEALTH_POLL_TIMEOUT:g}s"
+        )
     start_web_dev(config.ports)
     announce_serving(config)
 

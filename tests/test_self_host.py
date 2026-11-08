@@ -2044,6 +2044,7 @@ class ProductionCaddyFailureTests(unittest.TestCase):
             validate_caddyfile=mock.Mock(return_value=subprocess.CompletedProcess([], 0, stderr="")),
             reload_caddy=mock.Mock(side_effect=subprocess.CalledProcessError(1, ["caddy", "reload"])),
             start_server_dev=mock.DEFAULT,
+            poll_health=mock.Mock(return_value=True),
             start_web_dev=mock.DEFAULT,
             announce_serving=mock.DEFAULT,
         ) as mocks, redirect_stderr(io.StringIO()) as stderr:
@@ -2226,6 +2227,7 @@ class PortsAfterStopTests(unittest.TestCase):
             find_go=mock.DEFAULT,
             install_web=mock.DEFAULT,
             start_server_dev=mock.DEFAULT,
+            poll_health=mock.Mock(return_value=True),
             start_web_dev=mock.DEFAULT,
         )
         with mock.patch.multiple(self_host, **dev) as mocks:
@@ -3169,10 +3171,6 @@ class CandidateRoomCheckTests(unittest.TestCase):
             self.assertIs(mocks["deploy_remote"].call_args.kwargs["force_room_archive"], True)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class URLDefaultTests(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
@@ -3222,3 +3220,7 @@ class URLDefaultTests(unittest.TestCase):
     def test_first_ship_remembers_the_explicit_url_without_a_domain_default(self):
         self_host.remember_ship_target("deploy@example.test", "game", url="http://explicit.example.test")
         self.assertEqual(self_host.load_config().site.origin, "http://explicit.example.test")
+
+
+if __name__ == "__main__":
+    unittest.main()
