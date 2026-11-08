@@ -35,11 +35,12 @@ class SelfHostTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self_host.parse_site_url("https://ajayeb.example.com/room/demo")
 
-    def test_parse_url_defaults_to_https_ajayeb(self):
+    @mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": "example.test"})
+    def test_parse_url_defaults_to_environment_domain(self):
         site = self_host.parse_site_url(None)
         self.assertEqual(site.scheme, "https")
-        self.assertEqual(site.host, "ajayeb.lilf.ir")
-        self.assertEqual(site.origin, "https://ajayeb.lilf.ir")
+        self.assertEqual(site.host, "ajayeb.example.test")
+        self.assertEqual(site.origin, "https://ajayeb.example.test")
 
     def test_prod_caddy_block_is_single_reverse_proxy_with_redirect(self):
         site = self_host.parse_site_url("https://game.example.test")
@@ -597,7 +598,7 @@ class SelfHostTests(unittest.TestCase):
         self.assertEqual(restored.ship, self_host.ShipTarget("user@example.host", "a-dir"))
 
     def test_config_without_ship_omits_it_from_json(self):
-        cfg = self_host.Config(site=self_host.parse_site_url(None), mode=self_host.Mode.PROD)
+        cfg = self_host.Config(site=self_host.parse_site_url("https://game.example.test"), mode=self_host.Mode.PROD)
         self.assertNotIn("ship", cfg.to_json())
         self.assertIsNone(self_host.Config.from_json(cfg.to_json()).ship)
 
@@ -2309,6 +2310,7 @@ class PortsAfterStopTests(unittest.TestCase):
                     self.assertEqual(command.call_args.args[index], want)
 
 
+@mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": "example.test"})
 class ShipTargetMemoryTests(unittest.TestCase):
     def _with_config_file(self, tmp):
         config_dir = Path(tmp) / ".self-host"
@@ -2501,7 +2503,7 @@ class CommandShipTests(unittest.TestCase):
                 self_host.command_ship(None, "https://game.example.test", None)
             self.assertIn("v0.9.0", stderr.getvalue())
             self.assertIn("v1.0.0", stderr.getvalue())
-            mocks["remember_ship_target"].assert_called_once_with("user@example.host", "ajayeb")
+            mocks["remember_ship_target"].assert_called_once_with("user@example.host", "ajayeb", url="https://game.example.test")
             mocks["deploy_remote"].assert_called_once_with(
                 "user@example.host", "ajayeb", "setup", "https://game.example.test", None, None
             )
@@ -3169,3 +3171,54 @@ class CandidateRoomCheckTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class URLDefaultTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        for name, value in (("CONFIG_DIR", Path(tmp.name)),
+                            ("CONFIG_FILE", Path(tmp.name) / "config.json")):
+            patcher = mock.patch.object(self_host, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        patcher = mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": ""})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def save_site(self):
+        self_host.save_config(self_host.Config(
+            site=self_host.parse_site_url("http://saved.example.test:8080"), mode=self_host.Mode.PROD))
+
+    def test_explicit_url_overrides_saved_url_and_environment(self):
+        self.save_site()
+        with mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": "environment.test"}):
+            self.assertEqual(self_host.resolve_config("https://explicit.example.test").site.origin,
+                             "https://explicit.example.test")
+
+    def test_saved_url_overrides_environment(self):
+        self.save_site()
+        with mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": "environment.test"}):
+            self.assertEqual(self_host.resolve_config(None).site.origin, "http://saved.example.test:8080")
+
+    def test_existing_install_needs_no_domain_environment(self):
+        self.save_site()
+        self.assertEqual(self_host.resolve_config(None).site.origin, "http://saved.example.test:8080")
+
+    def test_environment_supplies_a_new_install_default(self):
+        with mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": "environment.test"}):
+            self.assertEqual(self_host.resolve_config(None).site.origin, "https://ajayeb.environment.test")
+
+    def test_missing_default_asks_for_a_url(self):
+        for domain in ("", "   "):
+            with self.subTest(domain=domain), mock.patch.dict(os.environ, {"BGD_DEFAULT_DOMAIN": domain}):
+                with self.assertRaisesRegex(ValueError, "pass a url or set BGD_DEFAULT_DOMAIN"):
+                    self_host.resolve_config(None)
+
+    def test_explicit_url_needs_no_environment_or_saved_config(self):
+        self.assertEqual(self_host.resolve_config("http://explicit.example.test").site.origin,
+                         "http://explicit.example.test")
+
+    def test_first_ship_remembers_the_explicit_url_without_a_domain_default(self):
+        self_host.remember_ship_target("deploy@example.test", "game", url="http://explicit.example.test")
+        self.assertEqual(self_host.load_config().site.origin, "http://explicit.example.test")

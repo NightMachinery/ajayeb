@@ -66,7 +66,6 @@ CADDY_RECHECK_DELAY = 1.0
 # API's /adapt and /load). `caddy run --config FILE` and `caddy reload
 # --config FILE` hide FILE itself there instead.
 ADAPTED_TEXT_HIDE = "./Caddyfile"
-DEFAULT_URL = "https://ajayeb.lilf.ir"
 DEFAULT_NODE_VERSION = "24"
 HEALTH_POLL_TIMEOUT = 10.0
 # Cold starts on slow hosts need a separate budget from a routine health probe.
@@ -231,7 +230,12 @@ class Config:
 
 
 def parse_site_url(value: str | None) -> Site:
-    parsed = urlparse(value or DEFAULT_URL)
+    if not value:
+        domain = os.environ.get("BGD_DEFAULT_DOMAIN", "").strip()
+        if not domain:
+            raise ValueError("No site URL configured; pass a url or set BGD_DEFAULT_DOMAIN")
+        value = f"https://ajayeb.{domain}"
+    parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"}:
         raise ValueError("URL must start with http:// or https://")
     if not parsed.hostname:
@@ -1451,11 +1455,11 @@ def poll_remote_version(
         return None
 
 
-def remember_ship_target(target: str, remote_dir: str) -> None:
+def remember_ship_target(target: str, remote_dir: str, url: str | None = None) -> None:
     existing = load_config()
     ship = ShipTarget(target, remote_dir)
     if existing is None:
-        config = Config(site=parse_site_url(None), mode=Mode.PROD, ship=ship)
+        config = Config(site=parse_site_url(url), mode=Mode.PROD, ship=ship)
     else:
         config = replace(existing, ship=ship)
     save_config(config)
@@ -1533,7 +1537,7 @@ def command_ship(
     deploy_remote(target, remote_dir, deploy_command, url, both_schemes, caddyfile,
                   **({"force_room_archive": True} if force_room_archive else {}))
 
-    remember_ship_target(target, remote_dir)
+    remember_ship_target(target, remote_dir, **({"url": url} if url else {}))
 
     if not url:
         print("no url given; skipping the post-deploy health poll")
@@ -2005,7 +2009,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     def add_url(p: argparse.ArgumentParser) -> None:
-        p.add_argument("url", nargs="?", help=f"Site origin, default {DEFAULT_URL}")
+        p.add_argument("url", nargs="?", help="Site origin; defaults to the saved URL, then "
+                       "https://ajayeb.<BGD_DEFAULT_DOMAIN>; required if neither is set")
 
     def add_both_schemes(p: argparse.ArgumentParser) -> None:
         # A pair of store_const flags rather than BooleanOptionalAction, which

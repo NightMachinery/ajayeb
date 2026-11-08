@@ -8,8 +8,9 @@ Docker. It is adapted from the snow-white project's `self_host.py`.
 
 Run `./self_host.py <command> [url]` from the repository root. The url
 argument is optional; it defaults to the site recorded in
-`.self-host/config.json`, or `https://ajayeb.lilf.ir` if nothing is
-recorded yet.
+`.self-host/config.json`, then to `https://ajayeb.<BGD_DEFAULT_DOMAIN>`
+when that environment variable is set. For a new install without that variable,
+pass an explicit url. Existing installs keep their recorded URL.
 
 - `setup [url] [--prebuilt PATH]`: first-time install. Installs web
   dependencies, builds the production web bundle, builds the Go server with
@@ -656,8 +657,7 @@ of the deployed site itself: `GET /health`, Home in both themes, a short
 online game between two isolated browser contexts (at least five moves,
 through the confirm step), and a short game against the bot. It builds
 nothing and starts nothing local; it only drives a browser against
-`PROD_URL` (default `https://ajayeb.lilf.ir`, the site `self_host.py`
-targets by default too):
+`PROD_URL`. Pass the deployed site explicitly:
 
 ```
 make e2e-prod PROD_URL=https://staging.example
