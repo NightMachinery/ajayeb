@@ -343,3 +343,18 @@ the locale's direction inside that structure.
 
 The same separate bot suffix is used in spectator follow buttons, the seat
 management list, the viewer's conflict panels and the final reveal's seat labels.
+
+### Symbol tooltips
+
+Resource tiles own their tooltips, including the relevant production quantity,
+printed cost or server-sent trade price. Each science symbol in the city strip and city sheet
+names itself and its server-sent count. Group backgrounds retain the production
+and science summaries. In a choice effect each resource or science option is a
+separate target; repeated shields describe one military-strength effect.
+Per-card rewards explain each category independently, and the reward amount
+retains the whole effect's explanation.
+
+These tooltips link to Haftgane's matching rules section. Chain symbols also
+preview the actual cards they connect, including printed costs and effects.
+Generic resource and science symbols have no card preview because they do not
+identify a particular card. Touch keeps the shared tap and long-press behavior.

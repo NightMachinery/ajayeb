@@ -39,7 +39,8 @@
   // A chain symbol on a card: one it provides (what it makes free later)
   // or the one that makes it free, ringed, with the card names in its
   // tooltip.
-  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { hgTooltip } from './tooltip';
+  import CardPreview from './CardPreview.svelte';
   import { hgDesignSlugs } from '$lib/wire/haftgane-catalog.gen';
   import { ht } from '../i18n/messages.svelte';
   import HgGlyph from './HgGlyph.svelte';
@@ -53,6 +54,11 @@
   let { chain, direction }: Props = $props();
 
   const cardName = (slug: string) => ht(`hg.card.${slug}` as 'hg.card.forum');
+  const linked = $derived(
+    direction === 'out'
+      ? [chain]
+      : hgDesignSlugs.filter((s) => design(s)?.chainOut?.includes(chain as never))
+  );
   const tip = $derived.by(() => {
     if (direction === 'out') return ht('hg.screen.chain.out', { card: cardName(chain) });
     const from = hgDesignSlugs.filter((s) => design(s)?.chainOut?.includes(chain as never));
@@ -68,10 +74,21 @@
   data-chain-dir={direction}
   role="img"
   aria-label={tip}
-  {@attach tooltip({ text: tip })}
+  {@attach hgTooltip({
+    text: tip,
+    rulesId: 'costs',
+    stack: linked.slice(0, 2).map((slug, i) => ({
+      kind: 'custom',
+      caption: cardName(slug),
+      render: i === 0 ? firstPreview : secondPreview
+    }))
+  })}
 >
   <HgGlyph name={chainDrawing(chain)} />
 </span>
+
+{#snippet firstPreview()}<CardPreview slug={linked[0] ?? ''} />{/snippet}
+{#snippet secondPreview()}<CardPreview slug={linked[1] ?? ''} />{/snippet}
 
 <style>
   .chain {

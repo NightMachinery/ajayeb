@@ -131,6 +131,9 @@ export const screen = {
   'hg.screen.colourName.green': 'Science buildings',
   'hg.screen.colourName.purple': 'Guilds',
 
+  'hg.screen.making.option': '{resource}: one option from this production unit each turn.',
+  'hg.screen.science.symbol': '{symbol} science symbols: {count}',
+  'hg.screen.science.option': '{symbol}: one possible science symbol, chosen at scoring.',
   'hg.screen.making.tip': 'What your city makes each turn:',
   'hg.screen.making.one': '{count} × {resource}',
   'hg.screen.making.choice': 'One of {options}',

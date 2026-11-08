@@ -7,7 +7,7 @@
   // `onopen` the crest and name form a button that opens the city. An
   // admin's role tag follows the name.
   import { formatNumber } from '$lib/i18n';
-  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { hgTooltip } from './tooltip';
   import type { Seat } from '$lib/wire/haftgane.gen';
   import Painting from '../art/Painting.svelte';
   import { wonderArtId, WONDER_STRIP_SIZES } from '../art/catalog';
@@ -147,15 +147,23 @@
       data-making
       role="img"
       aria-label={[ht('hg.screen.making.tip'), ...makingLines].join(' ')}
-      {@attach tooltip({ text: ht('hg.screen.making.tip'), lines: makingLines })}
+      {@attach hgTooltip({
+        text: ht('hg.screen.making.tip'),
+        lines: makingLines,
+        rulesId: 'resources'
+      })}
     >
       {#each made as m, i (i)}
         {#if m.choice}
           <span class="choice">
-            {#each m.res as r (r)}<ResourceTile res={r} size="xs" />{/each}
+            {#each m.res as r (r)}<ResourceTile
+                res={r}
+                size="xs"
+                tip={ht('hg.screen.making.option', { resource: resName(r) })}
+              />{/each}
           </span>
         {:else}
-          <ResourceTile res={m.res[0] ?? ''} />
+          <ResourceTile res={m.res[0] ?? ''} tip={makingLines[i]} />
           {#if m.n > 1}<span class="n">{formatNumber(m.n)}</span>{/if}
         {/if}
       {/each}
@@ -166,10 +174,19 @@
       data-science-symbols
       role="img"
       aria-label={scienceTip}
-      {@attach tooltip({ text: scienceTip })}
+      {@attach hgTooltip({ text: scienceTip, rulesId: 'science' })}
     >
       {#each SYMBOLS as s, i (s)}
-        <span class="sym"
+        {@const symbolTip = ht('hg.screen.science.symbol', {
+          symbol: ht(`hg.science.${s}`),
+          count: seat.science.counts[i] ?? 0
+        })}
+        <span
+          class="sym"
+          data-science-symbol={s}
+          role="img"
+          aria-label={symbolTip}
+          {@attach hgTooltip({ text: symbolTip, rulesId: 'science' })}
           ><HgGlyph name="science-{s}-sm" />{formatNumber(seat.science.counts[i] ?? 0)}</span
         >
       {/each}
@@ -177,7 +194,12 @@
     <span class="colours"><ColourCounts built={seat.built} hideZero /></span>
   </div>
   <div class="row">
-    <span class="wonder" role="img" aria-label={wonderTip} {@attach tooltip({ text: wonderTip })}>
+    <span
+      class="wonder"
+      role="img"
+      aria-label={wonderTip}
+      {@attach hgTooltip({ text: wonderTip, rulesId: 'wonders' })}
+    >
       <span class="wonder-picture"
         ><Painting id={wonderArtId(seat.board)} sizes={WONDER_STRIP_SIZES}
           >{#snippet fallback()}<HgGlyph name="wonder" />{/snippet}</Painting

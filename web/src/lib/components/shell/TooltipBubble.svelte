@@ -13,7 +13,6 @@
   // open. The link is not in the tab order: keyboard users open the rules from the game menu.
   import type { Snippet } from 'svelte';
   import { i18n, t } from '$lib/i18n';
-  import type { RuleSectionId } from '../rules/sections';
 
   interface Props {
     text: string;
@@ -28,9 +27,9 @@
     arrowX?: number;
     id?: string;
     /** The rules section of the "More in Rules" link; no link without it. */
-    rulesId?: RuleSectionId;
+    rulesId?: string;
     /** The link was clicked or tapped (the layer opens the rules). */
-    onrules?: (section: RuleSectionId) => void;
+    onrules?: (section: string) => void;
     /** Must position the bubble (relative or absolute): the arrow hangs
      *  off its edge. */
     class?: string;

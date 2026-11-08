@@ -12,7 +12,7 @@
 //   panels and two far chips, each with its status;
 // - the hand card of the pending pick carries the drafted
 //   pick tag;
-// - every glyph and image on the board sits inside a tooltip anchor, or in
+// - every meaningful glyph has its own concept tooltip, or sits in
 //   a button whose visible label already says what it is, and a trade
 //   chip's tooltip names its price;
 // - nothing animates with Animation off, and no console error or failed
@@ -41,7 +41,18 @@ async function untipped(page: Page): Promise<string[]> {
     for (const el of root.querySelectorAll('svg, [role="img"]')) {
       if (el.parentElement?.closest('svg')) continue;
       if (!el.getClientRects().length) continue;
-      if (el.closest('[data-tooltip]')) continue;
+      if (el.closest('[data-card-art]')) continue; // decorative painting/placeholder
+      const anchor = el.closest('[data-tooltip]');
+      // Group summaries and whole-card fallbacks do not explain a symbol.
+      // Repeated identical shields are one strength effect; a mixed effect
+      // needs an anchor for each distinct concept.
+      const broad = anchor?.matches('[data-making], [data-science-symbols], [data-act^="hand:"]');
+      const mixed =
+        anchor?.matches('[data-effect]') &&
+        new Set(
+          [...anchor.querySelectorAll('[data-glyph]')].map((g) => g.getAttribute('data-glyph'))
+        ).size > 1;
+      if (anchor && (anchor === el || (!broad && !mixed))) continue;
       const button = el.closest('button');
       const label = button && [...button.childNodes].some((n) => n.textContent?.trim());
       if (label) continue;

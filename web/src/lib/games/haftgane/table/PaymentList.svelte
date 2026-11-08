@@ -102,7 +102,7 @@
                   aria-label={unitTip(c, i)}
                   {@attach tooltip({ text: unitTip(c, i), actionable: true })}
                 >
-                  <ResourceTile res={u.resource} />
+                  <ResourceTile res={u.resource} tip={unitTip(c, i)} rulesId="trade" />
                   {#if source !== 'own'}<span class="unit-price">{formatNumber(u.price)}</span>{/if}
                 </span>
               {/each}

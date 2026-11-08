@@ -124,6 +124,9 @@ export const screen = {
   'hg.screen.colourName.green': 'ساختمان‌های علمی',
   'hg.screen.colourName.purple': 'انجمن‌ها',
 
+  'hg.screen.making.option': '{resource}: یکی از گزینه‌های این واحد تولید در هر نوبت.',
+  'hg.screen.science.symbol': 'نمادهای علمی {symbol}: {count}',
+  'hg.screen.science.option': '{symbol}: یکی از نمادهای علمی قابل انتخاب هنگام امتیازشماری.',
   'hg.screen.making.tip': 'آنچه شهر شما در هر نوبت تولید می‌کند:',
   'hg.screen.making.one': '{count} × {resource}',
   'hg.screen.making.choice': 'یکی از {options}',

@@ -261,7 +261,17 @@
                         aria-label={ht(`hg.resource.${u.resource}` as 'hg.resource.wood')}
                         {@attach tooltip({
                           text: ht(`hg.resource.${u.resource}` as 'hg.resource.wood')
-                        })}><ResourceTile res={u.resource} /></span
+                        })}
+                        ><ResourceTile
+                          res={u.resource}
+                          tip={source === 'own'
+                            ? ht(`hg.resource.${u.resource}` as 'hg.resource.wood')
+                            : ht('hg.sheet.unit', {
+                                resource: ht(`hg.resource.${u.resource}` as 'hg.resource.wood'),
+                                price: u.price
+                              })}
+                          rulesId="trade"
+                        /></span
                       >{/each}</span
                   >
                 {/if}

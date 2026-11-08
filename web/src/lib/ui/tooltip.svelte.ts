@@ -29,7 +29,6 @@
 
 import { untrack, type Snippet } from 'svelte';
 import type { Attachment } from 'svelte/attachments';
-import type { RuleSectionId } from '$lib/components/rules/sections';
 import { isQuietFocus, swallowClick } from './dismiss';
 import {
   downAction,
@@ -66,7 +65,9 @@ export interface TooltipContent {
   stack?: readonly TooltipStackItem[];
   /** The rules reference section this tooltip's topic belongs to: the
    *  bubble shows a "More in Rules" link that opens it. */
-  rulesId?: RuleSectionId;
+  rulesId?: string;
+  /** A game may open its own rules reference; absent this, use Duel. */
+  onrules?: (section: string) => void | Promise<void>;
   /** Whether a tap on the anchor acts, when the DOM cannot tell (the
    *  default looks for a button, a link, a data-act and the like on the
    *  anchor or an ancestor). */

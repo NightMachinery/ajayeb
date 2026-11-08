@@ -62,8 +62,15 @@
       {:else}
         {#each grouped(st.cost.res) as g (g.res)}
           <span class="cost"
-            ><ResourceTile res={g.res} size="xs" />{#if g.n > 1}<span>{formatNumber(g.n)}</span
-              >{/if}</span
+            ><ResourceTile
+              res={g.res}
+              size="xs"
+              tip={ht('hg.screen.cost.res', {
+                count: g.n,
+                resource: ht(`hg.resource.${g.res}` as 'hg.resource.wood')
+              })}
+              rulesId="costs"
+            />{#if g.n > 1}<span>{formatNumber(g.n)}</span>{/if}</span
           >
         {/each}
       {/if}

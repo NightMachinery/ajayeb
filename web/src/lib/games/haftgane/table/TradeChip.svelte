@@ -58,7 +58,17 @@
     <span class="res">
       {#each unit.options as o, i (o.resource)}
         {#if i > 0}<span class="slash" aria-hidden="true">/</span>{/if}
-        <ResourceTile res={o.resource} />
+        <ResourceTile
+          res={o.resource}
+          tip={ht('hg.screen.trade.many', {
+            name,
+            count: unit.count,
+            resource: resName(o.resource),
+            price: o.price
+          })}
+          {lines}
+          rulesId="trade"
+        />
       {/each}
     </span>
     {#if unit.count > 1}<span class="count" dir="ltr">×{formatNumber(unit.count)}</span>{/if}

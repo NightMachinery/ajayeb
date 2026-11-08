@@ -39,7 +39,7 @@
       resource: ht(`hg.resource.${g.res}` as 'hg.resource.wood')
     })}
     <span class="res" role="img" aria-label={tip} {@attach tooltip({ text: tip })}>
-      <ResourceTile res={g.res} size="xs" />
+      <ResourceTile res={g.res} size="xs" {tip} rulesId="costs" />
       {#if g.n > 1}<span>{formatNumber(g.n)}</span>{/if}
     </span>
   {/each}

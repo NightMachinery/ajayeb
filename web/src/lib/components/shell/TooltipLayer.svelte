@@ -13,7 +13,7 @@
   // never crosses.
   import { tooltips, installTooltipGestures, TOOLTIP_ID } from '$lib/ui/tooltip.svelte';
   import { openRules } from '../rules/rules-overlay.svelte';
-  import type { RuleSectionId } from '../rules/sections';
+  import { isRuleSectionId } from '../rules/sections';
   import { placeTooltip } from '$lib/ui/tooltip-place';
   import type { Attachment } from 'svelte/attachments';
   import TooltipBubble from './TooltipBubble.svelte';
@@ -28,9 +28,11 @@
   const active = $derived(tooltips.active);
 
   /** The bubble's "More in Rules" link: close the tooltip, open the rules. */
-  function moreRules(section: RuleSectionId): void {
+  function moreRules(section: string): void {
+    const onrules = active?.content.onrules;
     tooltips.hide();
-    void openRules(section);
+    if (onrules) void onrules(section);
+    else if (isRuleSectionId(section)) void openRules(section);
   }
 
   // DOM listeners only; they write the store from events, never here.

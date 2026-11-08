@@ -10,6 +10,7 @@
   import type { Snippet } from 'svelte';
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { hgTooltip } from './tooltip';
   import type { Seat } from '$lib/wire/haftgane.gen';
   import { ht } from '../i18n/messages.svelte';
   import CityRows from './CityRows.svelte';
@@ -201,10 +202,19 @@
       data-science
       role="img"
       aria-label={[scienceTip, ...scienceLines].join(' ')}
-      {@attach tooltip({ text: scienceTip, lines: scienceLines })}
+      {@attach hgTooltip({ text: scienceTip, lines: scienceLines, rulesId: 'science' })}
     >
       {#each SYMBOLS as s, i (s)}
-        <span class="sym"
+        {@const symbolTip = ht('hg.screen.science.symbol', {
+          symbol: ht(`hg.science.${s}`),
+          count: seat.science.counts[i] ?? 0
+        })}
+        <span
+          class="sym"
+          data-science-symbol={s}
+          role="img"
+          aria-label={symbolTip}
+          {@attach hgTooltip({ text: symbolTip, rulesId: 'science' })}
           ><HgGlyph name="science-{s}-sm" />{formatNumber(seat.science.counts[i] ?? 0)}</span
         >
       {/each}
@@ -251,10 +261,13 @@
           {#if m.choice}
             {#each m.res as r, j (r)}{#if j > 0}<span class="slash">/</span>{/if}<ResourceTile
                 res={r}
+                tip={ht('hg.screen.making.option', {
+                  resource: ht(`hg.resource.${r}` as 'hg.resource.wood')
+                })}
                 size="xs"
               />{/each}
           {:else}
-            <ResourceTile res={m.res[0] ?? ''} />
+            <ResourceTile res={m.res[0] ?? ''} {tip} />
             {#if m.n > 1}<span dir="ltr">×{formatNumber(m.n)}</span>{/if}
           {/if}
         </span>
