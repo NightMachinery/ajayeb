@@ -76,9 +76,7 @@ func (a *actor) kickBots() {
 		waitStart := time.Now()
 		err := roomWork.Acquire(ctx)
 		report.RoomWorkWait = time.Since(waitStart)
-		if err == nil {
-			defer roomWork.Release()
-		}
+		roomAdmitted := err == nil
 		waitStart = time.Now()
 		if err == nil && pool != nil {
 			err = pool.AcquireFor(ctx, key)
@@ -119,6 +117,11 @@ func (a *actor) kickBots() {
 				report.Counters, report.AgeCounters, report.Fallback = decision.Counters, decision.ageCounters, res.fallback
 				res.key = decision.Key
 			}()
+		}
+		// Admission bounds the search, not observers or actor inbox delivery.
+		// Even a cancelled shared-pool waiter must release its room permit.
+		if roomAdmitted {
+			roomWork.Release()
 		}
 		if err == nil {
 			err = ctx.Err()

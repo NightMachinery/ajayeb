@@ -31,3 +31,24 @@ func TestRoomWorkQueueHoldsNoSearchPermit(t *testing.T) {
 		t.Fatal("admission permit leak")
 	}
 }
+
+func TestRoomWorkReleasedBeforeObserverAndResultDelivery(t *testing.T) {
+	pool, gate := ai.NewPool(2), ai.NewPool(1)
+	reports := make(chan bool, 4)
+	h := newTH(t, Config{Pool: pool, RoomWork: gate, BotFinished: func(BotReport) {
+		// The result is sent to the actor only after this callback returns,
+		// so the next seat cannot have acquired either permit yet.
+		reports <- gate.InUse() == 0 && pool.InUse() == 0
+	}}, soloSpec(3, 913, BotEasy))
+	for range 2 {
+		select {
+		case free := <-reports:
+			if !free {
+				t.Fatal("search permit held through observer/result delivery")
+			}
+		case <-h.ctx.Done():
+			t.Fatal("bot report did not arrive")
+		}
+	}
+	h.f.close()
+}
