@@ -706,3 +706,39 @@ Source: the owner's messages of 2026-11-08.
 **Relation.** Refines the swallowed-tap rule in AGENTS.md ("Tooltips").
 
 Source: the owner's message of 2026-11-08 ("the stacked custom built tooltips and the rules page are a must have"); the M22 platform audit.
+
+## D64. Room roles follow the owner's platform defaults
+
+**Decision (2026-11-08).** In the shared lobby and Haftgane tables, these rules replace D42's provisional calls:
+
+- **The creator is permanent.** The creator's admin powers never end: the creator cannot step down or be demoted. Other admins may still step down.
+- **Temporary admins have full admin powers**, including promoting and demoting. Anyone a temporary admin promotes is also temporary, and loses the role whenever temporary admins do.
+- **Choosing a temporary admin.** When every real admin has been disconnected for five minutes, a connected human who was a temporary admin before in this room is chosen first (the most recent one); only when none is present is one chosen at random among the connected humans, seated first, then spectators. The room remembers who has been temporary across restarts.
+- A real admin's return still ends every temporary admin's powers at once.
+- **Observers rejoin by themselves.** A human moved to the spectators (replaced by a bot, or moved out of a lobby seat) may take their own former seat back, without an admin, while that seat is open or held by a bot. They cannot take a seat another human holds. This lets a player undo an admin's move of them, which the owner accepts. The rejoin shows in the game log like any seat switch.
+
+**Rationale.** The owner's platform defaults of 2026-11-08 ("1. adopt", "3. allow", "4. make perma").
+
+**Relation.** Supersedes D42's provisional calls on stepping down, temporary admins' powers and the longest-seated choice, and D42's rule that only an admin seats a spectator, for one's own former seat. Duel games keep D60 unchanged: a two-player game freezes its admin set at Start.
+
+Source: the owner's answers of 2026-11-08; the M22 platform audit.
+
+## D65. Admins can copy any player's device link, publicly
+
+**Decision (2026-11-08).** Every human in a lobby or a Haftgane table has their own device link with copy and reset controls, as Duel has. Any admin, real or temporary, may also copy another human's link, through a compact icon-only button by that player's name. Copying another player's link writes a public log entry naming the admin and the player, so everyone sees that it happened. Resetting a link revokes the old one and detaches sessions that used it.
+
+**Rationale.** The owner's answer "allow it". A link lets its holder see that seat's private hand; the public log entry makes any misuse visible, which the owner prefers to forbidding the recovery path.
+
+**Relation.** Supersedes the own-seat-only rule in `tableroom/links.go`. Extends D14's claims to the lobby. Duel's link rules stay as they are (D60).
+
+Source: the owner's answers of 2026-11-08.
+
+## D66. The too-small-window notice can be dismissed
+
+**Decision (2026-11-08).** Below each game's minimum size, the notice that asks for a larger window or a rotation stays, but a tap on it (or its button) dismisses it and shows the squeezed layout anyway. The dismissal lasts for the page's life, and the notice returns only if the window shrinks further below a much smaller hard floor, if any.
+
+**Rationale.** The owner's answer: "keep the notice but allow bypassing it by tapping; the small layout might still be useful".
+
+**Relation.** Both games.
+
+Source: the owner's answers of 2026-11-08.
