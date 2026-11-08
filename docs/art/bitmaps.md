@@ -550,12 +550,7 @@ resolution and at the shipped thumbnail size (cards at 120 px, tokens at
   and what it does not).
 - The paper background feathers cleanly; nothing looks like a hard
   rectangle waiting to be masked.
-- Background architecture reads as palaces, domed garden pavilions and
-  kiosks, never minarets or mosques, unless the asset's own `subject`
-  names one.
-- Culturally respectful, per `art/style.md`'s avoid list: no religious
-  figures, no political or national emblems, no heraldic animals on
-  buildings or banners, no anachronisms.
+- No anachronisms, per `art/style.md`'s avoid list.
 - No filler animals (deer, peacocks, a row of cypress trees) unless the
   asset's own `subject` names one.
 - The shipped byte budget is met (or the quality floor is hit and the

@@ -38,7 +38,6 @@ The blind check's 12 px DPR 2 and 16 px DPR 1 sheets bracket the two common size
   - The conflict tokens, the pass mark and the ability glyphs (spec [haftgane-conflicts-passing-abilities.md](haftgane-conflicts-passing-abilities.md)): the intact and the split pennant on a staff, two cards over a horizontal arrow, the stepped ziggurat, the bays with a check, a card with a plus, a palette, a card against a bracket.
   - The category glyphs, which show beside seats in the city's colour counts: the mountain, the anvil, the domed gate, the eight-point star, the purse, the crossed swords and the crown. Also `hint-crown`, `token-frame`'s rosette, `vp-laurel`'s wreath, `wonder`'s gateway, `shield`, `coin`, `choice`'s Y and `military-pawn`.
 - So no crest is a star, tower, sun, moon, gear, compass, tablet, scroll, book, lyre, crown, rosette, flag, shield, amphora, purse, awning or quadruped.
-- **No faith, state or heraldic meaning** ([art/style.md](../../style.md), "Culturally respectful"). No crest is a deity's emblem, a religious amulet, a national or political emblem, or a heraldic animal such as a bird of prey or a lion. Crests come from daily life, trade and nature in the ancient world, and each metaphor describes the generic thing, not a sacred or state one. The first draft's scarab (an Egyptian amulet) and falcon (the bird of Horus, and a national emblem of living states) broke this rule and were replaced by the boat and the bee.
 
 ## The seven crests
 

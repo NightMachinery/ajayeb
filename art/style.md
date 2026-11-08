@@ -54,9 +54,7 @@ tilework (girih strapwork, not representational mosaics); ornamental clouds
 (the Chinese-cloud motif Safavid painting borrowed); tiny figures in period
 dress, shown from the flattened three-quarter angle typical of the idiom;
 domes, arches and columns for architecture; calm water rendered as a
-patterned ripple, not a realistic reflection. Background buildings read as
-palaces, domed garden pavilions and kiosks, not places of worship: see
-"Don't" below. A card shows one only when its subject names one (see the
+patterned ripple, not a realistic reflection. A card shows a background building only when its subject names one (see the
 card template): a small background kiosk was where most pseudo-writing
 appeared in the Haftgane cards (M19.bitmaps-production-sites), as a band of
 script-like marks on its parapet or eave, and leaving it out removed the
@@ -91,23 +89,6 @@ fault.
   the bitmap.
 - **A frame, border or watermark.** The processing step feathers the image
   into the card; a hard rectangle or a drawn border fights that.
-- **Religious figures or scenes of worship as the subject.** A temple or an
-  altar is shown as architecture and a quiet gathering, never a depicted
-  deity or a specific rite. No shape that forms a religious symbol by accident either:
-  a lone post with a short crossbar standing against the paper reads as a
-  cross. A vine trellis drew one in the Haftgane Vineyard
-  (M19.bitmaps-civic-and-commercial); posts that stop at a continuous beam
-  avoid it.
-- **Background buildings are palaces, domed garden pavilions and kiosks.**
-  No minarets, no mosques, no religious buildings, unless the asset's own
-  `subject` names one. A skyline filling the background of a scene is
-  secular civic architecture, not a place of worship.
-- **Political or national emblems.** No lion-and-sun, no flag, no
-  fleur-de-lis, no crest tied to a real nation, ancient or modern. Patterned
-  robes use rosettes and leafy sprigs, not a repeated emblem.
-- **No heraldic animals on buildings or banners.** No lions, no winged
-  lions, no eagles as carved, painted or bannered emblems, and no lion
-  paired with a sun disc or sun orb.
 - **No filler animals unless the asset's own `subject` names one.** Deer,
   peacocks and a row of cypress trees are motifs, not a default background;
   reusing them on every card is what makes the set look repetitive.
@@ -116,17 +97,6 @@ fault.
 - **Any likeness of the official game's art, card frames or iconography.**
   These prompts are written from scratch per [docs/legal.md](../docs/legal.md)
   and never reference the published game's illustrations.
-
-## Culturally respectful
-
-The Persian-miniature idiom is a painting style, not a costume for a
-specific culture's sacred or political symbols. Depict generic period
-figures, trades and buildings; avoid identifiable religious iconography,
-named historical rulers, and any symbol tied to a living nation or faith.
-When a subject from `art/subjects.json` would need one of those to read
-correctly, it is written to avoid the need instead (see the `theology`
-token, which reads as a lit lamp and olive leaves rather than a national
-crescent-and-star).
 
 ## Kind templates
 
@@ -193,10 +163,8 @@ must tile, so it has no vignette at all.
 > pastel edges, patterned tilework, ornamental clouds, tiny figures in
 > period dress. The sky and background are plain ivory paper, never gold
 > leaf; gold appears only on small details such as finials, rims and a sun
-> disc. Background buildings are palaces, domed garden pavilions and
-> kiosks; no minarets, no mosques, no religious buildings unless the
-> subject names one. Robes are plain or patterned with small rosettes or
-> leafy sprigs, never fleur-de-lis or another repeated emblem. One clear
+> disc. Robes are plain or patterned with small rosettes or leafy sprigs.
+> One clear
 > central subject readable as a small thumbnail, calm uncluttered
 > background of warm ivory paper. No inscriptions, no glyph friezes, no
 > writing on scrolls, pages, banners, cloth or buildings; scrolls and
