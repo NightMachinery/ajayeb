@@ -1,7 +1,9 @@
 # Experimental Scholar calibration
 
-@OpenAI, 2026-11-07/08. Work in progress: no preset is selected or exposed to
-rooms. The offline `scholar-calibrate` command measures explicit `AgeWork`
+@OpenAI, 2026-11-07/08. The experimental candidate is frozen at two
+attempts, eight candidates and 1,048,576 sampler checks per attempt. The
+existing 3/4 rank plus 1/4 win reward, four rollout preferences and 1,500
+key-indexed policy noise are unchanged. No preset is exposed to rooms. The offline `scholar-calibrate` command measures explicit `AgeWork`
 rows, independently of released levels. [The bot plan](bot-plan.md) defines
 the gates; [the rollout guide](rollouts.md) describes the search.
 
@@ -25,8 +27,8 @@ held-out gate over all counts. The range obtained from the cheapest and most
 expensive observed Scholar seat-game rates was 3.88 to 15.66 hours. This is
 a throughput extrapolation, not a confidence interval or an execution bound.
 The coordinator accepted the mean estimate as within the eight-hour run
-limit. Validation and cancellation acceptance still precede any freeze;
-held-out games have not been run.
+limit. This was an early forecast; validation and the final implementation
+measurements below preceded freezing.
 
 ## Validation before freezing
 
@@ -113,8 +115,9 @@ per load. Load one adds a continuously computing goroutine on the same Go
 CPU thread. A timer-cancel probe is reported separately; a short unwind
 cannot substitute for the complete-call poll gap.
 
-Initial loaded poll-gap p99 was 50.975 ms, failing the 50 ms target. Tracing
-identified sampler matching and multi-quote evaluation stretches. Polls
+Initial loaded poll-gap p99 was 50.975 ms, failing the 50 ms target. Slow
+traced intervals ended near matching and multi-quote evaluation, without
+establishing where that interval was spent. Polls
 now split sampler matching traversals and individual evaluation quotes,
 including cutoff evaluation. These polls neither charge additional sampler
 checks nor change features, candidate ordering or random draws. The same
@@ -152,7 +155,7 @@ p99/max was 30.070/52.407 ms. One loaded maximum exceeded 50 ms; the declared
 p99 target passed. Separate timer-cancel p99 was 0.021 ms across 105 loaded
 cancelled calls, with 23 calls completing before the timer. The maximum-gap
 result remains the acceptance measure. No diagnostic GC settings were used
-in this final probe. Full verification and the held-out gate remain pending.
+in this final probe. `make verify-quick` passed. The held-out gate remains pending.
 
 ## Measured rollout approximations
 
@@ -251,3 +254,40 @@ GOMAXPROCS=1 GOTOOLCHAIN=go1.26.3 HEAVY_NOTIFY=auto \
 `HAFTGANE_SCHOLAR_TRACE=1` enables the separate expensive call-site tracer.
 Scheduler tracing also perturbs timing. Diagnostic trace runs do not count
 as cancellation acceptance evidence.
+
+## Worker watchdog probe
+
+The opt-in `TestScholarWorkerWatchdogMeasurements` shadows the full `2x8`
+row inside the existing admitted-worker hook, under a one-permit pool and
+the unchanged 30-second watchdog. One seven-seat table runs at a time.
+Released Greedy still chooses accepted actions after the shadow search, so
+these trajectories measure worker completion and watchdog behavior, not
+Scholar strength. Every shadow call must complete both attempts without
+a Greedy fallback; worker reports and durable records must contain no
+ordinary watchdog fallback. Run with `HAFTGANE_SCHOLAR_WORKER=1` through the
+guard.
+
+Across three seven-seat shadow games at `GOMAXPROCS=1`, all 349 calls
+completed their full work with zero watchdog or Greedy sample fallbacks.
+The maximum active worker duration was 116.0 ms. The same three trajectories
+passed under the race detector with zero fallbacks; its slower clocks are
+not used for latency estimates. No other tables or artificial CPU workers
+competed for the one pool permit.
+
+## Frozen held-out plan
+
+The final implementation repeated one development block at each count
+(113 games) and matched every accepted batch, final result and final hash
+from the earlier implementation. Its throughput projects 5.79 hours for
+the full gate, with observed-rate range 4.09 to 7.40 hours. One six-bot
+game took 4.62 seconds; its decision p50/p95/p99 was 34.25/121.10/134.72 ms
+(108 calls), and actual per-point service was 190.44/765.81/765.81 ms
+(18 points). These are a preflight, not a reliable game-tail estimate.
+
+The row above is fixed before any held-out play. The plan is 100 independent
+blocks per count at three through seven seats, epoch one, all treatments,
+11,300 unique games, one preserved binary and ten resumable shards. Normal
+GC, `GOMAXPROCS=1` and zero additional CPU workers apply throughout. The
+strength look happens once, after all 500 count-blocks complete. Failure
+requires reporting the miss; any subsequent informed change needs fresh
+held-out seeds. Neither the candidate nor this experiment enables a level.
