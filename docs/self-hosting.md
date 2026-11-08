@@ -50,6 +50,17 @@ pass an explicit url. Existing installs keep their recorded URL.
 Without either flag they keep the recorded choice, which is off for a new
 install. `ship` passes the flag on to the remote `setup` or `redeploy`.
 
+`setup`, `redeploy`, `start`, `ship` and `ship-all` also accept
+`--haftgane-tables` or `--no-haftgane-tables`. This release choice is recorded
+as `haftgane_tables` in the serving host's `.self-host/config.json`.
+Without either flag, the recorded choice is kept; new and legacy installs
+default to off. Enabling it adds Haftgane to Home and allows new tables on
+an ordinary production server. Disabling it hides new creation while
+existing tables and lobbies remain readable. Duel stays available.
+For example, `./self_host.py start --haftgane-tables` enables it locally;
+`./self_host.py ship --no-haftgane-tables` explicitly disables it remotely.
+An ordinary later `start`, `redeploy` or `ship` preserves that remote choice.
+
 The same commands take `--caddyfile PATH`, the Caddyfile the running Caddy
 reads. In this document, **the Caddyfile** means that file: `~/Caddyfile`
 unless `--caddyfile` has named another. `PATH` is absolute or relative to
@@ -154,6 +165,12 @@ from Caddy on the same host; the per-address limits of the socket and of the
 replay download (`GET /api/rooms/{code}/log`) count the real client this way
 instead of counting every player as Caddy. `--origin` restricts which WebSocket origins the
 server accepts.
+
+When the saved Haftgane release choice is on, this command also includes
+`--haftgane-tables`. It uses the server's measured default of one
+`--haftgane-bot-rooms` worker, with the complete Scholar budget for every
+bot. It does not enable development mode or development endpoints.
+See [Haftgane capacity](haftgane/capacity.md) for the accepted waits.
 
 Caddy's managed block, between `# BEGIN ajayeb self_host.py` and `# END
 ajayeb self_host.py` in the Caddyfile, is a redirect from the opposite scheme
@@ -482,7 +499,8 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
 4. Runs `setup --prebuilt .self-host/bin/ajayeb.upload [url]` over SSH on
    the remote side, or `redeploy` instead of `setup` when the remote
    already has a `.self-host/config.json`. `--both-schemes`,
-   `--no-both-schemes` and `--caddyfile PATH` are passed on when given, and
+   `--no-both-schemes`, `--haftgane-tables`, `--no-haftgane-tables` and
+   `--caddyfile PATH` are passed on when given, and
    the remote host records them in its own config, so a later `ship` can
    leave them out. `--prebuilt` installs by moving
    the uploaded binary into `.self-host/bin/ajayeb` rather than copying it,
@@ -556,8 +574,11 @@ keeps the command's build-once guarantee and prevents an incompatible binary
 from reaching a host. Use separate target files for different architectures.
 
 After preflight, it reuses `ship`'s build, upload and setup/redeploy steps.
-Each remote keeps its own remembered ports, `both_schemes` and Caddyfile path.
-The one batch safety override, `--force-room-archive`, explicitly accepts
+Each remote keeps its own remembered ports, `both_schemes`, Caddyfile path
+and Haftgane release choice. `ship-all --haftgane-tables` or
+`ship-all --no-haftgane-tables` changes that remembered release choice on
+every target; omitting both preserves each target's own setting.
+The batch safety override, `--force-room-archive`, explicitly accepts
 live-room archiving on every target for that invocation only. The local remembered single-target
 `ship` destination is left alone. A new host uses the normal setup defaults;
 configure host-specific options with single-target `ship` first if needed.

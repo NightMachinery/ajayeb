@@ -3264,5 +3264,123 @@ class URLDefaultTests(unittest.TestCase):
         self.assertEqual(self_host.load_config().site.origin, "http://explicit.example.test")
 
 
+class HaftganeReleaseOptionTests(unittest.TestCase):
+    def config(self, enabled=False):
+        return self_host.Config(self_host.parse_site_url("https://game.example.test"),
+                                self_host.Mode.PROD, haftgane_tables=enabled)
+
+    def test_saved_option_roundtrips_and_legacy_or_non_boolean_values_default_off(self):
+        for enabled in (False, True):
+            restored = self_host.Config.from_json(self.config(enabled).to_json())
+            self.assertIs(restored.haftgane_tables, enabled)
+        for value in (None, False, 1, "true"):
+            raw = {"url": "https://game.example.test"}
+            if value is not None: raw["haftgane_tables"] = value
+            self.assertFalse(self_host.Config.from_json(json.dumps(raw)).haftgane_tables)
+
+    def test_resolve_config_keeps_saved_choice_and_remembers_explicit_disable(self):
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.multiple(
+            self_host, CONFIG_DIR=Path(tmp), CONFIG_FILE=Path(tmp) / "config.json"
+        ):
+            self.assertFalse(self_host.resolve_config("https://game.example.test").haftgane_tables)
+            self_host.save_config(self.config(True))
+            self.assertTrue(self_host.resolve_config(None).haftgane_tables)
+            self.assertTrue(self_host.resolve_config("https://other.example.test").haftgane_tables)
+            disabled = self_host.resolve_config(None, haftgane_tables=False)
+            self.assertFalse(disabled.haftgane_tables)
+            self_host.save_config(disabled)
+            self.assertFalse(self_host.resolve_config(None).haftgane_tables)
+            self.assertTrue(self_host.resolve_config(None, haftgane_tables=True).haftgane_tables)
+
+    def test_cli_option_is_three_way_and_exclusive_for_every_production_command(self):
+        cases = (("setup", "command_setup"), ("redeploy", "command_redeploy"),
+                 ("start", "command_start"), ("ship", "command_ship"), ("ship-all", "command_ship_all"))
+        for name, function in cases:
+            for flags, expected in (([], None), (["--haftgane-tables"], True), (["--no-haftgane-tables"], False)):
+                with self.subTest(command=name, flags=flags), mock.patch.object(self_host, function, return_value=0) as called:
+                    self.assertIs(self_host.build_parser().parse_args([name, *flags]).haftgane_tables, expected)
+                    self.assertEqual(self_host.main([name, *flags]), 0)
+                    self.assertIs(called.call_args.kwargs.get("haftgane_tables"), expected)
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                self_host.build_parser().parse_args([name, "--haftgane-tables", "--no-haftgane-tables"])
+
+    def test_production_command_adds_only_the_release_flag_and_uses_default_admission(self):
+        cfg = self.config()
+        self.assertNotIn("--haftgane-tables", self_host.server_prod_command(cfg.ports, Path("data"), cfg.site))
+        command = self_host.server_prod_command(cfg.ports, Path("data"), cfg.site, True)
+        self.assertEqual(command.count("--haftgane-tables"), 1)
+        for flag in ("--dev", "--dev-endpoints", "--haftgane-bot-rooms"):
+            self.assertNotIn(flag, command)
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(self_host, "DATA_DIR", Path(tmp)), \
+             mock.patch.object(self_host, "tmuxnew") as tmux:
+            self_host.start_server_prod(cfg.ports, cfg.site, True)
+            self.assertIn("--haftgane-tables", shlex.split(tmux.call_args.args[1]))
+
+    def test_setup_redeploy_and_start_save_and_launch_the_effective_choice(self):
+        for name in ("setup", "redeploy", "start"):
+            for saved, override in ((False, None), (True, None), (False, True), (True, False)):
+                cfg = self.config(saved)
+                expected = saved if override is None else override
+                with self.subTest(command=name, saved=saved, override=override), mock.patch.multiple(
+                    self_host, load_config=mock.Mock(return_value=cfg), ensure_tools=mock.DEFAULT,
+                    check_prebuilt_binary=mock.DEFAULT, check_candidate_rooms=mock.DEFAULT,
+                    command_stop=mock.DEFAULT, wait_for_port_free=mock.Mock(return_value=True),
+                    ports_after_stop=mock.Mock(side_effect=lambda c: c), save_config=mock.DEFAULT,
+                    use_caddyfile=mock.DEFAULT, prepare_prod_caddy=mock.Mock(return_value=None),
+                    apply_caddyfile_safely=mock.Mock(return_value=True), archive_rooms=mock.Mock(return_value=None),
+                    swap_in_binary=mock.DEFAULT, start_server_prod=mock.DEFAULT,
+                    poll_health=mock.Mock(return_value=True), announce_serving=mock.DEFAULT,
+                ) as mocks, mock.patch.object(self_host, "BIN_PATH", Path(__file__)):
+                    if name == "start": self_host.command_start(None, haftgane_tables=override)
+                    else: getattr(self_host, f"command_{name}")(None, "candidate", haftgane_tables=override)
+                    self.assertIs(mocks["save_config"].call_args.args[0].haftgane_tables, expected)
+                    self.assertIs(mocks["start_server_prod"].call_args.kwargs.get("haftgane_tables", False), expected)
+
+    def test_failed_stopped_scan_restarts_with_previous_saved_release_choice(self):
+        for previous in (False, True):
+            cfg = self.config(not previous)
+            with self.subTest(previous=previous), mock.patch.object(self_host, "BIN_PATH", Path(__file__)), \
+                 mock.patch.multiple(self_host, load_config=mock.Mock(return_value=self.config(previous)),
+                                     check_candidate_rooms=mock.Mock(side_effect=[None, RuntimeError("scan failed")]),
+                                     command_stop=mock.DEFAULT, wait_for_port_free=mock.Mock(return_value=True),
+                                     start_server_prod=mock.DEFAULT, poll_health=mock.Mock(return_value=True)) as mocks:
+                with self.assertRaisesRegex(RuntimeError, "scan failed"):
+                    self_host.stop_for_candidate(cfg, Path("candidate"), False)
+                self.assertIs(mocks["start_server_prod"].call_args.kwargs.get("haftgane_tables", False), previous)
+
+    def test_remote_forwarding_preserves_absence_and_explicit_false(self):
+        for choice in (None, False, True):
+            with self.subTest(choice=choice), mock.patch.object(self_host, "run") as run:
+                self_host.deploy_remote("example.host", "game", "redeploy", None, haftgane_tables=choice)
+                tokens = shlex.split(run.call_args.args[0][-1])
+                self.assertEqual("--haftgane-tables" in tokens, choice is True)
+                self.assertEqual("--no-haftgane-tables" in tokens, choice is False)
+
+    def test_ship_forwards_explicit_choice_without_taking_local_serving_choice(self):
+        for choice in (None, False, True):
+            with self.subTest(choice=choice), CommandShipTests()._patched() as mocks:
+                mocks["resolve_ship_target"].return_value = self_host.ShipTarget("example.host", "game")
+                mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+                self_host.command_ship(None, None, None, haftgane_tables=choice)
+                self.assertIs(mocks["deploy_remote"].call_args.kwargs.get("haftgane_tables"), choice)
+
+    def test_ship_all_forwards_explicit_choice_to_each_remote_and_keeps_defaults(self):
+        targets = [self_host.DeployTarget(self_host.ShipTarget(f"host-{i}.example.test"), self.config().site)
+                   for i in range(2)]
+        for choice in (None, False, True):
+            with self.subTest(choice=choice), mock.patch.multiple(
+                self_host, load_deploy_targets=mock.Mock(return_value=targets),
+                detect_remote_platform=mock.Mock(return_value=("linux", "amd64")),
+                git_version=mock.Mock(return_value="v-test"), cross_build=mock.DEFAULT,
+                upload_to_remote=mock.DEFAULT, determine_deploy_command=mock.Mock(return_value="redeploy"),
+                deploy_remote=mock.DEFAULT, poll_host_version=mock.Mock(return_value="v-test"),
+                poll_public_version=mock.Mock(return_value="v-test"),
+            ) as mocks:
+                self.assertEqual(self_host.command_ship_all(haftgane_tables=choice), 0)
+                self.assertEqual(mocks["deploy_remote"].call_count, 2)
+                for call in mocks["deploy_remote"].call_args_list:
+                    self.assertIs(call.kwargs.get("haftgane_tables"), choice)
+
+
 if __name__ == "__main__":
     unittest.main()

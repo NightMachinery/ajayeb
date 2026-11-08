@@ -202,6 +202,8 @@ class Config:
     # The Caddyfile the running Caddy reads, if not ~/Caddyfile: absolute, or
     # relative to the home directory (caddyfile_path).
     caddyfile: str | None = None
+    # Public Haftgane creation; saved per server, off for new/legacy installs.
+    haftgane_tables: bool = False
 
     def to_json(self) -> str:
         payload: dict[str, object] = {
@@ -209,6 +211,7 @@ class Config:
             "mode": self.mode.value,
             "ports": self.ports.to_json(),
             "both_schemes": self.both_schemes,
+            "haftgane_tables": self.haftgane_tables,
         }
         if self.ship is not None:
             payload["ship"] = self.ship.to_json()
@@ -226,6 +229,7 @@ class Config:
             ship=ShipTarget.from_json(raw.get("ship")),
             both_schemes=raw.get("both_schemes") is True,
             caddyfile=str(raw["caddyfile"]) if raw.get("caddyfile") else None,
+            haftgane_tables=raw.get("haftgane_tables") is True,
         )
 
 
@@ -590,6 +594,7 @@ def stop_for_candidate(config: Config, candidate: Path, force_room_archive: bool
     """
     check_candidate_rooms(candidate, force_room_archive)
     previous_binary = BIN_PATH.is_file()
+    previous_config = load_config() if previous_binary else None
     command_stop()
     try:
         if not wait_for_port_free(config.ports.server):
@@ -598,7 +603,8 @@ def stop_for_candidate(config: Config, candidate: Path, force_room_archive: bool
     except BaseException:
         if previous_binary:
             try:
-                start_server_prod(config.ports, config.site)
+                start_server_prod(config.ports, config.site,
+                                  **({"haftgane_tables": True} if previous_config and previous_config.haftgane_tables else {}))
                 if not poll_health(config.ports.server, timeout=STARTUP_HEALTH_POLL_TIMEOUT, progress=True):
                     raise RuntimeError("previous server health check failed")
                 print("previous binary restarted after stopped room check failed", file=sys.stderr)
@@ -1092,7 +1098,7 @@ def poll_health(
     return False
 
 
-def server_prod_command(ports: Ports, data_dir: Path, site: Site) -> list[str]:
+def server_prod_command(ports: Ports, data_dir: Path, site: Site, haftgane_tables: bool = False) -> list[str]:
     return [
         str(BIN_PATH),
         "--addr",
@@ -1103,6 +1109,7 @@ def server_prod_command(ports: Ports, data_dir: Path, site: Site) -> list[str]:
         site.origin,
         "--trust-proxy",
         TRUST_PROXY_PROD,
+        *(["--haftgane-tables"] if haftgane_tables else []),
     ]
 
 
@@ -1110,9 +1117,9 @@ def server_prod_env() -> dict[str, str]:
     return {"GOMEMLIMIT": GOMEMLIMIT_PROD}
 
 
-def start_server_prod(ports: Ports, site: Site) -> None:
+def start_server_prod(ports: Ports, site: Site, haftgane_tables: bool = False) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    cmd = server_prod_command(ports, DATA_DIR, site)
+    cmd = server_prod_command(ports, DATA_DIR, site, haftgane_tables)
     env_pairs = {**server_prod_env(), **{k: v for k, v in os.environ.items() if k in PROXY_ENV_NAMES}}
     env_args: list[str] = []
     for key, value in env_pairs.items():
@@ -1142,9 +1149,10 @@ def resolve_config(
     fallback_mode: Mode = Mode.PROD,
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
+    haftgane_tables: bool | None = None,
 ) -> Config:
     """The config to run with: the stored one, overridden by url, and by
-    both_schemes and caddyfile unless they are None (None keeps the stored
+    both_schemes, caddyfile and haftgane_tables unless None (keeps the stored
     choice, so a plain redeploy or the boot-time start never drops it)."""
     existing = load_config()
     site = parse_site_url(url) if url else existing.site if existing else parse_site_url(None)
@@ -1152,6 +1160,8 @@ def resolve_config(
         both_schemes = existing.both_schemes if existing else False
     if caddyfile is None:
         caddyfile = existing.caddyfile if existing else None
+    if haftgane_tables is None:
+        haftgane_tables = existing.haftgane_tables if existing else False
     return Config(
         site,
         fallback_mode,
@@ -1159,6 +1169,7 @@ def resolve_config(
         existing.ship if existing else None,
         both_schemes,
         caddyfile or None,
+        haftgane_tables,
     )
 
 
@@ -1407,6 +1418,7 @@ def remote_deploy_command(
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
     force_room_archive: bool = False,
+    haftgane_tables: bool | None = None,
 ) -> list[str]:
     parts = [
         "cd",
@@ -1420,6 +1432,8 @@ def remote_deploy_command(
     ]
     if both_schemes is not None:
         parts.append("--both-schemes" if both_schemes else "--no-both-schemes")
+    if haftgane_tables is not None:
+        parts.append("--haftgane-tables" if haftgane_tables else "--no-haftgane-tables")
     if caddyfile is not None:
         parts.extend(["--caddyfile", shlex.quote(caddyfile)])
     if force_room_archive:
@@ -1437,9 +1451,11 @@ def deploy_remote(
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
     force_room_archive: bool = False,
+    haftgane_tables: bool | None = None,
 ) -> None:
     run(remote_deploy_command(target, remote_dir, deploy_command, url, both_schemes, caddyfile,
-                              **({"force_room_archive": True} if force_room_archive else {})))
+                              **({"force_room_archive": True} if force_room_archive else {}),
+                              **({"haftgane_tables": haftgane_tables} if haftgane_tables is not None else {})))
 
 
 def poll_remote_version(
@@ -1506,6 +1522,7 @@ def command_ship(
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
     force_room_archive: bool = False,
+    haftgane_tables: bool | None = None,
 ) -> None:
     if target is not None and looks_like_url(target):
         # `ship URL` with a remembered target: argparse puts URL in the
@@ -1536,7 +1553,8 @@ def command_ship(
     deploy_command = determine_deploy_command(target, remote_dir)
     print(f"remote command: {deploy_command}")
     deploy_remote(target, remote_dir, deploy_command, url, both_schemes, caddyfile,
-                  **({"force_room_archive": True} if force_room_archive else {}))
+                  **({"force_room_archive": True} if force_room_archive else {}),
+                  **({"haftgane_tables": haftgane_tables} if haftgane_tables is not None else {}))
 
     remember_ship_target(target, remote_dir, **({"url": url} if url else {}))
 
@@ -1730,7 +1748,7 @@ def poll_public_version(
     raise failure
 
 
-def command_ship_all(force_room_archive: bool = False) -> int:
+def command_ship_all(force_room_archive: bool = False, haftgane_tables: bool | None = None) -> int:
     targets = load_deploy_targets()
     platforms: list[tuple[str, str] | None] = []
     platform_errors: list[str | None] = []
@@ -1770,10 +1788,11 @@ def command_ship_all(force_room_archive: bool = False) -> int:
         try:
             upload_to_remote(target, remote_dir, binary)
             deploy_command = determine_deploy_command(target, remote_dir)
-            # No flag overrides: each host retains its own both_schemes,
-            # caddyfile and ports from its remembered config.
+            # Each host retains its own options unless this invocation
+            # explicitly changes the remembered Haftgane release switch.
             deploy_remote(target, remote_dir, deploy_command, entry.site.origin,
-                          **({"force_room_archive": True} if force_room_archive else {}))
+                          **({"force_room_archive": True} if force_room_archive else {}),
+                          **({"haftgane_tables": haftgane_tables} if haftgane_tables is not None else {}))
         except Exception as exc:
             deployment = f"failed ({type(exc).__name__})"
 
@@ -1825,7 +1844,8 @@ def start_prod_with_caddy(config: Config, caddy_error: Exception | None) -> None
             caddy_error = exc
             print(f"warning: Caddy configuration failed: {exc}", file=sys.stderr)
     try:
-        start_server_prod(config.ports, config.site)
+        start_server_prod(config.ports, config.site,
+                          **({"haftgane_tables": True} if config.haftgane_tables else {}))
         healthy = poll_health(config.ports.server, timeout=STARTUP_HEALTH_POLL_TIMEOUT, progress=True)
     except Exception as exc:
         raise RuntimeError(f"game server startup failed on port {config.ports.server}: {exc}") from exc
@@ -1851,8 +1871,10 @@ def start_prod_with_caddy(config: Config, caddy_error: Exception | None) -> None
 def command_setup(
     url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None,
     force_room_archive: bool = False,
+    haftgane_tables: bool | None = None,
 ) -> None:
-    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
+    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile,
+                            **({"haftgane_tables": haftgane_tables} if haftgane_tables is not None else {}))
     use_caddyfile(config)
     ensure_tools(["tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
@@ -1880,8 +1902,10 @@ def command_setup(
 def command_redeploy(
     url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None,
     force_room_archive: bool = False,
+    haftgane_tables: bool | None = None,
 ) -> None:
-    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
+    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile,
+                            **({"haftgane_tables": haftgane_tables} if haftgane_tables is not None else {}))
     use_caddyfile(config)
     ensure_tools(["tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
@@ -1910,8 +1934,10 @@ def command_redeploy(
     start_prod_with_caddy(config, caddy_error)
 
 
-def command_start(url: str | None, both_schemes: bool | None = None, caddyfile: str | None = None) -> None:
-    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
+def command_start(url: str | None, both_schemes: bool | None = None, caddyfile: str | None = None,
+                  haftgane_tables: bool | None = None) -> None:
+    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile,
+                            **({"haftgane_tables": haftgane_tables} if haftgane_tables is not None else {}))
     use_caddyfile(config)
     ensure_tools(["tmux"])
     caddy_error = prepare_prod_caddy(config)
@@ -1978,6 +2004,7 @@ def command_status() -> None:
         print(f"url: {config.site.origin}")
         print(f"mode: {config.mode.value}")
         print(f"both schemes: {'yes, http:// and https:// both serve the site' if config.both_schemes else 'no'}")
+        print(f"Haftgane creation: {'on' if config.haftgane_tables else 'off'}")
         print(f"caddyfile: {caddyfile_path(config.caddyfile)}")
         print(f"server port: {config.ports.server}")
         print(f"web dev port: {config.ports.web_dev}")
@@ -2039,6 +2066,17 @@ def build_parser() -> argparse.ArgumentParser:
             help="redirect the other scheme to the site's own again (remembered)",
         )
 
+    def add_haftgane_tables(p: argparse.ArgumentParser) -> None:
+        group = p.add_mutually_exclusive_group()
+        group.add_argument(
+            "--haftgane-tables", dest="haftgane_tables", action="store_const", const=True, default=None,
+            help="enable public Haftgane creation (remembered; omitted keeps the stored choice, off for a new install)",
+        )
+        group.add_argument(
+            "--no-haftgane-tables", dest="haftgane_tables", action="store_const", const=False,
+            help="disable new Haftgane creation without preventing existing tables from loading (remembered)",
+        )
+
     def add_caddyfile(p: argparse.ArgumentParser) -> None:
         p.add_argument(
             "--caddyfile",
@@ -2064,6 +2102,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_prebuilt(setup_p)
     add_force_room_archive(setup_p)
     add_both_schemes(setup_p)
+    add_haftgane_tables(setup_p)
     add_caddyfile(setup_p)
 
     redeploy_p = sub.add_parser("redeploy", help="rebuild and restart for a new version")
@@ -2071,11 +2110,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_prebuilt(redeploy_p)
     add_force_room_archive(redeploy_p)
     add_both_schemes(redeploy_p)
+    add_haftgane_tables(redeploy_p)
     add_caddyfile(redeploy_p)
 
     start_p = sub.add_parser("start", help="start the already-built server")
     add_url(start_p)
     add_both_schemes(start_p)
+    add_haftgane_tables(start_p)
     add_caddyfile(start_p)
 
     sub.add_parser("stop", help="stop every tmux session this script manages")
@@ -2098,10 +2139,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_force_room_archive(ship_p)
     add_both_schemes(ship_p)
+    add_haftgane_tables(ship_p)
     add_caddyfile(ship_p)
 
     ship_all_p = sub.add_parser("ship-all", help="build once and deploy every target in the private deploy-targets.json config")
     add_force_room_archive(ship_all_p)
+    add_haftgane_tables(ship_all_p)
 
     return parser
 
@@ -2109,14 +2152,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    release_options = ({"haftgane_tables": args.haftgane_tables}
+                       if getattr(args, "haftgane_tables", None) is not None else {})
 
     try:
         if args.command == "setup":
-            command_setup(args.url, args.prebuilt, args.both_schemes, args.caddyfile, args.force_room_archive)
+            command_setup(args.url, args.prebuilt, args.both_schemes, args.caddyfile, args.force_room_archive, **release_options)
         elif args.command == "redeploy":
-            command_redeploy(args.url, args.prebuilt, args.both_schemes, args.caddyfile, args.force_room_archive)
+            command_redeploy(args.url, args.prebuilt, args.both_schemes, args.caddyfile, args.force_room_archive, **release_options)
         elif args.command == "start":
-            command_start(args.url, args.both_schemes, args.caddyfile)
+            command_start(args.url, args.both_schemes, args.caddyfile, **release_options)
         elif args.command == "dev-start":
             command_dev_start(args.url, args.both_schemes, args.caddyfile)
         elif args.command == "stop":
@@ -2124,9 +2169,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "status":
             command_status()
         elif args.command == "ship-all":
-            return command_ship_all(args.force_room_archive)
+            return command_ship_all(args.force_room_archive, **release_options)
         elif args.command == "ship":
-            command_ship(args.target, args.url, args.remote_dir, args.both_schemes, args.caddyfile, args.force_room_archive)
+            command_ship(args.target, args.url, args.remote_dir, args.both_schemes, args.caddyfile, args.force_room_archive, **release_options)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
