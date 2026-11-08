@@ -142,20 +142,7 @@ export function probePage() {
     vscroll: de.scrollHeight > viewportHeight,
     theme: de.dataset.theme ?? null,
     ready: de.hasAttribute('data-ready'),
-    // The app's own keys; a token is shown only by its length.
-    storage: (() => {
-      try {
-        const keys = Object.keys(localStorage).filter((k) => k.startsWith('ajayeb:'));
-        return Object.fromEntries(
-          keys.sort().map((k) => {
-            const v = localStorage.getItem(k) ?? '';
-            return [k, k === 'ajayeb:token' ? `<${v.length} chars>` : v];
-          })
-        );
-      } catch {
-        return null;
-      }
-    })(),
+    // Do not dump localStorage: identity tokens and player data are private.
     body: (document.body?.innerText ?? '').slice(0, 400),
     overflow,
     tap: { count, smallest, under24, under44 }

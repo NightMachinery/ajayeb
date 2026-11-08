@@ -2,7 +2,7 @@
 // Launches our own headless Chromium for the CDP tools, or attaches to one
 // that is already running. Never touches the owner's everyday browser: the
 // binary is Playwright's Chromium (Chrome for Testing, its own app with its
-// own bundle id), not the installed Google Chrome (D26).
+// own bundle id), not the installed everyday Google Chrome app.
 //
 // Library:
 //   import { launch } from './launch.mjs';
@@ -12,23 +12,23 @@
 // CLI (a self-test, or a browser held open for several tool runs):
 //   python3 tools/heavy.py run --kind browser -- node tools/chrome/launch.mjs
 //   python3 tools/heavy.py run --kind browser -- node tools/chrome/launch.mjs --hold 600
-//     then, from another shell: CHROME_CDP=http://127.0.0.1:38959 node tools/chrome/shot.mjs ...
+//     then, from another shell: CHROME_CDP=http://127.0.0.1:41739 node tools/chrome/shot.mjs ...
 //
 // Rules it enforces:
-// - It launches only inside the guard's browser lock (AJAYEB_HEAVY_KIND=browser,
+// - It launches only inside the guard's browser lock (BGD_HEAVY_KIND=browser,
 //   which `heavy.py run --kind browser` sets) or with --force / {force: true}.
 // - It finds the DevTools endpoint from the "DevTools listening on" line in
 //   its own Chrome's stderr, never by probing a port that another browser
 //   might own, and it refuses to start when the port is already taken.
-// - Each launch gets a fresh profile, <os tmpdir>/ajayeb-chrome-<pid>-XXXXXX,
-//   so `pgrep -fl ajayeb-chrome` finds any browser we left behind.
+// - Each launch gets a fresh profile, <os tmpdir>/bgd-chrome-<pid>-XXXXXX,
+//   so `ps -axo pid=,command=` finds any browser we left behind.
 // - close() kills Chrome's process group, then any process still naming the
 //   profile directory, then deletes the profile. Exit, SIGINT, SIGTERM and
 //   SIGHUP do the same.
 // - If CHROME_CDP is set (http://host:port of a running Chrome's DevTools),
 //   it attaches instead, and close() never kills that browser.
 //
-// Env: CHROME_PORT (default 38959; 0 lets Chrome pick a free port),
+// Env: CHROME_PORT (default 41739; 0 lets Chrome pick a free port),
 // CHROME_BIN (another Chromium executable to use instead of Playwright's),
 // CHROME_CDP (attach mode).
 
@@ -42,9 +42,10 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { getJSON, sleep } from './cdp.mjs';
 
-export const DEFAULT_PORT = 38959;
-// The e2e package's Playwright knows where its Chromium is installed.
-const E2E_PACKAGE = fileURLToPath(new URL('../../e2e/package.json', import.meta.url));
+import { project, envName } from '../config.mjs';
+export const DEFAULT_PORT = project.ports.chrome;
+// Resolve Playwright from the adopted project's root dependencies.
+const PROJECT_PACKAGE = fileURLToPath(new URL(`../../${project.chrome?.playwright_package ?? 'package.json'}`, import.meta.url));
 
 /** Thrown when a launch is refused because the guard's browser lock is not held. */
 export class LaunchRefused extends Error {}
@@ -57,7 +58,7 @@ export const REFUSAL = [
   'To use a Chrome that is already running instead, set CHROME_CDP=http://127.0.0.1:<port>.'
 ].join('\n');
 
-/** The command line flags (infra plan, section 4). */
+/** Headless, loopback-only debugging with background services disabled. */
 export function chromeFlags({ port, profileDir }) {
   return [
     '--headless=new',
@@ -90,15 +91,17 @@ function isExecutable(file) {
 export function findChrome() {
   const fromEnv = process.env.CHROME_BIN;
   if (fromEnv) {
+    if (/Google Chrome\.app|Brave Browser|Microsoft Edge\.app/i.test(fromEnv))
+      throw new Error('chrome: CHROME_BIN must be a testing Chromium, never an everyday browser');
     if (!isExecutable(fromEnv))
       throw new Error(`chrome: CHROME_BIN=${fromEnv} is not an executable`);
     return fromEnv;
   }
   let bin = null;
   try {
-    bin = createRequire(E2E_PACKAGE)('@playwright/test').chromium.executablePath();
+    bin = createRequire(PROJECT_PACKAGE)(project.chrome?.playwright_module ?? 'playwright').chromium.executablePath();
   } catch {
-    // No e2e dependencies installed yet: fall through to the hint below.
+    // Project dependencies are not installed yet: show the hint below.
   }
   if (bin && isExecutable(bin)) return bin;
   throw new Error(
@@ -196,7 +199,7 @@ export async function launch({ force = false, port, timeoutMs = 20_000 } = {}) {
     };
   }
 
-  if (process.env.AJAYEB_HEAVY_KIND !== 'browser' && !force) throw new LaunchRefused(REFUSAL);
+  if (process.env[envName('HEAVY_KIND')] !== 'browser' && !force) throw new LaunchRefused(REFUSAL);
 
   const wantPort = port ?? Number(process.env.CHROME_PORT ?? DEFAULT_PORT);
   if (!Number.isInteger(wantPort) || wantPort < 0 || wantPort > 65535) {
@@ -205,13 +208,13 @@ export async function launch({ force = false, port, timeoutMs = 20_000 } = {}) {
   if (wantPort !== 0 && (await portInUse(wantPort))) {
     throw new Error(
       `chrome: 127.0.0.1:${wantPort} is already in use. A browser left behind? Check with ` +
-        `pgrep -fl ajayeb-chrome. Set CHROME_CDP=http://127.0.0.1:${wantPort} to attach to it, ` +
+        `ps -axo pid=,command=. Set CHROME_CDP=http://127.0.0.1:${wantPort} to attach to it, ` +
         'or CHROME_PORT to use another port.'
     );
   }
 
   const bin = findChrome();
-  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), `ajayeb-chrome-${process.pid}-`));
+  const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), `${project.name}-chrome-${process.pid}-`));
   const child = spawn(bin, chromeFlags({ port: wantPort, profileDir }), {
     detached: true, // its own process group, so close() can kill helpers too
     stdio: ['ignore', 'ignore', 'pipe']
@@ -314,7 +317,7 @@ export async function withChrome(fn, opts = {}) {
 /**
  * Shared CLI error handling for the tools: refusals exit 2, errors 1.
  * Expected errors (a plain Error, such as a usage mistake, or a parseArgs
- * error) print their message only, crashes their stack; AJAYEB_STACK=1
+ * error) print their message only, crashes their stack; BGD_STACK=1
  * prints the stack for every error.
  */
 export function reportAndExit(err) {
@@ -323,7 +326,7 @@ export function reportAndExit(err) {
     err instanceof Error &&
     ((typeof err.code === 'string' && err.code.startsWith('ERR_PARSE_ARGS_')) ||
       Object.getPrototypeOf(err) === Error.prototype);
-  const brief = refused || (expected && process.env.AJAYEB_STACK !== '1');
+  const brief = refused || (expected && process.env[envName('STACK')] !== '1');
   console.error(brief ? err.message : `${err?.stack ?? err}`);
   process.exit(refused ? 2 : 1);
 }

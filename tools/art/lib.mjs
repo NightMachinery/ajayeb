@@ -13,6 +13,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
+import { project, runDir as configuredRunDir, envName } from '../config.mjs';
 import { fileURLToPath } from 'node:url';
 
 // --- Repo and run-dir paths ------------------------------------------------
@@ -26,14 +27,14 @@ export const repoRoot = path.resolve(scriptDir, '..', '..');
  * Tests point it at a fixture tree; the tools themselves (Prettier,
  * tools/heavy.py) are always the repository's.
  */
-export const dataRoot = process.env.AJAYEB_ART_ROOT ? path.resolve(process.env.AJAYEB_ART_ROOT) : repoRoot;
+export const dataRoot = process.env[envName('ART_ROOT')] ? path.resolve(process.env[envName('ART_ROOT')]) : repoRoot;
 
 /**
  * Private run state directory, outside the repo (AGENTS.md "Private run
  * state"). Same default and override as tools/heavy.py, so both tools agree
  * on where it lives.
  */
-export const runDir = process.env.AJAYEB_RUN_DIR || path.join(os.homedir(), 'tmp', 'agents', 'ajayeb');
+export const runDir = configuredRunDir;
 
 export const artWorkDir = path.join(runDir, 'art-work');
 
@@ -330,109 +331,7 @@ export const STATIC_ASSETS = [
 //   (HIDPI_DPR): a kind needs a wider size once that width is more than
 //   HIDPI_SLACK times its widest one. null: not measured.
 
-export const KIND_SPEC = {
-  card: {
-    gen: '1536x1024',
-    crop: '4:3',
-    outDir: 'cards',
-    mask: 'none',
-    sizes: [
-      { suffix: '', w: 480, h: 360, budgetBytes: 35 * 1024 },
-      { suffix: 'thumb', w: 240, h: 180, budgetBytes: 10 * 1024 },
-    ],
-    // The card sheet's full-tier card (140 px wide, the art drawn 142 px
-    // by its cover crop); the board's cards are smaller.
-    displayCss: 142,
-  },
-  wonder: {
-    gen: '1536x1024',
-    crop: '3:2',
-    outDir: 'wonders',
-    mask: 'none',
-    sizes: [
-      { suffix: '', w: 960, h: 640, budgetBytes: 70 * 1024 },
-      { suffix: 'thumb', w: 480, h: 320, budgetBytes: 20 * 1024 },
-      // High-DPI (M10.AD1): a large wonder tile is half the viewport below
-      // 64rem, up to 486 CSS px on a 1020 px tablet, so 1458 device px at
-      // DPR 3. The budget keeps the 960 size's 70 KB per 614,400 pixels.
-      { suffix: '1440', w: 1440, h: 960, budgetBytes: 158 * 1024 },
-    ],
-    displayCss: 486,
-  },
-  token: {
-    gen: '1024x1024',
-    crop: '1:1',
-    outDir: 'tokens',
-    mask: 'circle',
-    sizes: [
-      { suffix: '', w: 256, h: 256, budgetBytes: 14 * 1024 },
-      { suffix: 'thumb', w: 96, h: 96, budgetBytes: 5 * 1024 },
-    ],
-    // The token sheet's medallion: the board's 36 px one, scaled 1.25.
-    displayCss: 45,
-  },
-  back: {
-    gen: '1024x1536',
-    crop: '1:1.545',
-    outDir: 'backs',
-    mask: 'none',
-    sizes: [{ suffix: '', w: 320, h: 495, budgetBytes: 30 * 1024 }],
-    // A face-down card on a 2560 px desktop board.
-    displayCss: 132,
-  },
-  texture: {
-    gen: '1024x1024',
-    crop: 'tile',
-    outDir: 'ui',
-    mask: 'none',
-    sizes: [{ suffix: '', w: 512, h: 512, budgetBytes: 60 * 1024 }],
-    displayCss: null,
-  },
-  hero: {
-    gen: '1536x1024',
-    crop: '16:9',
-    outDir: 'ui',
-    mask: 'none',
-    // Named "hero", not "hero/hero.avif", because it is the one hero image.
-    // The 800-wide variant is for phones (the asset table's hero-800).
-    sizes: [
-      { suffix: '', w: 1600, h: 900, budgetBytes: 120 * 1024, nameOverride: 'hero' },
-      { suffix: '800', w: 800, h: 450, budgetBytes: 60 * 1024, nameOverride: 'hero' },
-    ],
-    // Home's hero above 64rem (28rem).
-    displayCss: 448,
-  },
-  avatar: {
-    gen: '1024x1024',
-    crop: '1:1',
-    outDir: 'avatars',
-    mask: 'none',
-    sizes: [{ suffix: '', w: 192, h: 192, budgetBytes: 12 * 1024 }],
-    displayCss: null,
-  },
-  victory: {
-    gen: '1536x1024',
-    crop: '16:9',
-    outDir: 'victory',
-    mask: 'none',
-    sizes: [{ suffix: '', w: 960, h: 540, budgetBytes: 60 * 1024 }],
-    // The result screen's scene on a desktop.
-    displayCss: 158,
-  },
-  icon: {
-    gen: '1024x1024',
-    crop: '1:1',
-    outDir: 'icon',
-    mask: 'none',
-    sizes: [
-      { suffix: '512', w: 512, h: 512, budgetBytes: 60 * 1024 },
-      { suffix: '192', w: 192, h: 192, budgetBytes: 20 * 1024 },
-      { suffix: '180', w: 180, h: 180, budgetBytes: 20 * 1024 },
-      { suffix: '32', w: 32, h: 32, budgetBytes: 4 * 1024 },
-    ],
-    displayCss: null,
-  },
-};
+export const KIND_SPEC = project.art.kinds;
 
 /** The device pixel ratio the high-DPI check plans for (a phone at DPR 3). */
 export const HIDPI_DPR = 3;

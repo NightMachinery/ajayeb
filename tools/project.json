@@ -1,0 +1,232 @@
+{
+  "name": "ajayeb",
+  "run_dir_env": "AJAYEB_RUN_DIR",
+  "run_dir": "~/tmp/agents/ajayeb",
+  "kinds": [
+    "test",
+    "build",
+    "check",
+    "lint",
+    "browser",
+    "codex",
+    "install",
+    "fuzz",
+    "bench",
+    "light"
+  ],
+  "kind_locks": [
+    "browser",
+    "codex"
+  ],
+  "nice_kinds": [
+    "fuzz",
+    "bench"
+  ],
+  "ports": {
+    "server": 38951,
+    "dev": 38952,
+    "preview": 38953,
+    "e2e": 38954,
+    "chrome": 38959
+  },
+  "art": {
+    "kinds": {
+      "card": {
+        "gen": "1536x1024",
+        "crop": "4:3",
+        "outDir": "cards",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 480,
+            "h": 360,
+            "budgetBytes": 35840
+          },
+          {
+            "suffix": "thumb",
+            "w": 240,
+            "h": 180,
+            "budgetBytes": 10240
+          }
+        ],
+        "displayCss": 142
+      },
+      "wonder": {
+        "gen": "1536x1024",
+        "crop": "3:2",
+        "outDir": "wonders",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 960,
+            "h": 640,
+            "budgetBytes": 71680
+          },
+          {
+            "suffix": "thumb",
+            "w": 480,
+            "h": 320,
+            "budgetBytes": 20480
+          },
+          {
+            "suffix": "1440",
+            "w": 1440,
+            "h": 960,
+            "budgetBytes": 161792
+          }
+        ],
+        "displayCss": 486
+      },
+      "token": {
+        "gen": "1024x1024",
+        "crop": "1:1",
+        "outDir": "tokens",
+        "mask": "circle",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 256,
+            "h": 256,
+            "budgetBytes": 14336
+          },
+          {
+            "suffix": "thumb",
+            "w": 96,
+            "h": 96,
+            "budgetBytes": 5120
+          }
+        ],
+        "displayCss": 45
+      },
+      "back": {
+        "gen": "1024x1536",
+        "crop": "1:1.545",
+        "outDir": "backs",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 320,
+            "h": 495,
+            "budgetBytes": 30720
+          }
+        ],
+        "displayCss": 132
+      },
+      "texture": {
+        "gen": "1024x1024",
+        "crop": "tile",
+        "outDir": "ui",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 512,
+            "h": 512,
+            "budgetBytes": 61440
+          }
+        ],
+        "displayCss": null
+      },
+      "hero": {
+        "gen": "1536x1024",
+        "crop": "16:9",
+        "outDir": "ui",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 1600,
+            "h": 900,
+            "budgetBytes": 122880,
+            "nameOverride": "hero"
+          },
+          {
+            "suffix": "800",
+            "w": 800,
+            "h": 450,
+            "budgetBytes": 61440,
+            "nameOverride": "hero"
+          }
+        ],
+        "displayCss": 448
+      },
+      "avatar": {
+        "gen": "1024x1024",
+        "crop": "1:1",
+        "outDir": "avatars",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 192,
+            "h": 192,
+            "budgetBytes": 12288
+          }
+        ],
+        "displayCss": null
+      },
+      "victory": {
+        "gen": "1536x1024",
+        "crop": "16:9",
+        "outDir": "victory",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "",
+            "w": 960,
+            "h": 540,
+            "budgetBytes": 61440
+          }
+        ],
+        "displayCss": 158
+      },
+      "icon": {
+        "gen": "1024x1024",
+        "crop": "1:1",
+        "outDir": "icon",
+        "mask": "none",
+        "sizes": [
+          {
+            "suffix": "512",
+            "w": 512,
+            "h": 512,
+            "budgetBytes": 61440
+          },
+          {
+            "suffix": "192",
+            "w": 192,
+            "h": 192,
+            "budgetBytes": 20480
+          },
+          {
+            "suffix": "180",
+            "w": 180,
+            "h": 180,
+            "budgetBytes": 20480
+          },
+          {
+            "suffix": "32",
+            "w": 32,
+            "h": 32,
+            "budgetBytes": 4096
+          }
+        ],
+        "displayCss": null
+      }
+    }
+  },
+  "env_prefix": "AJAYEB_",
+  "chrome": {
+    "playwright_package": "e2e/package.json",
+    "playwright_module": "@playwright/test",
+    "default_origin": "http://127.0.0.1:38951",
+    "themes": [
+      "light",
+      "dark",
+      "system"
+    ]
+  }
+}

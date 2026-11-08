@@ -2,22 +2,22 @@
 // Screenshot and DOM probe for one page of the running app, over CDP.
 //
 //   python3 tools/heavy.py run --kind browser -- node tools/chrome/shot.mjs \
-//     --url /play/ABCD --token ajayebShotTokenA00000A --name Ana --vp 390x844@3 --theme dark \
+//     --origin http://localhost --url /play/ABCD --token my-gameShotTokenA00000A --name Ana --vp 390x844@3 \
 //     --probe --out x.png
 //
 // Flags (`--flag value` or `--flag=value`):
-//   --origin URL     app origin (default $AJAYEB_ORIGIN or http://127.0.0.1:38951)
+//   --origin URL     app origin (default $BGD_ORIGIN or .self-host/config.json URL)
 //   --url PATH       page to open, relative to --origin (default /); a full URL also works
-//   --token T        written to localStorage ajayeb:token before the page loads; it
+//   --token T        written to localStorage my-game:token before the page loads; it
 //                    must be 22 base64url characters ending in A, Q, g or w, or
 //                    the app replaces it (so the script refuses any other value)
-//   --name N         written to localStorage ajayeb:name
-//   --theme T        light | dark | system, written to localStorage ajayeb:theme
+//   --theme T        a project.chrome.themes value, written to the theme storage key
+//   --name N         written to localStorage my-game:name
 //   --storage JSON   a JSON object of localStorage keys to write before the page
-//                    loads, such as '{"ajayeb:settings":{"animationSpeed":"off"}}': a
+//                    loads, such as '{"my-game:settings":{"animationSpeed":"off"}}': a
 //                    string value is written as it is, any other value as its
 //                    JSON. Repeatable; later keys win, and --token, --name and
-//                    --theme win over the same key here
+//                    --name win over the same key here
 //   --scheme S       light | dark: the emulated OS colour scheme (what "system" follows)
 //   --vp V           WxH[@dpr] or a preset: mobile (390x844@2), desktop (1280x800@1);
 //                    default 390x844@2. A short side under 600 px also emulates a phone
@@ -42,7 +42,7 @@
 //                    active element is blurred before the probe and the capture
 //   --force          launch Chrome without the heavy.py browser lock
 //
-// Identity works as in the app: the token, name and theme (and any
+// Identity works as in the app: the token and name (and any
 // --storage keys) go into localStorage on the page's origin before any of
 // its scripts run, so the app starts as that player with those settings.
 // The token must have the real shape, the base64url form of 16 bytes: 22
@@ -61,7 +61,8 @@ import { CDP, evaluate, openPage, sleep } from './cdp.mjs';
 import { isMain, launch, printHeader, reportAndExit } from './launch.mjs';
 
 const PRESETS = { mobile: '390x844@2', desktop: '1280x800@1' };
-const THEMES = ['light', 'dark', 'system'];
+import { storagePrefix, project } from '../config.mjs';
+import { frontendOrigin } from './origin.mjs';
 
 /** The token shape the client keeps (identity.ts isValidToken). */
 export const TOKEN_RE = /^[A-Za-z0-9_-]{21}[AQgw]$/;
@@ -168,7 +169,7 @@ async function locate(selector, pad) {
 async function main() {
   const { values: o } = parseArgs({
     options: {
-      origin: { type: 'string', default: process.env.AJAYEB_ORIGIN ?? 'http://127.0.0.1:38951' },
+      origin: { type: 'string' },
       url: { type: 'string', default: '/' },
       token: { type: 'string' },
       name: { type: 'string' },
@@ -205,7 +206,8 @@ async function main() {
     throw new Error(
       `--token: expected 22 base64url characters ending in A, Q, g or w (the client replaces anything else), got ${o.token}`
     );
-  if (o.theme && !THEMES.includes(o.theme)) throw new Error(`--theme: one of ${THEMES.join(', ')}`);
+  if (o.theme && !project.chrome?.themes?.includes(o.theme))
+    throw new Error(`--theme: one of ${(project.chrome?.themes ?? []).join(', ')}`);
   if (o.scheme && !['light', 'dark'].includes(o.scheme)) throw new Error('--scheme: light or dark');
   if (!['reduce', 'no-preference'].includes(o.motion))
     throw new Error('--motion: reduce or no-preference');
@@ -213,7 +215,8 @@ async function main() {
     throw new Error(`--vision: one of ${VISIONS.join(', ')}, got ${o.vision}`);
   const vp = parseViewport(o.vp);
   const extraStorage = parseStorage(o.storage);
-  const target = new URL(o.url, o.origin);
+  const origin = o.origin ?? (/^https?:\/\//.test(o.url) ? o.url : frontendOrigin());
+  const target = new URL(o.url, origin);
 
   const chrome = await launch({ force: o.force });
   let browser = null;
@@ -274,9 +277,9 @@ async function main() {
 
     // --storage first, so the dedicated flags win over the same key.
     const storage = [...extraStorage];
-    if (o.token !== undefined) storage.push(['ajayeb:token', o.token]);
-    if (o.name !== undefined) storage.push(['ajayeb:name', o.name]);
-    if (o.theme !== undefined) storage.push(['ajayeb:theme', o.theme]);
+    if (o.token !== undefined) storage.push([`${storagePrefix}token`, o.token]);
+    if (o.name !== undefined) storage.push([`${storagePrefix}name`, o.name]);
+    if (o.theme !== undefined) storage.push([`${storagePrefix}theme`, o.theme]);
     // The keys are written by a new-document script, which runs on the
     // target origin before any of the page's own scripts (the theme
     // bootstrap in app.html included). So the app boots once, already

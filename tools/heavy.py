@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run heavy jobs under Ajayeb's RAM, slot and mode guard.
+"""Run heavy jobs under the project's RAM, slot and mode guard.
 
 Every command that compiles, tests, builds, lints, installs, launches a
 browser or runs codex goes through this script, usually via the Makefile:
@@ -30,8 +30,8 @@ Pressure gate (heavy slots)
 
 Kind locks
   browser and codex also take their own machine-wide lock of capacity 1.
-  A browser also needs free memory >= AJAYEB_MIN_FREE_PCT_BROWSER percent
-  (default 14) and free swap >= AJAYEB_MIN_SWAP_FREE_MB_BROWSER MB
+  A browser also needs free memory >= BGD_MIN_FREE_PCT_BROWSER percent
+  (default 14) and free swap >= BGD_MIN_SWAP_FREE_MB_BROWSER MB
   (default 512). The swap floor applies only where swap has a fixed size
   (Linux): macOS adds swap files as it needs them, so its free swap is only
   the unused room in the files made so far and says nothing about how much
@@ -40,7 +40,7 @@ Kind locks
 Jobs publish tickets in heavy/queue/ before attempting admission, ordered by
 priority then creation time (FIFO among equals). Unavailable slots or locks
 are checked every second for up to --wait seconds (default 1800, or
-AJAYEB_HEAVY_WAIT), then exit 75. Mode refusals remain immediate. A ticket
+BGD_HEAVY_WAIT), then exit 75. Mode refusals remain immediate. A ticket
 blocked only by its own browser floor or mode reserves nothing; one blocked
 by a kind lock reserves only that lock, so unrelated work can pass it. A slot
 waiter blocks later slot jobs even when multiple slots have just become free;
@@ -69,10 +69,10 @@ with the command's exit code. The child gets these defaults when unset or
 empty: NODE_OPTIONS=--max-old-space-size=1536, GOMEMLIMIT=768MiB,
 GOFLAGS=-p=2, GOMAXPROCS=4. A NODE_OPTIONS or GOFLAGS that is set but lacks a
 heap or -p flag gets ours appended; a value that has one is kept. The child
-also gets AJAYEB_HEAVY_KIND=<kind>, AJAYEB_HEAVY_HELD=1 when a slot is held,
-and AJAYEB_HEAVY_LOCKS=<held kind locks>.
+also gets BGD_HEAVY_KIND=<kind>, BGD_HEAVY_HELD=1 when a slot is held,
+and BGD_HEAVY_LOCKS=<held kind locks>.
 
-Nested runs: when AJAYEB_HEAVY_HELD=1 is already set, an outer heavy.py holds
+Nested runs: when BGD_HEAVY_HELD=1 is already set, an outer heavy.py holds
 a slot, so the inner run skips the mode gate and takes no slot (this keeps
 "heavy.py run -- make verify" from deadlocking). It still takes a browser or
 codex lock that no ancestor holds, and a new browser still passes its memory
@@ -83,9 +83,9 @@ RUN_DIR/logs/heavy.jsonl. stop-all sends SIGTERM to the process groups this
 script started (recorded in RUN_DIR/heavy/running/) and to guards still
 waiting for a slot, then SIGKILL to groups that outlive --grace seconds.
 
-RUN_DIR is AJAYEB_RUN_DIR, or ~/tmp/agents/ajayeb. With CI=true and no run
+RUN_DIR is BGD_RUN_DIR, or ~/.local/state/board-game-dev. With CI=true and no run
 dir, the guard runs in continuous mode with the Linux readers and keeps its
-state in RUNNER_TEMP (or the system temp dir). AJAYEB_MAX_SLOTS caps the
+state in RUNNER_TEMP (or the system temp dir). BGD_MAX_SLOTS caps the
 slot count.
 
 Detached runs (HEAVY_NOTIFY=<Paseo agent UUID> or --notify UUID; the value
@@ -123,6 +123,8 @@ settings warn once at guard creation, before admission holds shared resources.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import argparse
 import collections
 import contextlib
@@ -150,9 +152,27 @@ from typing import Callable, Dict, Iterable, List, Mapping, Optional, Sequence, 
 EX_TEMPFAIL = 75
 EX_USAGE = 2
 
-KINDS = ("test", "build", "check", "lint", "browser", "codex", "install", "fuzz", "bench", "light")
-KIND_LOCKS = ("browser", "codex")
-NICE_KINDS = ("fuzz", "bench")
+# Copy tools/project.json alongside this file. BGD_PROJECT_CONFIG can select
+# another config; all processes sharing a browser must share the run directory.
+CONFIG_PATH = Path(os.environ.get("BGD_PROJECT_CONFIG", Path(__file__).with_name("project.json")))
+CONFIG = json.loads(CONFIG_PATH.read_text())
+KINDS = tuple(CONFIG["kinds"])
+KIND_LOCKS = tuple(CONFIG["kind_locks"])
+NICE_KINDS = tuple(CONFIG["nice_kinds"])
+if "light" not in KINDS or not set(KIND_LOCKS + NICE_KINDS) <= set(KINDS):
+    raise ValueError("project.json: kinds must include light and all lock/nice kinds")
+ENV_PREFIX = CONFIG.get("env_prefix", "BGD_")
+if not re.fullmatch(r"[A-Z][A-Z0-9_]*_", ENV_PREFIX):
+    raise ValueError("project.json: env_prefix must be an uppercase prefix ending in _")
+
+
+def env_name(suffix):
+    """The configured namespace, retaining the project's existing shell contract."""
+    return CONFIG["run_dir_env"] if suffix == "RUN_DIR" else ENV_PREFIX + suffix
+
+
+__doc__ = __doc__.replace("BGD_", ENV_PREFIX).replace("~/.local/state/board-game-dev", CONFIG["run_dir"])
+
 MODES = ("continuous", "nightshift", "paused")
 
 DEFAULT_WINDOW = "00:00-10:00"
@@ -185,8 +205,8 @@ SLOT_RE = re.compile(r"^slot-(\d+)$")
 FORWARDED_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
 
 # Detached runs that notify a Paseo agent (see the module docstring).
-NOTIFY_ENV = ("HEAVY_NOTIFY", "AJAYEB_HEAVY_NOTIFY_AGENT", "AJAYEB_HEAVY_NOTIFY_FD",
-              "AJAYEB_HEAVY_NOTIFY_ACK_FD", "AJAYEB_HEAVY_NOTIFY_LOG")
+NOTIFY_ENV = ("HEAVY_NOTIFY", env_name("HEAVY_NOTIFY_AGENT"), env_name("HEAVY_NOTIFY_FD"),
+              env_name("HEAVY_NOTIFY_ACK_FD"), env_name("HEAVY_NOTIFY_LOG"))
 NOTIFY_OFF = ("", "0", "off", "no", "false")
 AGENT_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
@@ -797,13 +817,15 @@ class Guard:
         self.err = stderr or sys.stderr
 
         self.home = self.env.get("HOME") or os.path.expanduser("~")
-        self.configured_run_dir = self.env.get("AJAYEB_RUN_DIR") or os.path.join(
-            self.home, "tmp", "agents", "ajayeb")
+        default_run_dir = str(CONFIG["run_dir"])
+        if default_run_dir == "~" or default_run_dir.startswith("~/"):
+            default_run_dir = self.home + default_run_dir[1:]
+        self.configured_run_dir = self.env.get(CONFIG["run_dir_env"]) or os.path.expandvars(default_run_dir)
         ci = self.env.get("CI", "").lower() in ("true", "1")
         self.ci_mode = ci and not os.path.isdir(self.configured_run_dir)
         if self.ci_mode:
             base = self.env.get("RUNNER_TEMP") or tempfile.gettempdir()
-            self.run_dir = os.path.join(base, "ajayeb-heavy-ci")
+            self.run_dir = os.path.join(base, CONFIG["name"] + "-heavy-ci")
             self.reader_platform = "linux"
         else:
             self.run_dir = self.configured_run_dir
@@ -832,8 +854,8 @@ class Guard:
         # The getters used by eligibility/status must never write to a pipe.
         self._max_slots = self._read_max_slots()
         self._browser_floors = (
-            self._env_float("AJAYEB_MIN_FREE_PCT_BROWSER", DEFAULT_MIN_FREE_PCT_BROWSER),
-            self._env_float("AJAYEB_MIN_SWAP_FREE_MB_BROWSER", DEFAULT_MIN_SWAP_FREE_MB_BROWSER))
+            self._env_float(env_name("MIN_FREE_PCT_BROWSER"), DEFAULT_MIN_FREE_PCT_BROWSER),
+            self._env_float(env_name("MIN_SWAP_FREE_MB_BROWSER"), DEFAULT_MIN_SWAP_FREE_MB_BROWSER))
 
     # -- configuration -------------------------------------------------------
 
@@ -875,13 +897,13 @@ class Guard:
             return default
 
     def _read_max_slots(self) -> Optional[int]:
-        raw = self.env.get("AJAYEB_MAX_SLOTS")
+        raw = self.env.get(env_name("MAX_SLOTS"))
         if raw is None or raw == "":
             return None
         try:
             return max(int(raw), 0)
         except ValueError:
-            self._warn(f"heavy: ignoring AJAYEB_MAX_SLOTS={raw!r}: not an integer")
+            self._warn(f"heavy: ignoring {env_name('MAX_SLOTS')}={raw!r}: not an integer")
             return None
 
     def max_slots(self) -> Optional[int]:
@@ -1291,15 +1313,15 @@ class Guard:
         goflags = env["GOFLAGS"].split()
         if not any(flag in ("-p", "--p") or flag.startswith(("-p=", "--p=")) for flag in goflags):
             env["GOFLAGS"] = f"{env['GOFLAGS']} -p=2"
-        env["AJAYEB_HEAVY_KIND"] = kind
+        env[env_name("HEAVY_KIND")] = kind
         if slot_held:
-            env["AJAYEB_HEAVY_HELD"] = "1"
+            env[env_name("HEAVY_HELD")] = "1"
         else:
-            env.pop("AJAYEB_HEAVY_HELD", None)
+            env.pop(env_name("HEAVY_HELD"), None)
         if locks:
-            env["AJAYEB_HEAVY_LOCKS"] = ",".join(sorted(locks))
+            env[env_name("HEAVY_LOCKS")] = ",".join(sorted(locks))
         else:
-            env.pop("AJAYEB_HEAVY_LOCKS", None)
+            env.pop(env_name("HEAVY_LOCKS"), None)
         for key in NOTIFY_ENV:  # inner runs must block, not detach again
             env.pop(key, None)
         return env
@@ -1314,14 +1336,14 @@ class Guard:
             self._warn("heavy: run needs a command after --")
             return EX_USAGE
         if wait is None:
-            wait = self._env_float("AJAYEB_HEAVY_WAIT", DEFAULT_WAIT)
+            wait = self._env_float(env_name("HEAVY_WAIT"), DEFAULT_WAIT)
         priority = priority or self.env.get("HEAVY_PRIORITY") or "normal"
         if priority not in PRIORITIES:
             self._warn(f"heavy: invalid priority {priority!r}; use normal or high")
             return EX_USAGE
         self._memory_sample = None
-        nested = self.env.get("AJAYEB_HEAVY_HELD") == "1"
-        inherited = {x for x in self.env.get("AJAYEB_HEAVY_LOCKS", "").split(",") if x}
+        nested = self.env.get(env_name("HEAVY_HELD")) == "1"
+        inherited = {x for x in self.env.get(env_name("HEAVY_LOCKS"), "").split(",") if x}
         self.last_refusal, self.started_at = None, None
         if not nested:
             try:
@@ -1471,8 +1493,8 @@ class Guard:
         read_fd, write_fd = os.pipe()
         ack_read, ack_write = os.pipe()
         env = {k: v for k, v in self.env.items() if k not in NOTIFY_ENV}
-        env.update(AJAYEB_HEAVY_NOTIFY_AGENT=agent, AJAYEB_HEAVY_NOTIFY_FD=str(write_fd),
-                   AJAYEB_HEAVY_NOTIFY_ACK_FD=str(ack_read), AJAYEB_HEAVY_NOTIFY_LOG=log_path)
+        env.update({env_name("HEAVY_NOTIFY_AGENT"): agent, env_name("HEAVY_NOTIFY_FD"): str(write_fd),
+                    env_name("HEAVY_NOTIFY_ACK_FD"): str(ack_read), env_name("HEAVY_NOTIFY_LOG"): log_path})
         argv = [sys.executable, os.path.abspath(__file__), "run", "--kind", kind,
                 "--wait", repr(float(wait)), "--priority", priority, "--"] + cmd
         try:
@@ -1530,12 +1552,12 @@ class Guard:
     def run_notified(self, kind: str, cmd: Sequence[str], wait: Optional[float],
                      priority: Optional[str]) -> int:
         """The detached copy: run the job, then message the agent once."""
-        agent = self.env["AJAYEB_HEAVY_NOTIFY_AGENT"]
-        log_path = self.env.get("AJAYEB_HEAVY_NOTIFY_LOG", "")
+        agent = self.env[env_name("HEAVY_NOTIFY_AGENT")]
+        log_path = self.env.get(env_name("HEAVY_NOTIFY_LOG"), "")
         fds: Dict[str, Optional[int]] = {}
         for name in ("FD", "ACK_FD"):
             try:
-                fds[name] = int(self.env.get(f"AJAYEB_HEAVY_NOTIFY_{name}", ""))
+                fds[name] = int(self.env.get(env_name(f"HEAVY_NOTIFY_{name}"), ""))
             except ValueError:
                 fds[name] = None
 
@@ -1771,7 +1793,7 @@ class Guard:
         if state.in_window(now):
             why += ", nightshift window"
         if self.max_slots() is not None:
-            why += f", AJAYEB_MAX_SLOTS={self.max_slots()}"
+            why += f", {env_name('MAX_SLOTS')}={self.max_slots()}"
         resource_lines = []
         with self._admission():
             slots = self.locks.slot_names()
@@ -2133,7 +2155,7 @@ def build_parser() -> argparse.ArgumentParser:
                          description="Run CMD under the guard. Put -- before the command.")
     run.add_argument("--kind", required=True, choices=KINDS)
     run.add_argument("--wait", type=float, default=None, metavar="SECONDS",
-                     help="how long to wait for a slot or lock (default 1800 or $AJAYEB_HEAVY_WAIT)")
+                     help=f"how long to wait for a slot or lock (default 1800 or ${env_name('HEAVY_WAIT')})")
 
     run.add_argument("--priority", choices=PRIORITIES, default=None,
                      help="queue priority (default normal or $HEAVY_PRIORITY); only the coordinator grants high")
@@ -2168,7 +2190,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.command == "run":
         if cmd is None:
             parser.error("run needs -- before the command, e.g. heavy.py run --kind test -- go test ./...")
-        if guard.env.get("AJAYEB_HEAVY_NOTIFY_AGENT"):
+        if guard.env.get(env_name("HEAVY_NOTIFY_AGENT")):
             return guard.run_notified(args.kind, cmd, args.wait, args.priority)
         return guard.run(args.kind, cmd, args.wait, args.priority, args.notify)
     if args.command == "status":
