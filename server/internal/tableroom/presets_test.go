@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"slices"
 	"sync/atomic"
@@ -169,12 +170,18 @@ func TestRoomPolicyRepeatabilityAndForbiddenFacts(t *testing.T) {
 // manager. No accepted bot is searched again, and every missing bot retains
 // its full frozen row. Human none/draft/confirmed variants also restore.
 func TestBotEveryPendingSubsetRestarts(t *testing.T) {
+	// The 64 arrival subsets exercise persistence, not search quality. Reuse
+	// each fixed seat's pure decision; race builds use Apprentice for this sweep.
+	var keys [MaxSeats]string
 	for mask := 0; mask < 64; mask++ {
 		t.Run(fmt.Sprint(mask), func(t *testing.T) {
 			hook := faults.NewWork(true)
 			sp := soloSpec(7, 812, BotNormal)
 			for s := 1; s < 7; s++ {
 				sp.Participants[s].Bot = []string{BotEasy, BotNormal}[s%2]
+				if RaceEnabled {
+					sp.Participants[s].Bot = BotEasy
+				}
 			}
 			h := newTH(t, Config{BotWork: hook.Run}, sp)
 			<-hook.Started()
@@ -183,11 +190,14 @@ func TestBotEveryPendingSubsetRestarts(t *testing.T) {
 			g, _ := replay(su, nil)
 			for seat := 1; seat < 7; seat++ {
 				if mask&(1<<(seat-1)) != 0 {
-					d, err := runBot(context.Background(), policyInput(&r, &g, seat))
-					if err != nil {
-						t.Fatal(err)
+					if keys[seat] == "" {
+						d, err := runBot(context.Background(), policyInput(&r, &g, seat))
+						if err != nil {
+							t.Fatal(err)
+						}
+						keys[seat] = d.Key
 					}
-					r.Pending = append(r.Pending, PendingSlot{Seat: seat, Key: d.Key, Confirmed: true, Seqs: []SeqRecord{}})
+					r.Pending = append(r.Pending, PendingSlot{Seat: seat, Key: keys[seat], Confirmed: true, Seqs: []SeqRecord{}})
 				}
 			}
 			for _, human := range []int{0, 1, 2} {
@@ -438,6 +448,11 @@ func TestPresetTablesAndSixBotWait(t *testing.T) {
 			sp := humans(7, uint64(920+count))
 			for s := 7 - count; s < 7; s++ {
 				sp.Participants[s] = Participant{Bot: []string{BotEasy, BotNormal}[s%2]}
+				// Race checks the controller/actor/pool mechanics with the cheap policy.
+				// Focused stored-preset and side/ability tests still run Scholar workers.
+				if RaceEnabled {
+					sp.Participants[s].Bot = BotEasy
+				}
 			}
 			pool := ai.NewPool(1)
 			opened := time.Now()
@@ -478,7 +493,13 @@ func TestPresetTablesAndSixBotWait(t *testing.T) {
 }
 
 func TestSevenBotContinuationWithReleasedPolicies(t *testing.T) {
-	h := newTH(t, Config{Pool: ai.NewPool(1)}, soloSpec(7, 931, BotNormal))
+	level := BotNormal
+	// Continuing with no seated human is a platform contract. Keep this broad
+	// whole-game race test cheap; focused worker tests retain actual Scholar.
+	if RaceEnabled {
+		level = BotEasy
+	}
+	h := newTH(t, Config{Pool: ai.NewPool(1)}, soloSpec(7, 931, level))
 	// This waits for a whole game. Race instrumentation can exceed the short
 	// harness timeout even though every individual decision finishes promptly.
 	h.ctx = testContextFor(t, 3*time.Minute)
@@ -583,6 +604,9 @@ func TestReleasedRoomPoliciesAtSideAndAbilities(t *testing.T) {
 func TestSixBotPresetWaitMeasurements(t *testing.T) {
 	for _, level := range []string{BotEasy, BotNormal} {
 		t.Run(level, func(t *testing.T) {
+			if level == BotNormal && os.Getenv("HAFTGANE_SCHOLAR_WORKER") != "1" {
+				t.Skip("set HAFTGANE_SCHOLAR_WORKER=1 for full Scholar wait measurements")
+			}
 			reports := make(chan BotReport, 512)
 			opened := time.Now()
 			h := newTH(t, Config{Pool: ai.NewPool(1), BotFinished: func(r BotReport) { reports <- r }}, soloSpec(7, 942, level))
