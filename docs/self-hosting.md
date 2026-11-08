@@ -139,6 +139,10 @@ down.
 .self-host/bin/ajayeb.upload --check-rooms --data .self-host/data
 ```
 
+Both scans also pass `--haftgane-tables` when the effective production
+choice is on, so a candidate that cannot start with that flag is refused
+before the running server is stopped.
+
 The candidate emits one JSON report with format `ajayeb-room-check/1` and counts for room statuses, playable rooms, hashes it could refresh, rooms it would archive and read/schema failures. It opens no socket, initializes no identity, makes no directories and changes no room bytes. The check scans both `data/rooms` and `data/rooms-archive`; either missing folder is empty. Records in the archive folder must have archived status and never count as live rooms at risk. Directories and JSON files without valid room-code names are ignored, matching the server's room listing; permission, decoding and schema errors in room files fail closed. Unknown newer schemas are preserved. Exit 0 means the check permits deployment; exit 3 means in-progress rooms (lobby or playing) would archive; exit 1 means an operational/read/schema failure. A finished room that would archive is counted but does not require the live-room override.
 
 A clean replay in the same `engine.RulesVersion` can refresh an old state hash without ending the game or resetting its idle clock. Incompatible setup/RNG/catalog/rules changes must bump that version. Invalid action logs or a different rules version archive on ordinary load with a durable reason and timestamp; an archive never reopens automatically. See [D28](dev/decisions.md#d28-saved-rooms-are-canonical-within-an-explicit-rules-version) for the integrity tradeoff and [the CLI contract](protocol.md#read-only-room-check-cli) for the report fields.
@@ -698,6 +702,11 @@ server, restore `.self-host/bin/ajayeb.prev` to `.self-host/bin/ajayeb`, and
 `start` it again.
 
 A rollback to a pre-D28 binary still checks stored hashes strictly: rooms whose hashes the new binary refreshed or saved may archive on load. Preserve a copy of current data and pair that old binary with a matching pre-upgrade rooms backup when recovering; restoring that backup also gives up moves made afterward.
+
+Rolling back below the Haftgane public release requires
+`redeploy --prebuilt .self-host/bin/ajayeb.prev --no-haftgane-tables`.
+The candidate preflight enforces this flag compatibility before stopping;
+stored-room compatibility checks still apply.
 
 A rollback past the shared lobby (M18.shared-lobby, which moved Home's online Duel onto two-seat lobbies) strands the games it started. Two-seat lobbies still waiting load but can never start, because the older lobby starts only tables of three or more seats. The older binary loads an online Duel game started from a lobby as an ordinary online room, and its first save of that room drops the game's frozen `hintAdmins` (and an unused `rematchReserved`), which rolling forward again does not restore:
 

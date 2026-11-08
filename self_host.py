@@ -550,11 +550,12 @@ def check_prebuilt_binary(path: Path) -> None:
         raise RuntimeError(f"--prebuilt {path} --version did not print a version: {detail}")
 
 
-def check_candidate_rooms(candidate: Path, force_room_archive: bool = False) -> None:
+def check_candidate_rooms(candidate: Path, force_room_archive: bool = False, haftgane_tables: bool = False) -> None:
     """Read-only candidate check. Force permits live archive risk, never read errors."""
     try:
         result = subprocess.run(
-            [str(candidate.resolve()), "--check-rooms", "--data", str(DATA_DIR)],
+            [str(candidate.resolve()), "--check-rooms", "--data", str(DATA_DIR),
+             *(["--haftgane-tables"] if haftgane_tables else [])],
             capture_output=True, text=True, check=False, timeout=120,
         )
         report = json.loads(result.stdout)
@@ -592,14 +593,15 @@ def stop_for_candidate(config: Config, candidate: Path, force_room_archive: bool
     The first scan may race active moves. If the stopped scan fails, keep the
     candidate and data untouched and restart the previous binary on its old port.
     """
-    check_candidate_rooms(candidate, force_room_archive)
+    release_options = {"haftgane_tables": True} if config.haftgane_tables else {}
+    check_candidate_rooms(candidate, force_room_archive, **release_options)
     previous_binary = BIN_PATH.is_file()
     previous_config = load_config() if previous_binary else None
     command_stop()
     try:
         if not wait_for_port_free(config.ports.server):
             raise RuntimeError("previous server did not release its port; candidate not installed")
-        check_candidate_rooms(candidate, force_room_archive)
+        check_candidate_rooms(candidate, force_room_archive, **release_options)
     except BaseException:
         if previous_binary:
             try:

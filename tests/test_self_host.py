@@ -3269,6 +3269,32 @@ class HaftganeReleaseOptionTests(unittest.TestCase):
         return self_host.Config(self_host.parse_site_url("https://game.example.test"),
                                 self_host.Mode.PROD, haftgane_tables=enabled)
 
+    def test_old_candidate_rejecting_release_flag_is_refused_before_stop(self):
+        report = CandidateRoomCheckTests().report(rooms=0, playing=0, playable=0, refreshableHashes=0)
+        with tempfile.TemporaryDirectory() as tmp:
+            candidate = Path(tmp) / "old-candidate"
+            candidate.write_text('#!/usr/bin/env python3\nimport sys\n'
+                                 'if "--haftgane-tables" in sys.argv: sys.exit(2)\n'
+                                 f'print({json.dumps(report)!r})\n')
+            candidate.chmod(0o755)
+            with mock.patch.object(self_host, "DATA_DIR", Path(tmp) / "data"):
+                self_host.check_candidate_rooms(candidate)
+                with mock.patch.object(self_host, "command_stop") as stop, \
+                     self.assertRaisesRegex(RuntimeError, "candidate room check failed"):
+                    self_host.stop_for_candidate(self.config(True), candidate, False)
+                stop.assert_not_called()
+
+    def test_both_candidate_scans_parse_effective_production_release_flag(self):
+        report = CandidateRoomCheckTests().report(rooms=0, playing=0, playable=0, refreshableHashes=0)
+        result = subprocess.CompletedProcess([], 0, stdout=json.dumps(report))
+        with mock.patch.multiple(self_host, command_stop=mock.DEFAULT,
+                                 wait_for_port_free=mock.Mock(return_value=True)), \
+             mock.patch.object(self_host.subprocess, "run", return_value=result) as run:
+            self_host.stop_for_candidate(self.config(True), Path("candidate"), False)
+        self.assertEqual(run.call_count, 2)
+        for call in run.call_args_list:
+            self.assertEqual(call.args[0][-1], "--haftgane-tables")
+
     def test_saved_option_roundtrips_and_legacy_or_non_boolean_values_default_off(self):
         for enabled in (False, True):
             restored = self_host.Config.from_json(self.config(enabled).to_json())
