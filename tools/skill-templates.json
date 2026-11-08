@@ -1,0 +1,385 @@
+{
+  "version": 1,
+  "skill_commit": "ad6c766b72624344e03c5820a1f253e3e86095b4",
+  "note": "Per-file hashes identify the reviewed templates, including compatibility fixes pending upstream commit.",
+  "files": [
+    {
+      "template": "Makefile.template",
+      "path": "Makefile",
+      "class": "adapted",
+      "sha256": "0d051a8f4c62a3a567555bce7583554f43cf840c4e4da60fbf7eeb6d72dfd5de",
+      "reason": "Game-specific build, generation, engine, web and browser gates; preserves existing targets."
+    },
+    {
+      "template": "self_host.py",
+      "path": "self_host.py",
+      "class": "adapted",
+      "sha256": "953efad61e46a4a200ec8266fb82629b7d23eac35d40a16b0ceccb8b3cb505b8",
+      "reason": "Production ship, rollback, room backups, boot integration, startup health budget and pinned toolchain."
+    },
+    {
+      "template": "tests/__init__.py",
+      "path": "tests/__init__.py",
+      "class": "vendored",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tests/test_heavy.py",
+      "path": "tests/test_heavy.py",
+      "class": "vendored",
+      "sha256": "baff2ab0b5a5ff3e3f459366493fd9ac357e38fe7cff42696e9f40f94db7a3f7",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tests/test_self_host.py",
+      "path": "tests/test_self_host.py",
+      "class": "adapted",
+      "sha256": "9ef51f5bd295074b5152475e7ce5a460eb42b7d2fae5a83c74bd0c5e7cb29026",
+      "reason": "Production ship, rollback, room backups, boot integration, startup health budget and pinned toolchain."
+    },
+    {
+      "template": "tools/README.md",
+      "path": "tools/README.md",
+      "class": "vendored",
+      "sha256": "66eab2ff15fdbb109bce8bf0786e6f03e68eaf2b212068f1246ba9ec419a29ae",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/art/README.md",
+      "path": "tools/art/README.md",
+      "class": "adapted",
+      "sha256": "648dab49834e26b0943afb78f21e4c5249b8aa399010dbcacf39041d1dfa85a0",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/apply-review.mjs",
+      "path": "tools/art/apply-review.mjs",
+      "class": "adapted",
+      "sha256": "331c8d0c11775fdbb16bb61ae398938673260cac4926d319972a6df87fbf6bbc",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/gate.mjs",
+      "path": "tools/art/gate.mjs",
+      "class": "adapted",
+      "sha256": "c97bdb191a72de43d0016be5a832be9bc6e677e565027a31816275b21d3697c1",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/generate.mjs",
+      "path": "tools/art/generate.mjs",
+      "class": "adapted",
+      "sha256": "0bb1fb43e9ebea0851b8b1ccbd6bf73d0b259da0da35f13eb155833d840e8b1e",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/index.mjs",
+      "path": "tools/art/index.mjs",
+      "class": "adapted",
+      "sha256": "77fed1aef99e357d203bddb228ff26bd9f25b3f7ea4dac5b09585e38caf351ff",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/lib.mjs",
+      "path": "tools/art/lib.mjs",
+      "class": "adapted",
+      "sha256": "fb229a4b725edf53cef386ef3859ceabeb7db8173c1b86ea2bf50a9565b61cc7",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/manifest.mjs",
+      "path": "tools/art/manifest.mjs",
+      "class": "adapted",
+      "sha256": "c5eaff0c71240908aeda368f20fe78ab532ada439f134af88bcc790b2ee6c894",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/process.mjs",
+      "path": "tools/art/process.mjs",
+      "class": "adapted",
+      "sha256": "02ffb6526149ebd8398c6e64f284a10e25e28d7d8e0118bc77d631e1e5b4b0bc",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/art/render-fast.sh",
+      "path": "tools/art/render-fast.sh",
+      "class": "vendored",
+      "sha256": "a7920dc8435a50a4fc86c1412c82b923c720f7c974a46835a97a34852aaa8a0f",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/art/sheet.mjs",
+      "path": "tools/art/sheet.mjs",
+      "class": "adapted",
+      "sha256": "bbb5fc1dbf42ea31e88eb0780836f7eb57de189ab8f271c393c098c47a9eb5ab",
+      "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
+    },
+    {
+      "template": "tools/check_generated.py",
+      "path": "tools/check_generated.py",
+      "class": "vendored",
+      "sha256": "356810d9406eec2ee5730f162e1a0c45399dfcbffd47c7adeebc840e18b8bbae",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/README.md",
+      "path": "tools/chrome/README.md",
+      "class": "adapted",
+      "sha256": "470edee9a4ea59edfe503f41cc76ae91161a6bff3405afe780cd8de58e642e0c",
+      "reason": "Documents Ajayeb screenshot flags, tools and walkthroughs."
+    },
+    {
+      "template": "tools/chrome/cdp.mjs",
+      "path": "tools/chrome/cdp.mjs",
+      "class": "vendored",
+      "sha256": "a33826b8d24a716e06b18b12bec9abc9152984c4fddeab4eb8ddd4a3026805d7",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/cli.test.mjs",
+      "path": "tools/chrome/cli.test.mjs",
+      "class": "vendored",
+      "sha256": "9ec53c176e7a15eb500fb8c866de4b29d85145cde252c43d6742514c4f2beaf2",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/config.test.mjs",
+      "path": "tools/chrome/config.test.mjs",
+      "class": "vendored",
+      "sha256": "432901f03382c56f2b82129aa505d5c70622ab3a4bde10b14a690c7e7878f9e5",
+      "reason": "Shared browser-free configuration and browser-binary safety checks."
+    },
+    {
+      "template": "tools/chrome/launch.mjs",
+      "path": "tools/chrome/launch.mjs",
+      "class": "vendored",
+      "sha256": "13a1acc7594d6934c20b3d84a87b8be35d670abf355f8f812a617f2a5bce8c72",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/origin.mjs",
+      "path": "tools/chrome/origin.mjs",
+      "class": "vendored",
+      "sha256": "b4ac4a414401108e3102dcf7b1c4416b3e9b300e34e389f3468ad00307ddb259",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/origin.test.mjs",
+      "path": "tools/chrome/origin.test.mjs",
+      "class": "vendored",
+      "sha256": "49e831da79dee25cf8d14789623be00f73ae49e56beb82f2aaea9faaf9332f62",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/probe.d.mts",
+      "path": "tools/chrome/probe.d.mts",
+      "class": "vendored",
+      "sha256": "39bac3db2b3dab3ace8a19f67fa9be8a616f3ed5c3e71af9f29b94c768d69c46",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/probe.mjs",
+      "path": "tools/chrome/probe.mjs",
+      "class": "adapted",
+      "sha256": "74ae20f4b4226c50ae0f74e6a2954f29e42e42d3b333f88119a75357e4faf3e4",
+      "reason": "Haftgane rules-drawer coverage exemption; template storage-privacy fix ported."
+    },
+    {
+      "template": "tools/chrome/shot.mjs",
+      "path": "tools/chrome/shot.mjs",
+      "class": "vendored",
+      "sha256": "ed89b07c929d726545235b93d8bf71deb84807377fe6b16111749f16efde5be9",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/chrome/svg-render.mjs",
+      "path": "tools/chrome/svg-render.mjs",
+      "class": "vendored",
+      "sha256": "6eff174267f7b59a0f705d006dc6838afe4d173729c8018848409304f6070bf9",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/config.mjs",
+      "path": "tools/config.mjs",
+      "class": "vendored",
+      "sha256": "88cbfa64bd892c93b63fc498749a0a59b66245ebefb9bd89eb009548c33c13ac",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/heavy.py",
+      "path": "tools/heavy.py",
+      "class": "vendored",
+      "sha256": "a491b4b2a98db7231af45db49ad09c2bf54fc4459ab1aecdea120c8ff92952d3",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "tools/project.json",
+      "path": "tools/project.json",
+      "class": "adapted",
+      "sha256": "7719d2ada3291009bead24ab3cc42008abd0f1551854f94543f1f0468f141bee",
+      "reason": "Adopter settings: existing ports, environment namespace, run directory, Chrome options and art specs."
+    },
+    {
+      "template": "web/README.md",
+      "path": "web/README.md",
+      "class": "adapted",
+      "sha256": "2ac115a1d05638cd2da756ebfbaad628b756b54523f9443d04fcac1d5b8f450f",
+      "reason": "Documents the integrated client, theme tokens and project workflows."
+    },
+    {
+      "template": "web/src/lib/lint-ui.test.ts",
+      "path": "web/src/lib/lint-ui.test.ts",
+      "class": "adapted",
+      "sha256": "15e08499570cb66c648306a4ab391a7651b0564b324e0ada635230ac91894c94",
+      "reason": "Stronger project lint tests cover typed translations, logical CSS, tooltips and server-driven UI."
+    },
+    {
+      "template": "web/src/lib/rules/RulesContent.svelte",
+      "path": "web/src/lib/components/rules/RulesContent.svelte",
+      "class": "adapted",
+      "sha256": "83ceb411c65c3ff7df1a171af5703d98bad8836b48e39dc160aa88d9a41b3c81",
+      "reason": "Typed i18n blocks, game-specific sections and diagrams, lazy overlay mount, responsive drawer/sheet and shared page."
+    },
+    {
+      "template": "web/src/lib/rules/RulesOverlay.svelte",
+      "path": "web/src/lib/components/rules/RulesOverlay.svelte",
+      "class": "adapted",
+      "sha256": "f49fd1d954814fa92fcd12fa01c88d76ec89a6224ae290b73c51395720f34cb4",
+      "reason": "Typed i18n blocks, game-specific sections and diagrams, lazy overlay mount, responsive drawer/sheet and shared page."
+    },
+    {
+      "template": "web/src/lib/rules/rules-overlay.svelte.ts",
+      "path": "web/src/lib/components/rules/rules-overlay.svelte.ts",
+      "class": "adapted",
+      "sha256": "e59415d37939705d5c6f7d2d2fd3f344adf9679bd97ae18e649735d336eaac76",
+      "reason": "Typed i18n blocks, game-specific sections and diagrams, lazy overlay mount, responsive drawer/sheet and shared page."
+    },
+    {
+      "template": "web/src/lib/rules/sections.test.ts",
+      "path": "web/src/lib/components/rules/sections.test.ts",
+      "class": "adapted",
+      "sha256": "ec5e52b9d57fc7c194ba11870d225893483752c2abbc17aba8e949653541d2ac",
+      "reason": "Typed i18n blocks, game-specific sections and diagrams, lazy overlay mount, responsive drawer/sheet and shared page."
+    },
+    {
+      "template": "web/src/lib/rules/sections.ts",
+      "path": "web/src/lib/components/rules/sections.ts",
+      "class": "adapted",
+      "sha256": "be1b052b6f917a774b7aea2e52c97abc388536cdc03d24a233e2614e085d2e69",
+      "reason": "Typed i18n blocks, game-specific sections and diagrams, lazy overlay mount, responsive drawer/sheet and shared page."
+    },
+    {
+      "template": "web/src/lib/session/identity.test.ts",
+      "path": "web/src/lib/session/identity.test.ts",
+      "class": "vendored",
+      "sha256": "033a519e7e78b264e3be3e08523dd6aa8ddf4da155b483b046bbf6e086c0dc7a",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "web/src/lib/session/identity.ts",
+      "path": "web/src/lib/session/identity.ts",
+      "class": "adapted",
+      "sha256": "23f89ca0312f98f88ea07565f7dbba142bbe6479cdfa4f853392a70a0697bd12",
+      "reason": "Existing identity storage prefix and protocol documentation; algorithms and tests match."
+    },
+    {
+      "template": "web/src/lib/session/socket-url.test.ts",
+      "path": "web/src/lib/session/ws-transport.test.ts",
+      "class": "adapted",
+      "sha256": "1d44fa7f6774e5344dd2bb3c5f31b81a0dd5389ecb6b35786039f514a566f5e5",
+      "reason": "Same-origin socket URL is integrated with reconnect, offline, fatal-close and listener handling."
+    },
+    {
+      "template": "web/src/lib/session/socket-url.ts",
+      "path": "web/src/lib/session/ws-transport.ts",
+      "class": "adapted",
+      "sha256": "3b922ad10f2b37cb6feea717ab886482c026d899415fbf8844458f4357c2b51b",
+      "reason": "Same-origin socket URL is integrated with reconnect, offline, fatal-close and listener handling."
+    },
+    {
+      "template": "web/src/lib/theme.test.ts",
+      "path": "web/src/lib/ui/theme.test.ts",
+      "class": "adapted",
+      "sha256": "98f18694a4e451b9efc6b2b2b361702f70745691f11df7dc914f8719ba41f364",
+      "reason": "Stored system/light/dark preference, first-paint bootstrap and browser chrome colours; template uses selected theme packs."
+    },
+    {
+      "template": "web/src/lib/theme.ts",
+      "path": "web/src/lib/ui/theme.svelte.ts",
+      "class": "adapted",
+      "sha256": "cfd78609c6e2a15fda7652e065115f98f5fa0b8bd08675ecfc595da2ba7bd2aa",
+      "reason": "Stored system/light/dark preference, first-paint bootstrap and browser chrome colours; template uses selected theme packs."
+    },
+    {
+      "template": "web/src/lib/ui/TooltipLayer.svelte",
+      "path": "web/src/lib/components/shell/TooltipLayer.svelte",
+      "class": "adapted",
+      "sha256": "c99b491c61142d36d236072919d175d15ef601ce96f3da3ced05c9110addf4e6",
+      "reason": "Game-specific card/custom preview stack, rules callbacks, safe-area geometry and typed i18n; no generic extra controls in Ajayeb."
+    },
+    {
+      "template": "web/src/lib/ui/clipboard.test.ts",
+      "path": "web/src/lib/ui/clipboard.test.ts",
+      "class": "vendored",
+      "sha256": "2429c591cd0d6ef357a2c8a1887997bea48ce9ba50353c20d575de68309f0f3c",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "web/src/lib/ui/clipboard.ts",
+      "path": "web/src/lib/ui/clipboard.ts",
+      "class": "vendored",
+      "sha256": "6cc75967bb6d3082a7ef5d93eb805db7ea1da8c97b45f39a2814a50a0fe9a571",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "web/src/lib/ui/dismiss.ts",
+      "path": "web/src/lib/ui/dismiss.ts",
+      "class": "adapted",
+      "sha256": "a150e1daf22b8521bb59dae8882faaa4abddd72f8f61a562e7791e4950c44003",
+      "reason": "Overlay swallowing, long-press release behavior and focus trapping used by game sheets."
+    },
+    {
+      "template": "web/src/lib/ui/tooltip-gesture.test.ts",
+      "path": "web/src/lib/ui/tooltip-gesture.test.ts",
+      "class": "adapted",
+      "sha256": "33f56d8ccef564a67779681c7518b3df0b62efef0b66352257e9092d29cd52d7",
+      "reason": "Existing rules-link gesture API; template extra interactive controls have no current caller."
+    },
+    {
+      "template": "web/src/lib/ui/tooltip-gesture.ts",
+      "path": "web/src/lib/ui/tooltip-gesture.ts",
+      "class": "adapted",
+      "sha256": "5654df39f80591173c014007e18f2f0e4231a914954eaf87a7bcb2c8c4cc649d",
+      "reason": "Existing rules-link gesture API; template extra interactive controls have no current caller."
+    },
+    {
+      "template": "web/src/lib/ui/tooltip-place.test.ts",
+      "path": "web/src/lib/ui/tooltip-place.test.ts",
+      "class": "vendored",
+      "sha256": "85cad87799b3a879d88051f8a3f0e416fc9ce9806d1d06f8b9acb11732f1f936",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "web/src/lib/ui/tooltip-place.ts",
+      "path": "web/src/lib/ui/tooltip-place.ts",
+      "class": "vendored",
+      "sha256": "54be185fe98ce1dea66b640d7968defc0590b26148bd89278f465d5db3868904",
+      "reason": "Shared implementation; project values live in tools/project.json."
+    },
+    {
+      "template": "web/src/lib/ui/tooltip.svelte.ts",
+      "path": "web/src/lib/ui/tooltip.svelte.ts",
+      "class": "adapted",
+      "sha256": "5f450332c277d51130de5282b055b07f449e170569f5e2c4c7ffdb977119f976",
+      "reason": "Game-specific card/custom preview stack, rules callbacks, safe-area geometry and typed i18n; no generic extra controls in Ajayeb."
+    },
+    {
+      "template": "web/src/routes/rules/+page.svelte",
+      "path": "web/src/routes/rules/+page.svelte",
+      "class": "adapted",
+      "sha256": "565d2efa05713d86120a86b44e55d7624e56981d232b455b56c8ba2879007041",
+      "reason": "Typed i18n blocks, game-specific sections and diagrams, lazy overlay mount, responsive drawer/sheet and shared page."
+    }
+  ]
+}

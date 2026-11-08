@@ -55,7 +55,7 @@ E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
         fmt-check tidy-check vet test-go test-race test-haftgane-payment-exhaustive test-haftgane-rules-sweep test-haftgane-sampler-sweep fuzz-haftgane-rules lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
         e2e e2e-smoke e2e-webkit e2e-prod shots vec-lint vec-shot vec-blind vec-family \
-        test-py test-tools verify-quick verify verify-full clean
+        test-py test-tools vendor-check verify-quick verify verify-full clean
 
 ##@ Getting started
 
@@ -267,7 +267,10 @@ test-py: ## Python unit tests for tools/heavy.py and self_host.py (guard kind li
 test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
 	$(HEAVY) run --kind light -- node --test tools/chrome/cli.test.mjs
 
-verify-quick: fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go mod tidy, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
+vendor-check: ## Check vendored tool hashes without a skill checkout
+	python3 tools/skill_templates.py check --offline
+
+verify-quick: vendor-check fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go mod tidy, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
 
 verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room, ws, tableroom, lobbyroom and roles, the release build and the e2e smoke
 
