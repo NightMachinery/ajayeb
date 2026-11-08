@@ -1,6 +1,6 @@
 # Resource guard
 
-Copy `tools/` and `tests/test_heavy.py` to the project root. Edit `project.json` once: project name, private run directory (and its environment override), admitted kinds, exclusive kind locks and ports. `env_prefix` sets the runtime namespace (default `BGD_`); `run_dir_env` independently names its directory override. All projects that share a machine-wide browser budget must use the same run directory. Keep `browser`, `codex` and `light` for these templates; `light` intentionally bypasses mode and memory gates. `BGD_PROJECT_CONFIG` selects an alternative JSON file.
+Copy `tools/` and `tests/test_heavy.py` to the project root. Edit `project.json` once: project name, private run directory (and its environment override), admitted kinds, exclusive kind locks and ports. `env_prefix` sets the guard and Chrome environment namespace (default `BGD_`); `run_dir_env` independently names its directory override. All projects that share a machine-wide browser budget must use the same run directory. Keep `browser`, `codex` and `light` for these templates; `light` intentionally bypasses mode and memory gates. `BGD_PROJECT_CONFIG` selects an alternative JSON file.
 
 Use `python3 tools/heavy.py run --kind test --wait 3600 -- COMMAND`. Refusal is exit 75, including paused mode and an expired queue wait. Queue order is FIFO within priority. Only the coordinator grants high priority. Nested guarded commands reuse their parent's slot.
 

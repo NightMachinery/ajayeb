@@ -52,7 +52,8 @@ Adapted means reviewed against the template but maintained locally:
   optional interactive tooltip controls have no Ajayeb caller to port.
 
 Changes carried back to the templates make the environment namespace,
-Playwright resolution and screenshot options configurable, and preserve input
+Playwright resolution and screenshot options configurable, keep the art generator
+in its inherited guard namespace, and preserve input
 selection and modal-dialog copying in the clipboard fallback.
 
 ## Checking and updating

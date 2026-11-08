@@ -42,7 +42,7 @@
       "template": "tools/README.md",
       "path": "tools/README.md",
       "class": "vendored",
-      "sha256": "66eab2ff15fdbb109bce8bf0786e6f03e68eaf2b212068f1246ba9ec419a29ae",
+      "sha256": "f8f61e4db93e160165881c6859e18e9935bc0dc671e940d0ecf0b209860f1ff9",
       "reason": "Shared implementation; project values live in tools/project.json."
     },
     {
@@ -70,7 +70,7 @@
       "template": "tools/art/generate.mjs",
       "path": "tools/art/generate.mjs",
       "class": "adapted",
-      "sha256": "0bb1fb43e9ebea0851b8b1ccbd6bf73d0b259da0da35f13eb155833d840e8b1e",
+      "sha256": "95449c10eb5c805158faeae2ed4e0c9c1581182cbccee2b5a5fad073f48d46a9",
       "reason": "Game namespaces, catalog-generated assets, cross-game aliases, crop/mask/HiDPI specs, app icons and legacy review manifests; template uses inherited theme manifests."
     },
     {
