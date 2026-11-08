@@ -276,3 +276,48 @@ test('a desktop seat panel keeps the whole name beside ghost tallies', async ({ 
   }
   expect(problems, 'console errors, page errors or failed requests').toEqual([]);
 });
+
+for (const locale of ['en', 'fa'] as const) {
+  test.describe(`Duel small-window bypass ${locale}`, () => {
+    test.use({ appLocale: locale });
+    test('size notice dismisses on tap and stays dismissed across resize @mobile', async ({
+      page
+    }) => {
+      const problems = watchHygiene(page);
+      await page.setViewportSize({ width: 320, height: 300 });
+      await openHotseatRoom(page, 'mausoleum');
+      const notice = page.locator('[data-too-short]');
+      await expect(notice).toBeVisible();
+      const dismiss = notice.locator('[data-act="small-window-dismiss"]');
+      await expect(dismiss).toContainText(
+        locale === 'en' ? 'Continue anyway' : 'با این حال ادامه دهید'
+      );
+      // A tap on the warning text itself also takes the bypass.
+      await dismiss
+        .locator('span')
+        .filter({ hasText: locale === 'en' ? 'Not enough room' : 'جا کافی نیست' })
+        .last()
+        .click();
+      await expect(notice).toHaveCount(0);
+      for (const viewport of [
+        { width: 320, height: 300 },
+        { width: 400, height: 330 },
+        { width: 600, height: 320 },
+        { width: 390, height: 844 },
+        { width: 320, height: 300 }
+      ]) {
+        await page.setViewportSize(viewport);
+        await expect(notice).toHaveCount(0);
+        await expect(page.locator('.card-structure [data-card]').first()).toBeVisible();
+        await expect(page.locator('.card-structure [data-card]').first()).toBeInViewport();
+      }
+      await page.reload();
+      await expect(notice).toBeVisible();
+      // The labelled control remains operable from the keyboard, too.
+      await page.locator('[data-act="small-window-dismiss"]').focus();
+      await page.keyboard.press('Enter');
+      await expect(notice).toHaveCount(0);
+      expect(problems).toEqual([]);
+    });
+  });
+}

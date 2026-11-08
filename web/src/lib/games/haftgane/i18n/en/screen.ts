@@ -45,6 +45,7 @@ export const screen = {
   'hg.screen.notice.dismiss': 'Dismiss',
   // The window is below the smallest size the table can be played at.
   'hg.screen.tooShort.title': 'Not enough room',
+  'hg.screen.tooShort.continue': 'Continue anyway',
   'hg.screen.tooShort.body':
     'This window is too short to play. Make it taller, or turn your device.',
   'hg.screen.age': 'Age {age}',

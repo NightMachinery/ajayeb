@@ -130,6 +130,8 @@
   import GameOver from '../screens/GameOver.svelte';
   import Lobby from '../screens/Lobby.svelte';
   import PassDevice from '../screens/PassDevice.svelte';
+  import SmallWindowNotice from '../shell/SmallWindowNotice.svelte';
+
   import CitySheet from '../sheets/CitySheet.svelte';
   import LogSheet from '../sheets/LogSheet.svelte';
   import WonderListSheet from '../sheets/WonderListSheet.svelte';
@@ -172,6 +174,8 @@
   import { botSeat, seatNames } from './names';
   import { boardUndoKey, modalOpen } from './undo-keys';
   import SeatPanel from './SeatPanel.svelte';
+
+  let smallWindowDismissed = $state(false);
 
   interface Props {
     session: Session;
@@ -1119,6 +1123,7 @@
   <div
     {@attach rememberShown(frame, presenter.idle, pageVisible, seenPly)}
     class="game-screen h-full w-full overflow-hidden"
+    data-small-window-dismissed={smallWindowDismissed ? '' : undefined}
     data-layout={layout}
     data-short={short ? '' : undefined}
     data-draft={view?.phase === 'wonderDraft' ? '' : undefined}
@@ -1366,19 +1371,17 @@
       {/if}
     </div>
   </div>
-  <!-- Below the floor a translated notice covers the screen instead of a
-       broken board (see .too-short). -->
-  <div
-    class="too-short fixed inset-0 z-40 place-items-center bg-table p-6 text-center"
-    dir={i18n.dir}
-    role="status"
-    data-too-short
-  >
-    <div class="flex max-w-xs flex-col gap-2">
-      <p class="font-semibold text-fg">{t('game.tooShort.title')}</p>
-      <p class="text-sm text-fg-muted">{t('game.tooShort.body')}</p>
+  <!-- Keep the size warning until the player chooses the squeezed board. -->
+  {#if !smallWindowDismissed}
+    <div class="too-short fixed inset-0 z-40 bg-table" dir={i18n.dir} data-too-short>
+      <SmallWindowNotice
+        heading={t('game.tooShort.title')}
+        body={t('game.tooShort.body')}
+        label={t('game.tooShort.continue')}
+        ondismiss={() => (smallWindowDismissed = true)}
+      />
     </div>
-  </div>
+  {/if}
 {/if}
 
 {#if view}
@@ -1602,8 +1605,8 @@
      e2e/ux/short-screens.spec.ts: under 460 px of height in portrait the
      Age III cards drop under 44 px tall, and under 512 px of width the
      phone landscape layout's cards drop under 30 px wide. Pure CSS, so the
-     notice comes and goes as the window is resized; open dialogs stay
-     above it. */
+     notice follows the window size until dismissed for this page; open
+     dialogs stay above it. */
   .too-short {
     display: none;
   }
@@ -1664,6 +1667,16 @@
   }
   .game-screen[data-layout='phone-landscape'] .area-structure {
     padding-inline: 0.25rem;
+  }
+
+  /* A bypassed warning must still leave room for the structure when both
+     landscape strips would otherwise consume the whole window width. */
+  @media (max-width: 31.9375rem) {
+    .game-screen[data-small-window-dismissed][data-layout='phone-landscape']:not([data-draft]):not(
+        :has(> .area-main)
+      ) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    }
   }
 
   /* Desktop: my city panel / board / opponent's city panel. */

@@ -36,6 +36,8 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { i18n } from '$lib/i18n';
+  import SmallWindowNotice from '$lib/components/shell/SmallWindowNotice.svelte';
+
   import type { TableState } from '$lib/wire/platform.gen';
   import { ht } from '../i18n/messages.svelte';
   import type { TablePresenter } from '../session/presenter.svelte';
@@ -86,6 +88,8 @@
   import { dealOf, latestRecap, lineOf, recapWorthy } from './recap';
   import { actText, coinText, recapSpeech } from './recap-text';
   import { botName, humanName, isBot, seatName, where } from './seat-names';
+
+  let smallWindowDismissed = $state(false);
 
   interface Props {
     session: TableSession;
@@ -405,6 +409,7 @@
   class="screen"
   dir="ltr"
   data-table-screen
+  data-small-window-dismissed={smallWindowDismissed ? '' : undefined}
   data-seats={n}
   data-phase={view.phase}
   data-finished={finished ? '' : undefined}
@@ -770,14 +775,17 @@
     </div>
   {/if}
 </div>
-<!-- Below the floor a translated notice covers the screen instead of a
-     broken table (see .too-short). -->
-<div class="too-short" dir={i18n.dir} role="status" data-too-short>
-  <div>
-    <p class="too-short-title">{ht('hg.screen.tooShort.title')}</p>
-    <p>{ht('hg.screen.tooShort.body')}</p>
+<!-- Keep the size warning until the player chooses the squeezed table. -->
+{#if !smallWindowDismissed}
+  <div class="too-short" dir={i18n.dir} data-too-short>
+    <SmallWindowNotice
+      heading={ht('hg.screen.tooShort.title')}
+      body={ht('hg.screen.tooShort.body')}
+      label={ht('hg.screen.tooShort.continue')}
+      ondismiss={() => (smallWindowDismissed = true)}
+    />
   </div>
-</div>
+{/if}
 
 {#snippet tag(seat: number)}
   {@const line = tagsOn ? lineOf(recap, seat) : undefined}
@@ -1032,27 +1040,14 @@
      e2e/ux/short-screens.spec.ts: under 480 px of height in portrait a
      table of seven cannot keep every seat, a 44 px wide hand and the turn
      bar; in landscape the turn bar covers the hand under 667 px of width
-     or 340 px of height. Pure CSS; open dialogs stay above it. */
+     or 340 px of height. The warning follows the window size until
+     dismissed for this page; open dialogs stay above it. */
   .too-short {
     position: fixed;
     inset: 0;
     z-index: 40;
     display: none;
-    place-items: center;
-    padding: 1.5rem;
     background: var(--table);
-    color: var(--fg-muted);
-    font-size: 0.875rem;
-    text-align: center;
-  }
-  .too-short > div {
-    max-width: 20rem;
-  }
-  .too-short-title {
-    margin-block-end: 0.5rem;
-    color: var(--fg);
-    font-size: 1rem;
-    font-weight: 600;
   }
   @media (orientation: portrait) and (max-height: 29.9375rem),
     (orientation: landscape) and (max-height: 32rem) and (max-width: 41.625rem),
@@ -1128,6 +1123,20 @@
     .reveal {
       inset-block-end: 0.15rem;
       justify-content: flex-end;
+    }
+  }
+
+  /* After the size warning is bypassed, reserve space for the hand even
+     when the usual fixed neighbour columns would consume the whole width. */
+  @media (orientation: landscape) and (max-height: 32rem) and (max-width: 41.625rem) {
+    .screen[data-small-window-dismissed] {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    }
+    .screen[data-small-window-dismissed] .strip {
+      flex: 0 1 auto;
+      min-height: 0;
+      max-height: 35%;
+      overflow: auto;
     }
   }
 

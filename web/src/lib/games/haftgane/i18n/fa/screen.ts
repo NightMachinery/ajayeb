@@ -47,6 +47,7 @@ export const screen = {
   'hg.screen.menu.rules': 'قوانین',
   'hg.screen.notice.dismiss': 'بستن',
   'hg.screen.tooShort.title': 'جا کافی نیست',
+  'hg.screen.tooShort.continue': 'با این حال ادامه دهید',
   'hg.screen.tooShort.body':
     'این پنجره برای بازی خیلی کوتاه است. آن را بلندتر کنید یا دستگاه را بچرخانید.',
   'hg.screen.age': 'دوران {age}',

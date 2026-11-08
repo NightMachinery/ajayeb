@@ -1,10 +1,45 @@
 import { expect } from '@playwright/test';
 import { test } from '../fixtures/base';
+import { watchHygiene } from '../fixtures/hygiene';
 import { latest, openBotTable } from '../fixtures/table';
 
 for (const locale of ['en', 'fa'] as const) {
   test.describe(`Haftgane screen layout ${locale}`, () => {
     test.use({ appLocale: locale });
+    test('size notice dismisses on tap and stays dismissed across resize @mobile', async ({
+      page
+    }) => {
+      const problems = watchHygiene(page);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await openBotTable(page, 7, 'Layout');
+      await page.setViewportSize({ width: 320, height: 300 });
+      const notice = page.locator('[data-too-short]');
+      await expect(notice).toBeVisible();
+      const dismiss = notice.locator('[data-act="small-window-dismiss"]');
+      const label = locale === 'en' ? 'Continue anyway' : 'با این حال ادامه دهید';
+      await expect(dismiss).toContainText(label);
+      await dismiss.getByText(label, { exact: true }).click();
+      await expect(notice).toHaveCount(0);
+      for (const viewport of [
+        { width: 320, height: 300 },
+        { width: 400, height: 330 },
+        { width: 600, height: 320 },
+        { width: 390, height: 844 },
+        { width: 320, height: 300 }
+      ]) {
+        await page.setViewportSize(viewport);
+        await expect(notice).toHaveCount(0);
+        await expect(
+          page.locator('[data-table-screen] [data-hand] [data-card]').first()
+        ).toBeVisible();
+        await expect(
+          page.locator('[data-table-screen] [data-hand] [data-card]').first()
+        ).toBeInViewport();
+      }
+      await page.reload();
+      await expect(notice).toBeVisible();
+      expect(problems).toEqual([]);
+    });
     test('compact bot personas and numbers fit seats and city tabs @mobile', async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await openBotTable(page, 7, 'Human 42');
