@@ -12,9 +12,8 @@
 //   becomes a spectator's view;
 // - the creator seats that human again, then seats the spectator in that
 //   human's seat, and the human watches instead;
-// - the creator, the last real admin, steps down, and the rule makes a
-//   temporary admin at once (the timed case, five minutes away, is in
-//   haftgane-playthrough.full.spec.ts).
+// - the creator keeps permanent authority and has no step-down control
+//   (the timed temporary-admin case is in haftgane-playthrough.full.spec.ts).
 //
 // The client leak boundary: until the point resolves, neither pick the
 // second human drafted appears anywhere in the creator's or the
@@ -33,6 +32,7 @@ import { FrameLog, newDeviceContext } from '../fixtures/online';
 import { createTableFromHome } from '../fixtures/lobby';
 import {
   choose,
+  openMenu,
   contaminate,
   expectPending,
   latest,
@@ -229,24 +229,15 @@ test.describe('Haftgane table', { tag: ['@full', '@mobile', '@haftgane-table'] }
       expect((await latest(b)).you.seat).toBeUndefined();
       expect((await latest(a)).seats[seatB]).toMatchObject({ kind: 'human', userId: userC });
 
-      // The last real admin steps down. With no real admin left, the rule
-      // makes a temporary admin at once: the connected human who has held
-      // a seat longest, the creator, with seat powers and no promotion.
+      // The creator remains an admin and has no step-down control.
       const userA = startA.you.userId;
-      await choose(a, 'step-down');
-      await expect
-        .poll(async () => (await latest(a)).humans.find((h) => h.userId === userA))
-        .toMatchObject({ admin: false, temporary: true });
-      await expect(
-        a.locator(`[data-seat="${seatA}"] [data-role-tag="temporary"]`).first()
-      ).toBeVisible();
-      expect((await latest(a)).you.canPromote).toBeUndefined();
-      for (const page of [b, c])
-        await expect
-          .poll(async () =>
-            (await latest(page)).humans.filter((h) => h.temporary).map((h) => h.userId)
-          )
-          .toEqual([userA]);
+      await openMenu(a);
+      await expect(a.locator('[data-act="step-down"]')).toHaveCount(0);
+      expect((await latest(a)).humans.find((h) => h.userId === userA)).toMatchObject({
+        admin: true,
+        temporary: false
+      });
+      await a.locator('[data-act="menu-close"]').click();
 
       // Every frame of the whole game showed each page its own pick only.
       for (const [name, log] of [

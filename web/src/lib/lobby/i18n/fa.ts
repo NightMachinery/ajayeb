@@ -36,6 +36,7 @@ export const lobby = {
   'lobby.manage': 'مدیریت {name}',
   'lobby.promote': 'مدیر کردن',
   'lobby.demote': 'گرفتن نقش مدیر',
+  'lobby.rejoin': 'بازگشت به جایگاهم',
   'lobby.stepDown': 'کناره‌گیری از مدیری',
   'lobby.watch': 'ترک جایگاه و تماشا',
   'lobby.removeHuman': 'انتقال به تماشاگران',

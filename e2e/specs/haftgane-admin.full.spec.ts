@@ -89,7 +89,7 @@ function frameLeaks(name: string, log: readonly Traffic[]): string[] {
     const me = f.humans.find((h) => h.userId === f.you.userId);
     if (f.you.previousSeats !== undefined && !(me?.admin || me?.temporary))
       out.push(`${name} ${i}: previous seats sent to a non-admin`);
-    if (f.you.canPromote !== undefined && !me?.admin)
+    if (f.you.canPromote !== undefined && !(me?.admin || me?.temporary))
       out.push(`${name} ${i}: the admin cap sent to a viewer who is no real admin`);
     if (f.you.formerSeat !== undefined && (f.you.seat !== undefined || f.status !== 'playing'))
       out.push(`${name} ${i}: a former seat sent to a seated viewer or after play`);
@@ -165,6 +165,9 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
       await playTurn(a);
       await expect(a.locator('[data-act="undo"]')).toBeVisible();
       await expect(a.locator('[data-role-tag="creator"]').first()).toBeVisible();
+      await openMenu(a);
+      await expect(a.locator('[data-act="step-down"]')).toHaveCount(0);
+      await a.locator('[data-act="menu-close"]').click();
 
       // Two friends open the running table: they watch.
       for (const p of [b, c]) {
@@ -275,8 +278,10 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
       await c.locator('[data-act="menu-close"]').click();
       expect(hinted(logs[2]!), 'hints sent to a non-admin spectator').toBe(0);
 
-      // Seated again, then promoted and demoted from the seat's menu.
-      await seatAction(a, seatB, `seat-user:${seatB}:${userB}`);
+      // The former player takes their own bot-held seat without an admin.
+      await expect(b.locator('[data-act="rejoin"]')).toBeVisible();
+      expect((await frame(b)).view.you).toBeUndefined();
+      await b.locator('[data-act="rejoin"]').click();
       await expect.poll(async () => (await frame(b)).you.seat).toBe(seatB);
       await expect(b.locator('[data-former-seat]')).toHaveCount(0);
       await seatAction(a, seatB, `role-promote:${userB}`);

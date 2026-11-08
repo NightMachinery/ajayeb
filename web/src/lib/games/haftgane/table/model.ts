@@ -148,12 +148,20 @@ export function roleActions(
 ): { promote: boolean; demote: boolean } {
   const me = frame.humans.find((h) => h.userId === frame.you.userId);
   const them = frame.humans.find((h) => h.userId === userId);
-  if (!me?.admin || !them || them.userId === me.userId || frame.status !== 'playing')
+  if (
+    (!me?.admin && !me?.temporary) ||
+    !them ||
+    them.userId === me.userId ||
+    frame.status !== 'playing'
+  )
     return { promote: false, demote: false };
   return {
     // canPromote: the server's admin cap still has room.
-    promote: !them.admin && frame.you.canPromote === true,
-    demote: them.admin && !them.creator && (me.creator || them.promotedBy === me.userId)
+    promote: !them.admin && !them.temporary && frame.you.canPromote === true,
+    demote:
+      (them.admin || them.temporary) &&
+      !them.creator &&
+      (me.creator || (them.promotedBy === me.userId && (!me.temporary || them.temporary)))
   };
 }
 

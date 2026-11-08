@@ -41,8 +41,8 @@
 
   const playing = $derived(frame.status === 'playing');
   const admin = $derived(playing && !!onmanage && isAdmin(frame));
-  const realAdmin = $derived(
-    playing && !!frame.humans.find((h) => h.userId === frame.you.userId)?.admin
+  const mayStepDown = $derived(
+    playing && isAdmin(frame) && !frame.humans.find((h) => h.userId === frame.you.userId)?.creator
   );
   const controls = $derived(ready && session.canControl);
   const people = $derived(watchers(frame));
@@ -168,7 +168,7 @@
         onback={() => (asking = null)}
       />
     {:else}
-      {#if realAdmin}
+      {#if mayStepDown}
         <Button
           variant="secondary"
           disabled={!controls}

@@ -135,15 +135,15 @@
 {/snippet}
 
 {#snippet roles(h: PlatformHuman)}
-  {#if session.me?.admin && h.userId !== lobby.you.userId}
-    {#if !h.admin}
+  {#if session.admin && h.userId !== lobby.you.userId}
+    {#if !h.admin && !h.temporary}
       <Button
         variant="secondary"
-        disabled={!ready}
+        disabled={!ready || lobby.you.canPromote !== true}
         data-act={`lobby-promote:${h.userId}`}
         onclick={() => session.lobbyRole('promote', h.userId)}>{t('lobby.promote')}</Button
       >
-    {:else if !h.creator && (session.me.creator || h.promotedBy === lobby.you.userId)}
+    {:else if !h.creator && (session.me?.creator || (h.promotedBy === lobby.you.userId && (!session.me?.temporary || h.temporary)))}
       <Button
         variant="secondary"
         disabled={!ready}
@@ -454,13 +454,23 @@
             data-act="lobby-spectators"
             >{t('lobby.spectators', { count: spectators.length })}</summary
           >
+          {#if lobby.you.rejoinSeat !== undefined}
+            <Button
+              variant="secondary"
+              disabled={!ready}
+              data-act="lobby-rejoin"
+              onclick={() =>
+                edit({ op: 'seat', seat: lobby.you.rejoinSeat, userId: lobby.you.userId })}
+              >{t('lobby.rejoin')}</Button
+            >
+          {/if}
           <ul class="flex flex-col gap-3 pt-2">
             {#each spectators as h (h.userId)}<li class="flex flex-col gap-2">
                 {@render person(h)}{@render roles(h)}
               </li>{:else}<li class="text-sm text-fg-muted">{t('lobby.noSpectators')}</li>{/each}
           </ul>
         </details>
-        {#if session.me?.admin}
+        {#if session.admin && !session.me?.creator}
           <details class="rounded-panel border border-rule bg-panel p-4">
             <summary
               class="flex min-h-11 cursor-pointer items-center font-semibold"

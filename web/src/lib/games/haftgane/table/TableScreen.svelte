@@ -577,6 +577,8 @@
             disabled={!ready || !session.canControl}
             onrole={(a) => session.role(a.kind, a.userId)}
             {former}
+            onrejoin={frame.you.rejoinSeat !== undefined ? () => session.rejoin() : undefined}
+            rejoinDisabled={!ready || !!session.pending}
             {recap}
             {userName}
           />

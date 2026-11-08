@@ -280,13 +280,26 @@ describe('roles and spectators', () => {
       )
     };
     expect(roleActions(third, 'w')).toEqual({ promote: false, demote: false });
-    // A temporary admin, a player and a finished game get none.
+    // Temporary admins share promotions and only demote their own temporary promotees.
     const temporary = {
       ...creator,
-      you: { userId: 'u1', seat: 1 },
+      you: { userId: 'u1', seat: 1, canPromote: true },
       humans: creator.humans.map((h) => (h.userId === 'u1' ? { ...h, temporary: true } : h))
     };
-    expect(roleActions(temporary, 'w')).toEqual({ promote: false, demote: false });
+    expect(roleActions(temporary, 'w')).toEqual({ promote: true, demote: false });
+    expect(roleActions(temporary, 'u0')).toEqual({ promote: false, demote: false });
+    const deputy = {
+      ...temporary,
+      humans: temporary.humans.map((h) =>
+        h.userId === 'w' ? { ...h, temporary: true, promotedBy: 'u1' } : h
+      )
+    };
+    expect(roleActions(deputy, 'w')).toEqual({ promote: false, demote: true });
+    const other = {
+      ...deputy,
+      humans: deputy.humans.map((h) => (h.userId === 'w' ? { ...h, promotedBy: 'other' } : h))
+    };
+    expect(roleActions(other, 'w')).toEqual({ promote: false, demote: false });
     expect(roleActions(tableFrame({}, 1), 'w')).toEqual({ promote: false, demote: false });
     expect(roleActions({ ...creator, status: 'finished' }, 'u1')).toEqual({
       promote: false,

@@ -59,6 +59,18 @@ test.describe('shared online lobby', { tag: ['@full', '@mobile'] }, () => {
       expect(await guest.evaluate(() => window.__ajayebTable!.lobby()!.you.seat)).toBe(1);
       expect(await twin.evaluate(() => window.__ajayebTable!.lobby()!.you.seat)).toBe(1);
       expect(await watch.evaluate(() => window.__ajayebTable!.lobby()!.you.seat)).toBeUndefined();
+      // Removal offers the former open slot to the same human on every tab.
+      await menu(owner, 1);
+      const former = await guest.evaluate(() => window.__ajayebTable!.lobby()!.you.userId);
+      await lobbyAction(owner, `lobby-remove-human:${former}`);
+      await guest.locator('[data-act="lobby-spectators"]').click();
+      await expect(guest.locator('[data-act="lobby-rejoin"]')).toBeVisible();
+      await expect
+        .poll(() => twin.evaluate(() => window.__ajayebTable!.lobby()!.you.rejoinSeat))
+        .toBe(1);
+      await lobbyAction(guest, 'lobby-rejoin');
+      await expect.poll(() => twin.evaluate(() => window.__ajayebTable!.lobby()!.you.seat)).toBe(1);
+      await expect(guest.locator('[data-act="lobby-rejoin"]')).toHaveCount(0);
       // Fully occupied lobbies wait for an explicit Start, never a friend's join.
       await expect(owner.locator('[data-duel-settings]')).toBeVisible();
       expect((readRoomFile(code) as unknown as { game: string }).game).toBe('lobby');
@@ -68,9 +80,7 @@ test.describe('shared online lobby', { tag: ['@full', '@mobile'] }, () => {
       await lobbyAction(owner, `lobby-promote:${guestId}`);
       await owner.locator('[data-act="lobby-spectators"]').click();
       await lobbyAction(owner, `lobby-promote:${watchId}`);
-      await owner.locator('[data-act="lobby-roles"]').click();
-      await lobbyAction(owner, 'lobby-step-down');
-      await expect(owner.locator('[data-act="lobby-start"]')).toHaveCount(0);
+      await expect(owner.locator('[data-act="lobby-step-down"]')).toHaveCount(0);
       await startOnlineGame(guest);
       for (const page of [owner, guest, twin, watch]) {
         await new GameDriver(page).waitReady();
@@ -81,7 +91,7 @@ test.describe('shared online lobby', { tag: ['@full', '@mobile'] }, () => {
       expect(await guest.evaluate(() => window.__ajayeb!.you()!.seats)).toEqual([1]);
       expect(await twin.evaluate(() => window.__ajayeb!.you()!.seats)).toEqual([1]);
       expect(await watch.evaluate(() => window.__ajayeb!.you()!.seats)).toEqual([]);
-      expect(await owner.evaluate(() => window.__ajayeb!.you()!.admin)).toBe(false);
+      expect(await owner.evaluate(() => window.__ajayeb!.you()!.admin)).toBe(true);
       expect(await guest.evaluate(() => window.__ajayeb!.you()!.admin)).toBe(true);
       expect(await watch.evaluate(() => window.__ajayeb!.you()!.admin)).toBe(true);
       expect(hellos).toContain(2);

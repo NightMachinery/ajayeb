@@ -91,9 +91,8 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
       await expect(guest.locator('[data-act="lobby-reveal"]')).toHaveValue('false');
       await expect(host.locator('[data-act="lobby-undo"]')).toBeDisabled();
       await expect(host.locator('[data-act="lobby-undo"]')).toHaveValue('false');
-      await host.locator('[data-act="lobby-roles"]').click();
-      await lobbyAction(host, 'lobby-step-down');
-      await expect(host.locator('[data-act="lobby-seating"]')).toBeDisabled();
+      await expect(host.locator('[data-act="lobby-step-down"]')).toHaveCount(0);
+      await expect(host.locator('[data-act="lobby-seating"]')).toBeEnabled();
       await lobbyAction(guest, 'lobby-start');
       await expect
         .poll(() => guest.evaluate(() => window.__ajayebTable?.latest()?.status))

@@ -378,6 +378,21 @@ export class TableSession {
     return true;
   }
 
+  /** Take the former seat offered in this viewer's frame. */
+  rejoin(): boolean {
+    const seat = this.table?.you.rejoinSeat;
+    if (!this.#ready || seat === undefined || !this.table) return false;
+    this.#request({
+      t: 'table-seat',
+      code: this.code,
+      seq: this.#nextSeq(),
+      seat,
+      control: 'human',
+      userId: this.table.you.userId
+    });
+    return true;
+  }
+
   /** Promotes or demotes a user, or steps this user down. */
   role(op: 'promote' | 'demote' | 'step-down', userId?: string): boolean {
     if (!this.#ready || !this.table || this.table.status !== 'playing') return false;

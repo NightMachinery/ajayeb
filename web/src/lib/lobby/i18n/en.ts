@@ -33,6 +33,7 @@ export const lobby = {
   'lobby.manage': 'Manage {name}',
   'lobby.promote': 'Make admin',
   'lobby.demote': 'Remove admin role',
+  'lobby.rejoin': 'Take my seat back',
   'lobby.stepDown': 'Step down',
   'lobby.watch': 'Leave seat and watch',
   'lobby.removeHuman': 'Move to spectators',

@@ -19,10 +19,9 @@
 // tab closes. Five minutes later, the server's AwayLimit (a constant: no
 // test clock or development endpoint changes it, and the e2e server gets
 // no backdoor), the second human becomes the temporary admin, sees the
-// role tag, and uses a seat power, while the frames give them no
-// promotion. The creator comes back, and the temporary admin is demoted
-// at once. The made-at-once case, when the last real admin steps down,
-// is in haftgane-table.full.spec.ts; the clock-driven rule is also
+// role tag, uses seat powers, and promotes and demotes temporary admins.
+// The creator comes back, and every temporary admin loses the role.
+// The clock-driven rule is also
 // covered in Go (TestRolesAndTemporaryAdmin in server/internal/tableroom,
 // TestTemporaryAdmin in server/internal/roles).
 import { expect, type BrowserContext, type Page } from '@playwright/test';
@@ -38,6 +37,7 @@ import {
   choose,
   dismissMilitary,
   latest,
+  menuAction,
   openBotTable,
   openMenu,
   pendingOwnership,
@@ -163,7 +163,7 @@ test.describe(
       test.setTimeout(600_000);
       const contexts: BrowserContext[] = [];
       try {
-        for (let i = 0; i < 2; i++) contexts.push(await newDeviceContext(browser, info));
+        for (let i = 0; i < 3; i++) contexts.push(await newDeviceContext(browser, info));
         const a = await named(contexts[0]!, 'Ana');
         const b = await named(contexts[1]!, 'Bo');
         const hygieneB = watchHygiene(b);
@@ -184,6 +184,10 @@ test.describe(
         const userB = start.you.userId;
         const seatB = start.you.seat!;
         const bot = start.seats.find((s) => s.kind === 'bot')!;
+        const c = await named(contexts[2]!, 'Cy');
+        await c.goto(`/play/${code}`);
+        await ready(c);
+        const userC = (await latest(c)).you.userId;
 
         // The creator's tab closes; the room sees them away.
         await a.close();
@@ -205,7 +209,7 @@ test.describe(
           b.locator(`[data-seat="${seatB}"] [data-role-tag="temporary"]`).first()
         ).toBeVisible();
         const made = await latest(b);
-        expect(made.you.canPromote).toBeUndefined();
+        expect(made.you.canPromote).toBe(true);
         expect(made.humans.find((h) => h.userId === userB)?.admin).toBe(false);
 
         // The seat powers: a bot's seat takes another level.
@@ -214,7 +218,7 @@ test.describe(
         await expect
           .poll(async () => (await latest(b)).seats[bot.seat])
           .toMatchObject({ kind: 'bot', bot: level });
-        // No promotion: the away creator's seat menu offers seat powers only.
+        // The creator's permanent role is protected from temporary admins.
         const seatA = made.seats.find((s) => s.userId === userA)!.seat;
         await openMenu(b);
         await b.locator(`[data-act="seat-menu:${seatA}"]`).click();
@@ -224,7 +228,19 @@ test.describe(
         await b.locator('[data-act="seat-menu-close"]').click();
         await b.locator('[data-act="menu-close"]').click();
 
-        // The creator comes back: the temporary admin is demoted at once.
+        // The temporary admin promotes, demotes and promotes an observer.
+        await menuAction(b, `role-promote:${userC}`);
+        await expect
+          .poll(async () => (await latest(c)).humans.find((h) => h.userId === userC))
+          .toMatchObject({ admin: false, temporary: true, promotedBy: userB });
+        await menuAction(b, `role-demote:${userC}`);
+        await expect
+          .poll(async () => (await latest(c)).humans.find((h) => h.userId === userC)?.temporary)
+          .toBe(false);
+        await menuAction(b, `role-promote:${userC}`);
+        await b.locator('[data-act="menu-close"]').click();
+        // The creator comes back: the whole temporary team is demoted.
+
         const back = await contexts[0]!.newPage();
         await back.goto(`/play/${code}`);
         await ready(back);
@@ -233,6 +249,9 @@ test.describe(
           .toBe(false);
         await expect(b.locator('[data-role-tag="temporary"]')).toHaveCount(0);
         expect((await latest(back)).humans.find((h) => h.userId === userA)?.admin).toBe(true);
+        await expect
+          .poll(async () => (await latest(c)).humans.find((h) => h.userId === userC)?.temporary)
+          .toBe(false);
 
         expect(pendingOwnership('the second human', logB)).toEqual([]);
         expect(hygieneB).toEqual([]);

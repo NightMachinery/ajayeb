@@ -6,6 +6,7 @@
   // of the turn; and the spectators are listed with their roles. A former
   // player first reads who holds their seat now. Nothing private reaches a
   // spectator, so nothing private is shown.
+  import Button from '$lib/components/shell/Button.svelte';
   import type { Seat } from '$lib/wire/haftgane.gen';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
@@ -33,6 +34,8 @@
     disabled?: boolean;
     onrole?: (action: Extract<SeatAction, { kind: 'promote' | 'demote' }>) => void;
     /** This viewer held a seat earlier: who plays it now. */
+    onrejoin?: () => void;
+    rejoinDisabled?: boolean;
     former?: { seat: number; by: 'bot' | 'human'; name: string } | null;
     /** The newest turn, recapped from the followed seat; null before the first. */
     recap?: Recap | null;
@@ -53,6 +56,8 @@
     disabled = false,
     onrole,
     former = null,
+    onrejoin,
+    rejoinDisabled = false,
     recap = null,
     userName = () => ''
   }: Props = $props();
@@ -68,6 +73,12 @@
     </p>
   {/if}
 
+  {#if onrejoin}<Button
+      variant="secondary"
+      disabled={rejoinDisabled}
+      data-act="rejoin"
+      onclick={onrejoin}>{ht('hg.watch.rejoin')}</Button
+    >{/if}
   <div class="follow" role="group" aria-label={ht('hg.watch.follow')}>
     {#each seats as s (s.seat)}
       {@const name = names[s.seat] ?? ''}

@@ -617,6 +617,29 @@ describe('admin requests and undo', () => {
     expect(connection.last()).toEqual({ t: 'table-role', code: CODE, seq: 4, op: 'step-down' });
   });
 
+  it('rejoins only the former seat offered by the server and retries the same request', () => {
+    const spectator = tableFrame({}, null);
+    const { session, connection } = setup({
+      ...spectator,
+      you: { ...spectator.you, rejoinSeat: 1 }
+    });
+    expect(session.admin).toBe(false);
+    expect(session.rejoin()).toBe(true);
+    const sent = connection.last();
+    expect(sent).toMatchObject({
+      t: 'table-seat',
+      seat: 1,
+      control: 'human',
+      userId: spectator.you.userId
+    });
+    connection.drop();
+    connection.rejoin();
+    connection.frame({ ...spectator, you: { ...spectator.you, rejoinSeat: 1 } });
+    expect(connection.last()).toEqual(sent);
+    const without = setup(spectator);
+    expect(without.session.rejoin()).toBe(false);
+  });
+
   it('offers no seat switch to a non-admin', () => {
     const { session } = setup(tableFrame({}, 1));
     expect(session.admin).toBe(false);

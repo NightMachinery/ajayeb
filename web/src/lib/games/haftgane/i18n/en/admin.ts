@@ -28,7 +28,7 @@ export const admin = {
   'hg.admin.seat.hint.tip': 'Only admins see where a spectator sat earlier in this game.',
   'hg.admin.seat.roles': 'Admin role',
   'hg.admin.seat.temporary':
-    'As a temporary admin you can seat players and bots, but not change who is an admin.',
+    'Temporary admins can manage seats and promote temporary admins. These roles end when a real admin returns.',
 
   'hg.admin.confirm.toBot':
     '{bot} plays seat {seat} from now on. {name} watches, and their pick, confirmed or not, is played by the bot.',
@@ -49,6 +49,7 @@ export const admin = {
 
   'hg.admin.promote': 'Make admin',
   'hg.admin.demote': 'Remove admin',
+  'hg.watch.rejoin': 'Take my seat back',
   'hg.admin.stepDown': 'Stop being admin',
   'hg.admin.resign': 'Resign to a bot',
   'hg.admin.undo': 'Undo',
