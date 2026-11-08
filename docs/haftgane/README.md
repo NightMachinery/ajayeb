@@ -92,7 +92,7 @@ The owner's final answers, the same evening:
 
 - **Shared lobby:** the design of platform-architecture.md ("Shared lobby"), with Duel's one-tap starts kept; the two alternatives are rejected.
 - **Seating spectators:** an admin may seat any spectator in any seat, a bot's or a human's, whose occupant then watches. The admin's seat menu shows each spectator's earlier seat in this game. A former player seated elsewhere keeps their own memory of the old seat's hands, which the owner accepts; the server gives each viewer only its current seat's knowledge.
-- **Admin roles:** the real admins are the creator and every human an admin promotes, seated or spectating. An admin may demote the admins they promoted, and the creator anyone; nobody demotes the creator. Only when every real admin has been disconnected for five minutes does a temporary admin take over (the connected human seated longest, else the spectator connected longest), and a real admin's return demotes them at once. Roles persist across restart and reload, every seat switch and role change is in everyone's game log, roles exist in the lobby for both games, and a Duel game has none once it starts. Whoever requests a rematch creates its lobby.
+- **Admin roles:** the real admins are the creator and every human an admin promotes, seated or spectating. An admin may demote the admins they promoted, and the creator anyone; nobody demotes the creator. Only when every real admin has been disconnected for five minutes does a temporary admin take over (the connected human seated longest, else the spectator connected longest), and a real admin's return demotes them at once. (Superseded by D64 on 2026-11-08: a former temporary admin is preferred, otherwise one is chosen at random; temporary admins have full powers; the creator is permanent; players may rejoin their own former seat. See [platform-architecture.md](platform-architecture.md).) Roles persist across restart and reload, every seat switch and role change is in everyone's game log, roles exist in the lobby for both games, and a Duel game has none once it starts. Whoever requests a rematch creates its lobby.
 - **Fan reference files:** the owner downloads them from BoardGameGeek, and `M13.printed-card-check` reads them when present.
 
 ## Open items
@@ -111,11 +111,11 @@ One question remains:
 
 ### Provisional calls
 
-The coordinator's calls on the admin roles (D42):
+The coordinator's calls on the admin roles (D42), as amended by the owner's D64 (2026-11-08):
 
-1. Any admin may step down.
+1. Any admin except the creator may step down; the creator's powers are permanent.
 2. Demoting an admin leaves the admins they promoted in place, so only the creator can then demote those.
-3. A temporary admin has the seat powers but cannot promote or demote.
+3. A temporary admin has full admin powers; whoever it promotes is temporary too, and it may demote only temporary admins it promoted.
 
 Calls made while folding in the final answers, so that the rules have no gap:
 

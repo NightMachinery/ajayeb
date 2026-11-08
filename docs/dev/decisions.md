@@ -715,7 +715,7 @@ Source: the owner's message of 2026-11-08 ("the stacked custom built tooltips an
 - **Temporary admins have full admin powers**, including promoting and demoting. Anyone a temporary admin promotes is also temporary, and loses the role whenever temporary admins do.
 - **Choosing a temporary admin.** When every real admin has been disconnected for five minutes, a connected human who was a temporary admin before in this room is chosen first (the most recent one); only when none is present is one chosen at random among the connected humans, seated first, then spectators. The room remembers who has been temporary across restarts.
 - A real admin's return still ends every temporary admin's powers at once.
-- **Observers rejoin by themselves.** A human moved to the spectators (replaced by a bot, or moved out of a lobby seat) may take their own former seat back, without an admin, while that seat is open or held by a bot. They cannot take a seat another human holds. This lets a player undo an admin's move of them, which the owner accepts. The rejoin shows in the game log like any seat switch.
+- **Observers rejoin by themselves.** A human moved to the spectators (replaced by a bot, or moved out of a lobby seat) may take their own former seat back, without an admin, while that seat is open or held by a bot. They cannot take a seat another human holds. This lets a player undo an admin's move of them, which the owner accepts. The rejoin shows in the game log like any seat switch. At a table this also lets a player who resigned to a bot take their seat back; resigning hands the seat to a bot, it does not end one's claim to it.
 
 **Rationale.** The owner's platform defaults of 2026-11-08 ("1. adopt", "3. allow", "4. make perma").
 

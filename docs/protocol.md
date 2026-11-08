@@ -967,15 +967,21 @@ always sends it; a request without it is judged as before.
   if the Start policy allowed it and no second human has since taken a seat.
 - `table-seat` adds `seat` (0 through 6), `control` (`human` or `bot`), and
   exactly one of `userId` (a spectator to seat) or `bot` (difficulty; a
-  client offers the lowest released level, `easy`, first). An admin may seat
+  client offers the lowest released level, `easy`, first). Without admin
+  powers, a user may send it only to seat themselves (`control: human`,
+  their own `userId`) in their own former seat while a bot holds it
+  (self-rejoin, D64); this also undoes their own resignation. An admin may seat
   any connected spectator in any seat. The switch keeps the seat's pending
   pick. A bot confirms it; a newly seated human may change it. The replaced
   human becomes a spectator, and the claims of the seat's former user are
   revoked (Device links). At a table that started with one human, seating
   anyone else turns `undoOff` on for good.
 - `table-role` adds `op`: `promote` or `demote` requires `userId`;
-  `step-down` forbids it and targets the sender. Temporary admins cannot
-  promote or demote; the actor enforces creator and promotion ownership.
+  `step-down` forbids it and targets the sender. The creator cannot step
+  down or be demoted. Temporary admins may promote; whoever they promote is
+  temporary too. A temporary admin may demote only temporary admins it
+  promoted itself. Every temporary role ends when a real admin returns. The
+  actor enforces creator and promotion ownership (D64).
 - `table-resign` adds required `confirm: true`. It replaces the sender with a
   bot of the lowest released level and does not award a terminal victory.
   The sender becomes a spectator, and its seat's claims are revoked.
@@ -1063,7 +1069,9 @@ Other lobby requests carry `t`, `code` and nonnegative `seq`:
   that slot's existing bot; `remove-bot` requires `seat`; `seat` requires
   `seat` and `userId`; `remove-human` requires `userId`; `release` has no
   payload; `open-reservation` requires `seat`. Except releasing one's own
-  slot, these are admin operations. Unrelated known fields are refused.
+  slot, and `seat` with one's own `userId` into one's own former slot while
+  it is open (self-rejoin, D64), these are admin operations. Unrelated
+  known fields are refused.
 - `lobby-role` carries the same `op`/`userId` shape and policy as `table-role`.
 - `lobby-start` carries required `fillBots`, true or false. The sender must
   be a seated human admin. Every seat must be filled, or `fillBots: true`
@@ -1111,7 +1119,8 @@ The client then hands the room to its version 1 Duel session, which joins the
 same code, and every later join of the code is an ordinary Duel join.
 
 Such a game stores the lobby's effective admins at Start, its real admins
-and its temporary one, as its frozen `hintAdmins`. Those users, promoted
+and every temporary admin (the temporary root and those it promoted), as
+its frozen `hintAdmins`, within the same admin cap. Those users, promoted
 spectators included, may send `hints`, and their `you.admin` is true; they
 have no role or seat power. Nobody is promoted, demoted or made a temporary
 admin once the game has started, so the set never changes. Each player may
@@ -1233,9 +1242,11 @@ Both snapshots use these fixed metadata shapes:
   `you` may also carry `previousSeats`, a list of `{userId, seat}` hints:
   each connected spectator who held a seat earlier in this game, with the
   seat they held last. Former controllers and ordinary spectators receive
-  no hints. A lobby frame never carries them. A table frame gives a real
-  admin's `you` `canPromote`, whether the admin cap has room for another
-  admin. While a game is in play, a viewer who holds no seat but held one
+  no hints. A lobby frame never carries them. A lobby or table frame gives
+  an admin's `you`, real or temporary, `canPromote`, whether the admin cap
+  has room for another admin. An unseated viewer whose own former seat is
+  available to rejoin (open in a lobby, held by a bot at a table) gets the
+  optional `rejoinSeat` in their own frames only. While a game is in play, a viewer who holds no seat but held one
   earlier in this game gets `formerSeat`, the seat they held last, in their
   own frames only, on every tab and device.
 - `roomLog` is the bounded public log, with entries `{kind, at, by}` and
