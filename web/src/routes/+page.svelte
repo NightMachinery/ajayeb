@@ -108,19 +108,31 @@
 
   // The query is dropped once read, so a reload does not open it again.
   onMount(() => {
-    deviceReady = true;
     const controller = new AbortController();
+    let settled = false;
+    // Finalize the picker before enabling any Home controls. A slow or
+    // failed health request must not move buttons that can already be tapped.
+    function ready(creation = false): void {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      haftganeCreation = creation;
+      deviceReady = true;
+    }
+    const timeout = setTimeout(() => ready(), 1500);
     void fetch('/health', { cache: 'no-store', signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
-      .then((health) => {
-        haftganeCreation = health?.haftganeCreation === true;
-      })
-      .catch(() => {});
+      .then((health) => ready(health?.haftganeCreation === true))
+      .catch(() => ready());
     if (aiOpen) openAi();
     if (page.url.searchParams.has('play')) {
       void goto(resolve('/'), { replaceState: true, keepFocus: true, noScroll: true });
     }
-    return () => controller.abort();
+    return () => {
+      settled = true;
+      clearTimeout(timeout);
+      controller.abort();
+    };
   });
 
   /** Home's offer and row: a failure leaves the player on Home. */

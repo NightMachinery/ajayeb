@@ -7,6 +7,64 @@ import { watchHygiene } from '../fixtures/hygiene';
 import { joinByLink, newDeviceContext } from '../fixtures/online';
 
 test.describe('Home loading', { tag: '@mobile' }, () => {
+  for (const late of [false, true]) {
+    test(`health ${late ? 'after timeout is ignored' : 'settles before buttons enable'}`, async ({
+      page
+    }) => {
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let requested!: () => void;
+      const requestSeen = new Promise<void>((resolve) => {
+        requested = resolve;
+      });
+      await page.route('**/health', async (route) => {
+        requested();
+        await held;
+        await route.fulfill({ json: { ok: true, version: 'test', haftganeCreation: true } });
+      });
+      try {
+        await page.goto('/');
+        await requestSeen;
+        const button = page.locator('[data-act="home-mode:ai"]');
+        await expect(button).toBeDisabled();
+        await expect(page.locator('[data-act="home-game:haftgane"]')).toHaveCount(0);
+        const response = page.waitForResponse((r) => new URL(r.url()).pathname === '/health');
+        if (late) {
+          // The 1.5s deadline must enable Home even while health is held.
+          await expect(button).toBeEnabled();
+        } else {
+          await page.waitForTimeout(1200);
+          await expect(button).toBeDisabled();
+          release();
+          await response;
+          await expect(button).toBeEnabled();
+          await expect(page.locator('[data-act="home-game:haftgane"]')).toBeVisible();
+        }
+        await page.evaluate(() => document.fonts.ready);
+        const before = await button.boundingBox();
+        expect(before).not.toBeNull();
+        if (late) {
+          await page.waitForTimeout(300);
+          release();
+          await response;
+        }
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+            })
+        );
+        await expect(button).toBeEnabled();
+        await expect(page.locator('[data-act="home-game:haftgane"]')).toHaveCount(late ? 0 : 1);
+        expect(await button.boundingBox()).toEqual(before);
+      } finally {
+        release();
+      }
+    });
+  }
+
   for (const action of [
     { name: 'Play vs AI', heading: 'Choose your rival' },
     { name: 'Pass and play', heading: 'Pass and play' },
