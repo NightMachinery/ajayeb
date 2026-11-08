@@ -20,7 +20,11 @@ The chosen row is `a2-c8`: two attempts, at most eight candidates and
 1,048,576 sampler checks per attempt, in full for every bot. Reward remains
 3/4 rank plus 1/4 win (scale 3,360), with the balanced, economic, science and
 military rollout preferences and key-indexed noise 1,500. The frozen source
-is `e12d08f9`; the preserved binary SHA-256 is
+is the commit "sim: freeze Scholar candidate after worker preflight"
+(`a57b7c38` on master; the run used its pre-rebase twin, whose server tree
+differs only in an unrelated lobby test). The binary embeds VCS stamping,
+so its hash cannot be reproduced byte for byte from the merged commit. The
+preserved binary SHA-256 is
 `d6f5453fc239e5570f32bcaea30368a0d2c64de5ce149d9e2c687a45b632f5d2`
 and catalog SHA-256 is
 `613971b06c4616f0e41c4fb6515735042019432a993ccd9608ee3a1a89976ecb`.
@@ -211,7 +215,12 @@ watchdogs, privacy, persistence or release.
 Development, validation and held-out deals have separate seed namespaces
 and an explicit epoch. Policy entropy is independent of setup entropy and
 is indexed by logical point and seat, so a treatment cannot consume another
-seat's draws. Any change informed by held-out outcomes requires a fresh
+seat's draws. In format `scholar-calibration/1` the policy roots depend on
+the epoch but not the partition, so development, validation and held-out
+blocks with the same index share policy tapes and differ only in their
+deals. That was harmless here (only two rows were compared and the margins
+are large), but a wider search should mix the partition into the policy
+root under a new format version first. Any change informed by held-out outcomes requires a fresh
 epoch. Do not inspect partial held-out outcomes: interim summaries omit
 strength contrasts until every planned block is present.
 
@@ -313,7 +322,9 @@ latency bound.
 
 The unchanged normal-GC probe passed after both storage changes. Across
 128 complete calls per load, idle p99/max was 0.989/2.082 ms and loaded
-p99/max was 30.070/52.407 ms. One loaded maximum exceeded 50 ms; the declared
+p99/max was 30.070/52.407 ms, over the turn-three fixtures of each Age
+plus the seven-seat discard root. Turn-one roots cost about twice as much,
+so they are not covered; the preset slice adds them. One loaded maximum exceeded 50 ms; the declared
 p99 target passed. Separate timer-cancel p99 was 0.021 ms across 105 loaded
 cancelled calls, with 23 calls completing before the timer. The maximum-gap
 result remains the acceptance measure. No diagnostic GC settings were used
@@ -370,8 +381,9 @@ development prefixes, not a claim about every possible root.
 ## Running and resuming
 
 Build one binary through the guard and preserve it for every shard. Its
-SHA-256, catalog hash, exact work rows, partition/epoch, schedule, block
-count, Go CPU budget and load are part of the immutable experiment identity.
+SHA-256, catalog hash, exact work rows, partition/epoch, block count, Go
+CPU budget and load are part of the immutable experiment identity. The
+shard schedule and the CPU model are not; keep them fixed by hand.
 Rebuilding a changed binary requires a new output directory.
 
 ```sh
@@ -410,7 +422,9 @@ nonzero profile, `-blocks 100`, counts 3 through 7 and `-suite all`. The full
 manifest has 800/1600/2200/3700/3000 unique games, respectively, or 11,300 in
 total. Ten shards assign `(profile, count, block)` ordinals modulo ten and
 cover ten independent deals per count each. They can run sequentially here
-or on isolated CI workers with the same binary and CPU/load identity. Share
+or on isolated CI workers with the same binary, GOMAXPROCS and load (the
+config does not record the CPU model, so timings from different machines
+would pool silently; strength is unaffected, since play is deterministic). Share
 or collect immutable block files under their original names; tally only
 after all 500 blocks are present. Never shorten work to meet a timer.
 

@@ -177,8 +177,9 @@ not supply the latency figures above.
 
 The few benchmark repetitions and host scheduling limit precision. Rebuilding
 keys once per policy/shortlist reduced temporary allocation without changing
-tapes or measured paired rewards. Allocation throughput remains material;
-calibration must assess full-table waits, quality and memory before freezing
+tapes or measured paired rewards. Calibration later cut the eight-candidate
+row to 13,992 B/op and 50 allocations/op without changing any choice
+([scholar-calibration.md](scholar-calibration.md)); calibration must assess full-table waits, quality and memory before freezing
 any preset. Work is never reduced because more bots sit at the table.
 
 ## Reproduce
