@@ -684,3 +684,25 @@ Source: [platform-architecture.md](../haftgane/platform-architecture.md), "Share
 **Relation.** Amends D51's entry mechanism: Duel's Session gains one case, a `protocol` refusal of a join after a welcome, which it reports as a wrong-game answer for the page instead of a fatal error. D51's budgets and its service-worker rule stand. D60's lobby uses the same overlapping hand-off when its Start turns the room into a Duel game.
 
 Source: the M14.client-game-entry review, 2026-10-22; [platform-architecture.md](../haftgane/platform-architecture.md), "Protocol and lazy client entry".
+
+## D62. Ajayeb keeps both its light and dark themes
+
+**Decision (2026-11-08).** Ajayeb keeps its two themes, the ivory manuscript page and the lapis night, chosen in Settings. The default the owner set for new games, one deliberately chosen look per game with further looks added later as their own themes, does not apply retroactively to Ajayeb.
+
+**Rationale.** The owner's answer: "ajayeb can keep its dark mode". The dark theme already ships and passes its contrast checks.
+
+**Known gap, deferred.** The dark theme changes only the interface tokens. The card, wonder and token art keeps its ivory paper ground, so cards still look light on the night table. A real dark look needs its own art (the night theme's own bitmaps, or a darker ground for the light-ground kinds). The owner marked this deferred, not a priority.
+
+**Relation.** None superseded.
+
+Source: the owner's messages of 2026-11-08.
+
+## D63. A tooltip's rules link is the one tap inside a tooltip that acts
+
+**Decision (2026-11-08).** On touch, any tap while a tooltip is open closes it and is swallowed, except a tap on the tooltip's own "More in Rules" link, which opens the rules reference at its section and closes the tooltip. On a fine pointer the link is the only part of the bubble that takes the pointer.
+
+**Rationale.** The owner made both the custom tooltips (with their preview stack) and the rules reference must-haves, and the link is how a tooltip reaches the rules. The exception only ever opens the rules; it never acts on the board.
+
+**Relation.** Refines the swallowed-tap rule in AGENTS.md ("Tooltips").
+
+Source: the owner's message of 2026-11-08 ("the stacked custom built tooltips and the rules page are a must have"); the M22 platform audit.
