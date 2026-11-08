@@ -32,7 +32,7 @@ for (const locale of ['en', 'fa'] as const) {
       }
       expect(await clipped(suffixes)).toBe(0);
       const frame = await latest(page);
-      const compact = locale === 'en' ? 'App' : 'شاگ';
+      const compact = locale === 'en' ? 'App' : 'شاگرد';
       const full = locale === 'en' ? 'Apprentice' : 'شاگرد';
       const digits = new Intl.NumberFormat(locale);
       const far = page.locator('[data-table-screen] [data-relation="other"]');
