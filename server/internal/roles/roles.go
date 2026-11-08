@@ -8,17 +8,14 @@
 // presence the caller reports, so the actors run them inside their
 // transactions and the tests drive them with any clock.
 //
-// The real admins are the creator and every human an admin promoted. Any
-// real admin may promote any human in the room; an admin may demote the
-// admins they promoted, the creator anyone, and nobody the creator. Any
-// real admin may step down. Only once every real admin has been
-// disconnected for AwayLimit does a temporary admin take the role, chosen
-// by the caller's candidate order; a real admin's return demotes them at
-// once, and a temporary admin away for AwayLimit passes the role on. A
-// temporary admin has the seat powers, the lobby's edits and Start, but
-// cannot promote or demote. With no real admin at all (the last one
-// stepped down, or a table made without a creator), the rule applies at
-// once.
+// The creator is permanent. Other real admins may step down. Real admins
+// promote humans permanently and demote their own promotees (the creator
+// anyone except itself). Temporary admins may promote temporary admins
+// and demote their own temporary promotees. Every temporary role ends
+// when a real admin returns. A bounded recency history prefers former
+// temporary admins; Candidates gives the fallback a restart-stable order.
+// All real admins must have been away for AwayLimit before a temporary
+// team is made, and all temporary admins away that long before replacement.
 //
 // A room saves each change the rule makes. When its store refuses one,
 // the room keeps the unsaved roles (Carry starts the next check from
@@ -34,6 +31,9 @@
 package roles
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"errors"
 	"slices"
 	"time"
@@ -46,8 +46,17 @@ import (
 // before the role passes on.
 const AwayLimit = 5 * time.Minute
 
-// MaxAdmins bounds the real admins of one room.
+// MaxAdmins caps new real promotions. A legacy creator restored by Upgrade
+// can occupy the final authority slot without removing old real grants.
 const MaxAdmins = 32
+
+// MaxAuthorities preserves the existing room and Duel handoff bound.
+const MaxAuthorities = MaxAdmins + 1
+
+// MaxHistory bounds distinct former temporary admins, oldest first.
+const MaxHistory = 64
+
+const maxUserIDBytes = 64
 
 // Retry is how soon a room checks its roles again after its store
 // refused a role change.
@@ -65,7 +74,7 @@ var (
 	// ErrNotAdmin: the sender may not make this change.
 	ErrNotAdmin = errors.New("not-admin")
 	// ErrForbidden: nobody may make this change (the creator's demotion,
-	// a temporary admin stepping down, too many admins).
+	// the creator stepping down, too many admins).
 	ErrForbidden = errors.New("forbidden")
 	// ErrBadRequest: the target is not someone the change applies to.
 	ErrBadRequest = errors.New("bad-request")
@@ -88,7 +97,16 @@ type Roles struct {
 	Creator string  `json:"creator"`
 	Admins  []Admin `json:"admins"`
 	// Temporary is the temporary admin, or "".
-	Temporary string `json:"temporary"`
+	Temporary   string  `json:"temporary"`
+	TemporaryBy *string `json:"temporaryBy,omitempty"`
+	// Deputies are the temporary admins promoted by other temporary admins.
+	Deputies []Admin `json:"deputies"`
+	// History is temporary-admin recency, oldest first, one row per user.
+	History []string `json:"history"`
+	// Declined excludes temporary admins who stepped down until they disconnect.
+	Declined []string `json:"declined"`
+	// Elections advances only when an automatic grant is persisted.
+	Elections uint64 `json:"elections"`
 	// Away holds, for each real admin and the temporary admin whose
 	// connections are all absent, the time the last one left.
 	Away []Away `json:"away"`
@@ -97,7 +115,7 @@ type Roles struct {
 // New returns the roles of a new room: the creator, if any, is its one
 // real admin.
 func New(creator string) Roles {
-	r := Roles{Creator: creator, Admins: []Admin{}, Away: []Away{}}
+	r := Roles{Creator: creator, Admins: []Admin{}, Deputies: []Admin{}, History: []string{}, Declined: []string{}, Away: []Away{}}
 	if creator != "" {
 		r.Admins = append(r.Admins, Admin{UserID: creator})
 	}
@@ -107,6 +125,10 @@ func New(creator string) Roles {
 // Clone returns a deep copy.
 func (r Roles) Clone() Roles {
 	c := r
+	if r.TemporaryBy != nil {
+		by := *r.TemporaryBy
+		c.TemporaryBy = &by
+	}
 	c.Admins = make([]Admin, 0, len(r.Admins))
 	for _, a := range r.Admins {
 		if a.PromotedBy != nil {
@@ -115,6 +137,9 @@ func (r Roles) Clone() Roles {
 		}
 		c.Admins = append(c.Admins, a)
 	}
+	c.Deputies = cloneAdmins(r.Deputies)
+	c.History = append([]string{}, r.History...)
+	c.Declined = append([]string{}, r.Declined...)
 	c.Away = slices.Clone(r.Away)
 	if c.Away == nil {
 		c.Away = []Away{}
@@ -127,12 +152,39 @@ func (r *Roles) Real(u string) bool { return r.admin(u) >= 0 }
 
 // IsAdmin reports whether u has the admin powers: a real admin or the
 // temporary admin.
-func (r *Roles) IsAdmin(u string) bool { return u != "" && (r.Real(u) || r.Temporary == u) }
+func (r *Roles) IsAdmin(u string) bool { return u != "" && (r.Real(u) || r.Temp(u)) }
+
+// Temp reports whether u has a temporary role.
+func (r *Roles) Temp(u string) bool { return u != "" && (r.Temporary == u || r.deputy(u) >= 0) }
+
+func (r *Roles) deputy(u string) int {
+	return slices.IndexFunc(r.Deputies, func(a Admin) bool { return a.UserID == u })
+}
+
+func cloneAdmins(as []Admin) []Admin {
+	out := make([]Admin, 0, len(as))
+	for _, a := range as {
+		if a.PromotedBy != nil {
+			by := *a.PromotedBy
+			a.PromotedBy = &by
+		}
+		out = append(out, a)
+	}
+	return out
+}
 
 // PromotedBy returns who promoted u, or nil.
 func (r *Roles) PromotedBy(u string) *string {
 	if i := r.admin(u); i >= 0 && r.Admins[i].PromotedBy != nil {
 		by := *r.Admins[i].PromotedBy
+		return &by
+	}
+	if r.Temporary == u && r.TemporaryBy != nil {
+		by := *r.TemporaryBy
+		return &by
+	}
+	if i := r.deputy(u); i >= 0 && r.Deputies[i].PromotedBy != nil {
+		by := *r.Deputies[i].PromotedBy
 		return &by
 	}
 	return nil
@@ -148,84 +200,178 @@ func entry(at int, by, user, role string) wire.PlatformLogEntry {
 }
 
 // HasRoom reports whether the admin cap leaves room for one more admin.
-func (r *Roles) HasRoom() bool { return len(r.Admins) < MaxAdmins }
+func (r *Roles) HasRoom(by ...string) bool {
+	if len(r.Admins)+len(r.Deputies)+boolInt(r.Temporary != "") >= MaxAuthorities {
+		return false
+	}
+	return len(by) > 0 && r.Temp(by[0]) || len(r.Admins) < MaxAdmins
+}
 
-// Promote makes target a real admin, promoted by by. Only a real admin may
-// promote, and only a human in the room (seated or spectating).
+func boolInt(v bool) int {
+	if v {
+		return 1
+	}
+	return 0
+}
+
+// Promote grants a real role for a real promoter, a temporary role for a
+// temporary promoter. The total authority cap also bounds temporary grants.
 func (r *Roles) Promote(by, target string, inRoom bool, at int) (wire.PlatformLogEntry, error) {
 	switch {
-	case !r.Real(by):
+	case !r.IsAdmin(by):
 		return wire.PlatformLogEntry{}, ErrNotAdmin
-	case target == "" || !inRoom || r.Real(target):
+	case target == "" || len(target) > maxUserIDBytes || !inRoom || r.IsAdmin(target):
 		return wire.PlatformLogEntry{}, ErrBadRequest
-	case !r.HasRoom():
+	case !r.HasRoom(by):
 		return wire.PlatformLogEntry{}, ErrForbidden
 	}
 	p := by
-	r.Admins = append(r.Admins, Admin{UserID: target, PromotedBy: &p})
-	if r.Temporary == target {
-		r.Temporary = ""
+	a := Admin{UserID: target, PromotedBy: &p}
+	if r.Temp(by) {
+		r.Deputies = append(r.Deputies, a)
+		r.remember(target)
+		return entry(at, by, target, RoleTemporary), nil
 	}
+	r.Admins = append(r.Admins, a)
 	return entry(at, by, target, RoleAdmin), nil
 }
 
-// Demote removes target's real admin role. The creator may demote anyone
-// else; another admin only those they promoted. The admins target promoted
-// stay admins.
+// Demote enforces direct promotion ancestry. A temporary admin can only
+// demote a temporary admin they promoted, never a real admin or the root.
+// Demoting a promoter leaves its promotees in place.
 func (r *Roles) Demote(by, target string, at int) (wire.PlatformLogEntry, error) {
-	i := r.admin(target)
 	switch {
-	case !r.Real(by):
+	case !r.IsAdmin(by):
 		return wire.PlatformLogEntry{}, ErrNotAdmin
-	case i < 0:
-		return wire.PlatformLogEntry{}, ErrBadRequest
-	case target == r.Creator:
+	case target == r.Creator && target != "":
 		return wire.PlatformLogEntry{}, ErrForbidden
-	case by != r.Creator && (r.Admins[i].PromotedBy == nil || *r.Admins[i].PromotedBy != by):
-		return wire.PlatformLogEntry{}, ErrNotAdmin
+	case !r.IsAdmin(target):
+		return wire.PlatformLogEntry{}, ErrBadRequest
 	}
-	r.Admins = slices.Delete(r.Admins, i, i+1)
+	if i := r.deputy(target); i >= 0 {
+		if by != r.Creator && (r.Deputies[i].PromotedBy == nil || *r.Deputies[i].PromotedBy != by) {
+			return wire.PlatformLogEntry{}, ErrNotAdmin
+		}
+		r.Deputies = slices.Delete(r.Deputies, i, i+1)
+	} else if i := r.admin(target); i >= 0 {
+		if !r.Real(by) || by != r.Creator && (r.Admins[i].PromotedBy == nil || *r.Admins[i].PromotedBy != by) {
+			return wire.PlatformLogEntry{}, ErrNotAdmin
+		}
+		r.Admins = slices.Delete(r.Admins, i, i+1)
+	} else {
+		if by != r.Creator && (r.TemporaryBy == nil || *r.TemporaryBy != by) {
+			return wire.PlatformLogEntry{}, ErrNotAdmin
+		}
+		r.removeRoot()
+	}
+	r.pruneAway()
 	return entry(at, by, target, RoleHuman), nil
 }
 
-// StepDown removes by's own real admin role, the creator's included. A
-// temporary admin cannot step down: the role passes on when they leave.
+// StepDown removes an admin's role, except the permanent creator. A
+// temporary root hands its place to its oldest remaining deputy. With no
+// admins left, the normal temporary election applies on the next check.
 func (r *Roles) StepDown(by string, at int) (wire.PlatformLogEntry, error) {
-	i := r.admin(by)
 	switch {
-	case i >= 0:
-	case r.Temporary == by && by != "":
+	case by == r.Creator && by != "":
 		return wire.PlatformLogEntry{}, ErrForbidden
-	default:
+	case !r.IsAdmin(by):
 		return wire.PlatformLogEntry{}, ErrNotAdmin
 	}
-	r.Admins = slices.Delete(r.Admins, i, i+1)
+	if i := r.admin(by); i >= 0 {
+		r.Admins = slices.Delete(r.Admins, i, i+1)
+	} else if i := r.deputy(by); i >= 0 {
+		r.Deputies = slices.Delete(r.Deputies, i, i+1)
+	} else {
+		r.removeRoot()
+	}
+	r.Declined = slices.DeleteFunc(r.Declined, func(u string) bool { return u == by })
+	r.Declined = append(r.Declined, by)
+	if len(r.Declined) > MaxHistory {
+		r.Declined = slices.Delete(r.Declined, 0, len(r.Declined)-MaxHistory)
+	}
+	r.pruneAway()
 	return entry(at, by, by, RoleHuman), nil
 }
 
-// Check brings the roles up to date at now: it records when each real or
-// temporary admin went away (connected reports presence), demotes the
-// temporary admin once a real admin is connected, and makes or passes on
-// the temporary role under the five-minute rule. candidates are the
-// connected humans in the order the rule prefers them: seated humans by
-// how long they have held their seat, then spectators by how long they
-// have been connected. It returns the log entries of the changes and the
-// next time the rule could change something by the clock alone (zero:
-// never, until presence or roles change).
+func (r *Roles) removeRoot() {
+	r.Temporary, r.TemporaryBy = "", nil
+	if len(r.Deputies) > 0 {
+		a := r.Deputies[0]
+		r.Temporary, r.TemporaryBy = a.UserID, a.PromotedBy
+		r.Deputies = slices.Delete(r.Deputies, 0, 1)
+	}
+}
+
+func (r *Roles) pruneAway() {
+	r.Away = slices.DeleteFunc(r.Away, func(w Away) bool { return !r.IsAdmin(w.UserID) })
+}
+
+func (r *Roles) remember(user string) {
+	r.History = slices.DeleteFunc(r.History, func(u string) bool { return u == user })
+	r.History = append(r.History, user)
+	if len(r.History) > MaxHistory {
+		r.History = slices.Delete(r.History, 0, len(r.History)-MaxHistory)
+	}
+}
+
+func (r *Roles) temps() []string {
+	out := []string{}
+	if r.Temporary != "" {
+		out = append(out, r.Temporary)
+	}
+	for _, a := range r.Deputies {
+		out = append(out, a.UserID)
+	}
+	return out
+}
+
+func (r *Roles) clearTemps(at int) []wire.PlatformLogEntry {
+	var log []wire.PlatformLogEntry
+	for _, u := range r.temps() {
+		log = append(log, entry(at, "", u, RoleHuman))
+	}
+	r.Temporary, r.TemporaryBy, r.Deputies = "", nil, []Admin{}
+	r.pruneAway()
+	return log
+}
+
+// Candidates orders connected humans by a hash of public room code,
+// durable election count and user id, independently within the two pools.
+// Candidate order and connection arrival order cannot change a replay.
+func Candidates(code string, election uint64, seated, spectators []string) []string {
+	order := func(pool []string) []string {
+		out := append([]string{}, pool...)
+		rank := func(u string) [32]byte {
+			data := []byte(code + "\x00")
+			data = binary.BigEndian.AppendUint64(data, election)
+			return sha256.Sum256(append(data, []byte(u)...))
+		}
+		slices.SortFunc(out, func(a, b string) int { x, y := rank(a), rank(b); return bytes.Compare(x[:], y[:]) })
+		return slices.Compact(out)
+	}
+	return append(order(seated), order(spectators)...)
+}
+
+// Check applies the five-minute rule. candidates are hash-ordered seated
+// humans then spectators (Candidates); connected former temporary admins
+// take priority over both pools, most recent first.
 func (r *Roles) Check(now time.Time, connected func(string) bool, candidates []string, at int) ([]wire.PlatformLogEntry, time.Time) {
 	var log []wire.PlatformLogEntry
+	r.Declined = slices.DeleteFunc(r.Declined, func(u string) bool { return !connected(u) })
 	r.sync(now, connected)
 	realHere := slices.ContainsFunc(r.Admins, func(a Admin) bool { return connected(a.UserID) })
 	if realHere {
-		if r.Temporary != "" {
-			log = append(log, entry(at, "", r.Temporary, RoleHuman))
-			r.Temporary = ""
-			r.sync(now, connected)
-		}
+		log = r.clearTemps(at)
+		r.sync(now, connected)
 		return log, time.Time{}
 	}
-	// Every real admin is away: the role waits until the last of them has
-	// been away for AwayLimit.
+	// A legacy full roster can gain its restored creator as the 33rd real
+	// admin. Keep the durable cap: only a real admin can free room for a
+	// temporary grant by demotion or step-down.
+	if len(r.Admins) >= MaxAuthorities {
+		return log, time.Time{}
+	}
 	var allAway time.Time
 	for _, a := range r.Admins {
 		if s := r.since(a.UserID); s.After(allAway) {
@@ -236,34 +382,49 @@ func (r *Roles) Check(now time.Time, connected func(string) bool, candidates []s
 		allAway = allAway.Add(AwayLimit)
 	}
 	if now.Before(allAway) {
-		if r.Temporary != "" {
-			log = append(log, entry(at, "", r.Temporary, RoleHuman))
-			r.Temporary = ""
-			r.sync(now, connected)
-		}
+		log = r.clearTemps(at)
+		r.sync(now, connected)
 		return log, allAway
 	}
-	var tempDue time.Time
-	if r.Temporary != "" && !connected(r.Temporary) {
-		tempDue = r.since(r.Temporary).Add(AwayLimit)
-	}
-	if r.Temporary != "" && (connected(r.Temporary) || now.Before(tempDue)) {
-		return log, tempDue
-	}
-	for _, c := range candidates {
-		if c == "" || c == r.Temporary || !connected(c) || r.Real(c) {
-			continue
+	var due time.Time
+	for _, u := range r.temps() {
+		if connected(u) {
+			return log, time.Time{}
 		}
-		if r.Temporary != "" {
-			log = append(log, entry(at, "", r.Temporary, RoleHuman))
+		if t := r.since(u).Add(AwayLimit); t.After(due) {
+			due = t
 		}
-		r.Temporary = c
-		log = append(log, entry(at, "", c, RoleTemporary))
-		r.sync(now, connected)
+	}
+	if now.Before(due) {
+		return log, due
+	}
+	eligible := func(u string) bool {
+		return u != "" && !r.Real(u) && !slices.Contains(r.Declined, u) && connected(u) && slices.Contains(candidates, u)
+	}
+	selected := ""
+	for i := len(r.History) - 1; i >= 0; i-- {
+		if eligible(r.History[i]) {
+			selected = r.History[i]
+			break
+		}
+	}
+	if selected == "" {
+		for _, u := range candidates {
+			if eligible(u) {
+				selected = u
+				break
+			}
+		}
+	}
+	if selected == "" {
 		return log, time.Time{}
 	}
-	// Nobody to pass the role to: it stays, and the next connection checks
-	// again.
+	log = r.clearTemps(at)
+	r.Temporary = selected
+	r.remember(selected)
+	r.Elections++
+	log = append(log, entry(at, "", selected, RoleTemporary))
+	r.sync(now, connected)
 	return log, time.Time{}
 }
 
@@ -277,22 +438,47 @@ func (r *Roles) Carry(ahead *Roles, at int) []wire.PlatformLogEntry {
 		return nil
 	}
 	var log []wire.PlatformLogEntry
-	t := ahead.Temporary
-	if r.Real(t) {
-		t = ""
-	}
-	if t != r.Temporary {
-		if r.Temporary != "" {
-			log = append(log, entry(at, "", r.Temporary, RoleHuman))
+	// A refused disconnect can clear an exclusion. Preserve a step-down
+	// added since ahead was made, identified by ahead still holding its role.
+	r.Declined = slices.DeleteFunc(r.Declined, func(u string) bool { return !slices.Contains(ahead.Declined, u) && !ahead.IsAdmin(u) })
+	// Only Check makes ahead, so it cannot change real promotions. Filter
+	// out users since made real; carry the whole temporary team and history.
+	if ahead.Elections > r.Elections || ahead.Temporary == "" && r.Temporary != "" {
+		ts := ahead.temps()
+		ts = slices.DeleteFunc(ts, r.Real)
+		for _, u := range r.temps() {
+			if !slices.Contains(ts, u) {
+				log = append(log, entry(at, "", u, RoleHuman))
+			}
 		}
-		if t != "" {
-			log = append(log, entry(at, "", t, RoleTemporary))
+		for _, u := range ts {
+			if !r.Temp(u) {
+				log = append(log, entry(at, "", u, RoleTemporary))
+			}
 		}
-		r.Temporary = t
+		r.Temporary, r.TemporaryBy, r.Deputies = "", nil, []Admin{}
+		if len(ts) > 0 {
+			r.Temporary = ts[0]
+			r.TemporaryBy = ahead.PromotedBy(ts[0])
+			for _, a := range ahead.Deputies {
+				if a.UserID != r.Temporary && !r.Real(a.UserID) {
+					r.Deputies = append(r.Deputies, cloneAdmins([]Admin{a})...)
+				}
+			}
+		}
+		r.History = append([]string{}, ahead.History...)
+		r.Elections = ahead.Elections
 	}
 	away := make([]Away, 0, len(r.Away)+len(ahead.Away))
-	for _, w := range append(slices.Clone(r.Away), ahead.Away...) {
-		if r.IsAdmin(w.UserID) && !slices.ContainsFunc(away, func(x Away) bool { return x.UserID == w.UserID }) {
+	// ahead records returns as well as departures. Do not resurrect an old
+	// absence after a refused return followed by another disconnect.
+	for _, w := range r.Away {
+		if r.IsAdmin(w.UserID) && !ahead.IsAdmin(w.UserID) {
+			away = append(away, w)
+		}
+	}
+	for _, w := range ahead.Away {
+		if r.IsAdmin(w.UserID) {
 			away = append(away, w)
 		}
 	}
@@ -309,13 +495,13 @@ func (r *Roles) Holds(u string, ahead *Roles, now time.Time, connected func(stri
 	if r.Real(u) {
 		return true
 	}
-	if u == "" || r.Temporary != u {
+	if u == "" || !r.Temp(u) {
 		return false
 	}
 	live := r.Clone()
 	live.Carry(ahead, 0)
 	live.Check(now, connected, candidates, 0)
-	return live.Temporary == u
+	return live.Temp(u) && live.Elections == r.Elections
 }
 
 // sync keeps one Away row for each real or temporary admin who is not
@@ -335,7 +521,9 @@ func (r *Roles) sync(now time.Time, connected func(string) bool) {
 	for _, a := range r.Admins {
 		track(a.UserID)
 	}
-	track(r.Temporary)
+	for _, u := range r.temps() {
+		track(u)
+	}
 	r.Away = keep
 }
 
@@ -346,22 +534,63 @@ func (r *Roles) since(u string) time.Time {
 	return time.Time{}
 }
 
-// Valid checks roles read from a record: nonempty, distinct real admins
-// within MaxAdmins, each promoter named, a temporary admin who is not also
-// real, and Away rows only for real or temporary admins, once each.
+// Upgrade initializes format-5 role metadata without changing old grants.
+// A creator who stepped down under the old policy regains the permanent role.
+func (r *Roles) Upgrade() {
+	if r.Creator != "" && !r.Real(r.Creator) {
+		r.Admins = append([]Admin{{UserID: r.Creator}}, r.Admins...)
+		// Legacy step-down allowed a full real-admin list without the creator.
+		// Restore every real grant; defer the temporary role if the list is full.
+		if len(r.Admins) == MaxAuthorities {
+			r.Temporary = ""
+		}
+	}
+	r.Deputies = []Admin{}
+	r.History = []string{}
+	r.Declined = []string{}
+	r.TemporaryBy = nil
+	if r.Temporary != "" {
+		if r.Real(r.Temporary) {
+			r.Temporary = ""
+		} else {
+			r.remember(r.Temporary)
+		}
+	}
+	r.pruneAway()
+}
+
 func (r *Roles) Valid() error {
 	bad := errors.New("roles: invalid")
-	if len(r.Admins) > MaxAdmins {
+	validID := func(u string) bool { return u != "" && len(u) <= maxUserIDBytes }
+	if len(r.Admins)+len(r.Deputies)+boolInt(r.Temporary != "") > MaxAuthorities || len(r.History) > MaxHistory || len(r.Declined) > MaxHistory ||
+		r.Creator != "" && (!validID(r.Creator) || !r.Real(r.Creator)) {
 		return bad
 	}
 	for i, a := range r.Admins {
-		if a.UserID == "" || r.admin(a.UserID) != i || (a.PromotedBy != nil && *a.PromotedBy == "") ||
-			(a.PromotedBy == nil && a.UserID != r.Creator) {
+		if !validID(a.UserID) || r.admin(a.UserID) != i || a.PromotedBy != nil && !validID(*a.PromotedBy) || (a.PromotedBy == nil && a.UserID != r.Creator) {
 			return bad
 		}
 	}
-	if r.Temporary != "" && r.Real(r.Temporary) {
+	if r.Temporary != "" && (!validID(r.Temporary) || r.Real(r.Temporary)) || r.Temporary == "" && len(r.Deputies) > 0 {
 		return bad
+	}
+	if r.TemporaryBy != nil && (r.Temporary == "" || !validID(*r.TemporaryBy)) {
+		return bad
+	}
+	for i, a := range r.Deputies {
+		if !validID(a.UserID) || a.UserID == r.Temporary || r.Real(a.UserID) || r.deputy(a.UserID) != i || a.PromotedBy == nil || !validID(*a.PromotedBy) {
+			return bad
+		}
+	}
+	for i, u := range r.Declined {
+		if !validID(u) || slices.Index(r.Declined, u) != i {
+			return bad
+		}
+	}
+	for i, u := range r.History {
+		if !validID(u) || slices.Index(r.History, u) != i {
+			return bad
+		}
 	}
 	for i, w := range r.Away {
 		if !r.IsAdmin(w.UserID) || slices.IndexFunc(r.Away, func(x Away) bool { return x.UserID == w.UserID }) != i || w.Since.IsZero() {
@@ -370,3 +599,12 @@ func (r *Roles) Valid() error {
 	}
 	return nil
 }
+
+// Equal compares all durable role metadata, including silent changes.
+func (r *Roles) Equal(o *Roles) bool {
+	sameAdmin := func(a, b Admin) bool { return a.UserID == b.UserID && sameString(a.PromotedBy, b.PromotedBy) }
+	return r.Creator == o.Creator && r.Temporary == o.Temporary && sameString(r.TemporaryBy, o.TemporaryBy) && r.Elections == o.Elections &&
+		slices.EqualFunc(r.Admins, o.Admins, sameAdmin) && slices.EqualFunc(r.Deputies, o.Deputies, sameAdmin) && slices.Equal(r.History, o.History) && slices.Equal(r.Declined, o.Declined) &&
+		slices.EqualFunc(r.Away, o.Away, func(a, b Away) bool { return a.UserID == b.UserID && a.Since.Equal(b.Since) })
+}
+func sameString(a, b *string) bool { return a == nil && b == nil || a != nil && b != nil && *a == *b }

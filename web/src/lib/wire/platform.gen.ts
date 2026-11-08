@@ -117,8 +117,8 @@ export interface PlatformAck {
 }
 /**
  * PlatformHuman contains public identity, presence and role metadata. Temporary
- * admins have seat powers but cannot promote or demote. PromotedBy records the
- * real admin who granted the role; absence means no such promotion.
+ * admins may promote temporary admins and demote their own promotees.
+ * PromotedBy records the promoter; absence means no such promotion.
  */
 export interface PlatformHuman {
   userId: string;
@@ -151,7 +151,8 @@ export interface PreviousSeat {
  * PlatformYou holds connection-specific metadata, including admin-only hints.
  * No previous-seat hint is sent to a non-admin. A former player gets only its
  * own FormerSeat, the seat it held last, while it watches a playing table.
- * CanPromote goes to a real admin of a table: whether the admin cap leaves
+ * RejoinSeat offers only the viewer's own former seat when it is available.
+ * CanPromote goes to an admin: whether that role's cap leaves
  * room for another admin.
  */
 export interface PlatformYou {
@@ -159,6 +160,7 @@ export interface PlatformYou {
   seat?: number /* int */;
   previousSeats?: PreviousSeat[];
   formerSeat?: number /* int */;
+  rejoinSeat?: number /* int */;
   canPromote?: boolean;
 }
 /**

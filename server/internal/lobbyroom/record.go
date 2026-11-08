@@ -25,7 +25,8 @@ const Schema = 2
 // format 1 (before slots had claim epochs) and format 2 (before clients
 // were remembered by tableroom.ClientKey), and format 3 (before the name
 // ledger). A newer format is refused and left as it is.
-const recordFormat = 4
+// Format 5 adds bounded temporary-role history and promotion ancestry.
+const recordFormat = 5
 
 // Seat counts: two seats start Duel (M18.shared-lobby), three to seven
 // Haftgane.
@@ -51,7 +52,7 @@ const (
 	maxUserIDBytes = 64
 	// maxSeqUsers bounds the users with remembered seqs: the humans in
 	// slots, the real admins, the temporary admin and the retired users.
-	maxSeqUsers = MaxSeats + roles.MaxAdmins + 1 + maxRetired
+	maxSeqUsers = MaxSeats + roles.MaxAuthorities + maxRetired
 )
 
 // Record is a lobby's durable record, the whole schema-2 room file.
@@ -76,8 +77,11 @@ type Record struct {
 	Roles roles.Roles `json:"roles"`
 	// Unseated are the users who released their slot or were removed from
 	// one, oldest first and at most maxUnseated: joining again does not
-	// put them back in an open slot; an admin may.
+	// put them back in an open slot; an admin may seat them, or they may
+	// reclaim the slot remembered in Previous.
 	Unseated []string `json:"unseated"`
+	// Previous remembers each former player's last lobby slot, oldest first.
+	Previous []tableroom.PreviousRecord `json:"previous"`
 	// Retired are the users who lost all authority while the lobby
 	// remembered their seqs (as for a table).
 	Retired []string `json:"retired"`
@@ -126,6 +130,7 @@ func (r *Record) clone() Record {
 	c.Slots = slices.Clone(r.Slots)
 	c.Roles = r.Roles.Clone()
 	c.Unseated = slices.Clone(r.Unseated)
+	c.Previous = slices.Clone(r.Previous)
 	c.Retired = slices.Clone(r.Retired)
 	c.Seqs = slices.Clone(r.Seqs)
 	c.RoomLog = slices.Clone(r.RoomLog)
@@ -168,6 +173,9 @@ func (r *Record) encode() ([]byte, error) {
 		if *p == nil {
 			*p = []string{}
 		}
+	}
+	if c.Previous == nil {
+		c.Previous = []tableroom.PreviousRecord{}
 	}
 	if c.Seqs == nil {
 		c.Seqs = []SeqRecord{}
@@ -219,6 +227,7 @@ func decodeRecord(data []byte) (*Record, error) {
 // sent, so the seq acknowledgements are re-keyed by tableroom.ClientKey,
 // once: format 3 marks the keys, which ClientKey must not see again.
 // Format 4 adds the name ledger, initialized in current slot order.
+// Format 5 preserves that ledger and restores the permanent creator role.
 func upgrade(r *Record) {
 	if r.Format == 1 {
 		for i := range r.Slots {
@@ -232,8 +241,13 @@ func upgrade(r *Record) {
 			r.Seqs[i].Client = tableroom.ClientKey(r.Seqs[i].Client)
 		}
 	}
-	r.Names = namenum.Ledger{}
-	r.assignSlotNames()
+	if r.Format < 4 {
+		r.Names = namenum.Ledger{}
+		r.assignSlotNames()
+	}
+	r.Roles.Upgrade()
+	// A creator restored from a legacy step-down is no longer retired.
+	r.Retired = slices.DeleteFunc(r.Retired, func(u string) bool { return hasAuthority(r, u) })
 	r.Format = recordFormat
 }
 
@@ -325,8 +339,13 @@ func validate(r *Record, acks int) error {
 	if r.Roles.Valid() != nil {
 		return invalid("the roles")
 	}
-	if len(r.Unseated) > maxUnseated || len(r.Retired) > maxRetired || len(r.RoomLog) > maxRoomLog {
+	if len(r.Previous) > maxUnseated || len(r.Unseated) > maxUnseated || len(r.Retired) > maxRetired || len(r.RoomLog) > maxRoomLog {
 		return invalid("a list past its bound")
+	}
+	for i, p := range r.Previous {
+		if p.UserID == "" || len(p.UserID) > maxUserIDBytes || p.Seat < 0 || p.Seat >= MaxSeats || slices.IndexFunc(r.Previous, func(x tableroom.PreviousRecord) bool { return x.UserID == p.UserID }) != i {
+			return invalid("the previous seats")
+		}
 	}
 	for i, u := range r.Unseated {
 		if u == "" || slices.Index(r.Unseated, u) != i {
@@ -480,6 +499,9 @@ func authorities(r *Record) []string {
 	for _, ad := range r.Roles.Admins {
 		out = append(out, ad.UserID)
 	}
+	for _, ad := range r.Roles.Deputies {
+		out = append(out, ad.UserID)
+	}
 	if r.Roles.Temporary != "" {
 		out = append(out, r.Roles.Temporary)
 	}
@@ -487,7 +509,12 @@ func authorities(r *Record) []string {
 }
 
 // unseat records that u left a slot by releasing it or being removed.
-func unseat(r *Record, u string) {
+func unseat(r *Record, u string, seat int) {
+	r.Previous = slices.DeleteFunc(r.Previous, func(p tableroom.PreviousRecord) bool { return p.UserID == u })
+	r.Previous = append(r.Previous, tableroom.PreviousRecord{UserID: u, Seat: seat})
+	if len(r.Previous) > maxUnseated {
+		r.Previous = slices.Delete(r.Previous, 0, len(r.Previous)-maxUnseated)
+	}
 	r.Unseated = slices.DeleteFunc(r.Unseated, func(x string) bool { return x == u })
 	r.Unseated = append(r.Unseated, u)
 	if over := len(r.Unseated) - maxUnseated; over > 0 {
@@ -500,4 +527,18 @@ func appendLog(r *Record, entries ...wire.PlatformLogEntry) {
 	if over := len(r.RoomLog) - maxRoomLog; over > 0 {
 		r.RoomLog = slices.Delete(r.RoomLog, 0, over)
 	}
+}
+
+// rejoinSeat offers only an unseated human's own former open slot.
+func rejoinSeat(r *Record, user string) *int {
+	if slotOf(r, user, SlotHuman) >= 0 || slotOf(r, user, SlotReserved) >= 0 {
+		return nil
+	}
+	for _, p := range r.Previous {
+		if p.UserID == user && p.Seat < len(r.Slots) && r.Slots[p.Seat].Kind == SlotOpen {
+			seat := p.Seat
+			return &seat
+		}
+	}
+	return nil
 }

@@ -1,7 +1,6 @@
 package lobbyroom
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"slices"
@@ -441,7 +440,7 @@ func (a *actor) checkRoles() {
 	log := cand.Roles.Carry(a.rolesAhead, 0)
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)
 	log = append(log, more...)
-	if len(log) == 0 && sameAway(cand.Roles.Away, a.rec.Roles.Away) {
+	if len(log) == 0 && cand.Roles.Equal(&a.rec.Roles) {
 		a.rolesAhead = nil
 		a.armRoles(next)
 		return
@@ -473,41 +472,28 @@ func (a *actor) checkRoles() {
 // connection and human, so only the temporary admin pays for the check.
 func (a *actor) isAdmin(u string) bool {
 	r := &a.rec
-	if r.Roles.Real(u) || u == "" || r.Roles.Temporary != u {
+	if r.Roles.Real(u) || u == "" || !r.Roles.Temp(u) {
 		return r.Roles.Real(u)
 	}
 	return r.Roles.Holds(u, a.rolesAhead, a.now(), a.connected, a.candidates(r))
 }
 
-func sameAway(x, y []roles.Away) bool {
-	return slices.EqualFunc(x, y, func(p, q roles.Away) bool { return p.UserID == q.UserID && p.Since.Equal(q.Since) })
-}
-
-// candidates are the connected humans in the temporary-admin rule's
-// order: those in slots by how long they have held them (slot order
-// breaks ties), then the others by how long they have been connected.
+// candidates hash-orders seated humans and then spectators, using only
+// durable public inputs. Roles.Check applies former-admin recency first.
 func (a *actor) candidates(r *Record) []string {
-	type held struct {
-		user  string
-		taken int
-	}
-	var seated []held
+	seated, spectators := []string{}, []string{}
 	for _, s := range r.Slots {
 		if s.Kind == SlotHuman && a.connected(s.UserID) {
-			seated = append(seated, held{s.UserID, s.Taken})
+			seated = append(seated, s.UserID)
 		}
-	}
-	slices.SortStableFunc(seated, func(x, y held) int { return cmp.Compare(x.taken, y.taken) })
-	out := []string{}
-	for _, s := range seated {
-		out = append(out, s.user)
 	}
 	for _, c := range a.conns {
-		if u := a.userOf(c); !slices.Contains(out, u) {
-			out = append(out, u)
+		u := a.userOf(c)
+		if !slices.Contains(seated, u) && !slices.Contains(spectators, u) {
+			spectators = append(spectators, u)
 		}
 	}
-	return out
+	return roles.Candidates(r.Code, r.Roles.Elections, seated, spectators)
 }
 
 func (a *actor) armRoles(at time.Time) {
@@ -748,7 +734,8 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 	}
 	r := &a.rec
 	user := a.userOf(c)
-	if f.Op != "release" && !a.isAdmin(user) {
+	self := f.Op == "seat" && f.UserID != nil && *f.UserID == user && f.Seat != nil && rejoinSeat(r, user) != nil && *rejoinSeat(r, user) == *f.Seat
+	if f.Op != "release" && !self && !a.isAdmin(user) {
 		return a.refuse(c, f.Seq, f.Op, outNotAdmin)
 	}
 	cand := r.clone()
@@ -768,9 +755,10 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 			return a.refuse(c, f.Seq, f.Op, outForbidden)
 		}
 		n := *f.SeatCount
-		for _, s := range cand.Slots[min(n, len(cand.Slots)):] {
+		for i := min(n, len(cand.Slots)); i < len(cand.Slots); i++ {
+			s := cand.Slots[i]
 			if s.Kind == SlotHuman {
-				unseat(&cand, s.UserID)
+				unseat(&cand, s.UserID, i)
 			}
 		}
 		if n < len(cand.Slots) {
@@ -810,6 +798,8 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 		}
 		cand.Slots[i] = Slot{Kind: SlotHuman, UserID: *f.UserID, Name: a.nameOf(*f.UserID), Taken: cand.Revision + 1, Epoch: cand.Revision + 1}
 		cand.Unseated = slices.DeleteFunc(cand.Unseated, func(u string) bool { return u == *f.UserID })
+		target, control := *f.UserID, "human"
+		appendLog(&cand, wire.PlatformLogEntry{Kind: "seat", By: user, Seat: &i, UserID: &target, Control: &control})
 	case "remove-human":
 		if f.UserID == nil {
 			return bad()
@@ -819,14 +809,16 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 			return bad()
 		}
 		cand.Slots[i] = Slot{Kind: SlotOpen}
-		unseat(&cand, *f.UserID)
+		unseat(&cand, *f.UserID, i)
+		appendLog(&cand, wire.PlatformLogEntry{Kind: "resign", By: user, Seat: &i, UserID: f.UserID})
 	case "release":
 		i := slotOf(r, user, SlotHuman)
 		if i < 0 {
 			return a.refuse(c, f.Seq, f.Op, outForbidden)
 		}
 		cand.Slots[i] = Slot{Kind: SlotOpen}
-		unseat(&cand, user)
+		unseat(&cand, user, i)
+		appendLog(&cand, wire.PlatformLogEntry{Kind: "resign", By: user, Seat: &i, UserID: &user})
 	case "open-reservation":
 		i, ok := slot()
 		if !ok || r.Slots[i].Kind != SlotReserved {
@@ -844,8 +836,11 @@ func (a *actor) role(c *room.Client, f wire.LobbyRole) string {
 	if a.seen(c, f.Seq) {
 		return outDuplicate
 	}
-	cand := a.rec.clone()
 	user := a.userOf(c)
+	if !a.isAdmin(user) {
+		return a.refuse(c, f.Seq, "role", outNotAdmin)
+	}
+	cand := a.rec.clone()
 	var entry wire.PlatformLogEntry
 	var err error
 	switch {
@@ -962,6 +957,9 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		}
 		if rs.Temporary != "" {
 			duel.HintAdmins = append(duel.HintAdmins, rs.Temporary)
+		}
+		for _, ad := range rs.Deputies {
+			duel.HintAdmins = append(duel.HintAdmins, ad.UserID)
 		}
 		for i, p := range spec.Participants {
 			if p.UserID != "" {

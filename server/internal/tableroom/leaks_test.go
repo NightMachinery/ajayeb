@@ -139,6 +139,11 @@ func envelope(where string, v frameViewer, fr wire.TableState, w pendingWant, tr
 	if (fr.You.FormerSeat == nil) != (former == nil) || (former != nil && *fr.You.FormerSeat != *former) {
 		bad("you.formerSeat", "not the seat this unseated viewer held last")
 	}
+	if seat := fr.You.RejoinSeat; seat != nil {
+		if former == nil || *seat != *former || *seat < 0 || *seat >= len(fr.Seats) || fr.Seats[*seat].Kind != SeatBot {
+			bad("you.rejoinSeat", "not this observer's available former seat")
+		}
+	}
 	if fr.You.CanPromote != nil && !v.Admin {
 		bad("you.canPromote", "the admin cap in a non-admin's frame")
 	}
@@ -574,6 +579,8 @@ func TestSwitchFramesLeakNothing(t *testing.T) {
 	if ps := h.latest(admin).You.PreviousSeats; ps == nil || len(*ps) != 1 || (*ps)[0] != (wire.PreviousSeat{UserID: userOf(1), Seat: 1}) {
 		t.Fatalf("the admin's hint after the switch: %v", ps)
 	}
+	change("user-1 rejoins its own seat", func() { p.seats[userOf(1)] = 1 }, c1, toHuman(seq(c1), 1, userOf(1)))
+	change("seat 1 to a bot again", func() { delete(p.seats, userOf(1)) }, admin, toBot(seq(admin), 1, BotEasy))
 	change("the watcher to seat 1", func() { p.seats["watcher"] = 1 }, admin, toHuman(seq(admin), 1, "watcher"))
 	change("user-1's promotion", func() { p.admins[userOf(1)] = true }, admin, roleOp(seq(admin), "promote", userOf(1)))
 	change("user-1 steps down", func() { p.admins[userOf(1)] = false }, c1, roleOp(seq(c1), "step-down", ""))

@@ -113,6 +113,11 @@ func largestRecordFitsTheStore(t *testing.T, glyph string) {
 			r.Roles.Admins = append(r.Roles.Admins, roles.Admin{UserID: hexUser(2, i), PromotedBy: &by})
 		}
 		r.Roles.Temporary = hexUser(3, 0)
+		for i := range roles.MaxHistory {
+			r.Roles.History = append(r.Roles.History, hexUser(8, i))
+			r.Roles.Declined = append(r.Roles.Declined, hexUser(9, i))
+		}
+		r.Roles.Elections = math.MaxUint64
 		r.Roles.Away = nil
 		for _, ad := range r.Roles.Admins {
 			r.Roles.Away = append(r.Roles.Away, roles.Away{UserID: ad.UserID, Since: since})

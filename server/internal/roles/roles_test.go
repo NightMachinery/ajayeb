@@ -3,6 +3,7 @@ package roles
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -13,285 +14,268 @@ var t0 = time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)
 func present(users ...string) func(string) bool {
 	return func(u string) bool { return slices.Contains(users, u) }
 }
-
-func roleOf(t *testing.T, r *Roles, u string) string {
+func mustRole(t *testing.T, err error) {
 	t.Helper()
-	switch {
-	case r.Real(u):
-		return RoleAdmin
-	case r.Temporary == u:
-		return RoleTemporary
-	}
-	return RoleHuman
-}
-
-// TestPromoteDemote: any real admin promotes any human in the room; an
-// admin demotes only those they promoted, the creator anyone, and nobody
-// the creator; a demoted admin's own promotees stay; anyone real may step
-// down, the creator too; a temporary admin promotes and demotes nothing.
-func TestPromoteDemote(t *testing.T) {
-	r := New("c")
-	must := func(err error) {
-		t.Helper()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	want := func(err, target error) {
-		t.Helper()
-		if !errors.Is(err, target) {
-			t.Fatalf("got %v, want %v", err, target)
-		}
-	}
-	_, err := r.Promote("c", "a", true, 0)
-	must(err)
-	_, err = r.Promote("a", "b", true, 0)
-	must(err)
-	_, err = r.Promote("x", "y", true, 0)
-	want(err, ErrNotAdmin)
-	_, err = r.Promote("c", "gone", false, 0)
-	want(err, ErrBadRequest)
-	_, err = r.Promote("c", "a", true, 0)
-	want(err, ErrBadRequest)
-	if by := r.PromotedBy("b"); by == nil || *by != "a" {
-		t.Fatalf("b promoted by %v", by)
-	}
-	_, err = r.Demote("b", "a", 0)
-	want(err, ErrNotAdmin)
-	_, err = r.Demote("a", "c", 0)
-	want(err, ErrForbidden)
-	_, err = r.Demote("c", "nobody", 0)
-	want(err, ErrBadRequest)
-	e, err := r.Demote("c", "a", 3)
-	must(err)
-	if e.Kind != "role" || e.At != 3 || e.By != "c" || *e.UserID != "a" || *e.Role != RoleHuman {
-		t.Fatalf("entry %+v", e)
-	}
-	if !r.Real("b") {
-		t.Fatal("demoting a removed the admin a promoted")
-	}
-	_, err = r.Demote("b", "b", 0)
-	want(err, ErrNotAdmin) // b was promoted by a, not by itself
-	_, err = r.Demote("c", "b", 0)
-	must(err)
-	_, err = r.StepDown("c", 0)
-	must(err)
-	if r.Real("c") || len(r.Admins) != 0 || r.Creator != "c" {
-		t.Fatalf("after the creator stepped down: %+v", r)
-	}
-	_, err = r.StepDown("c", 0)
-	want(err, ErrNotAdmin)
-
-	// A temporary admin promotes, demotes and steps down nothing.
-	r.Check(t0, present("t"), []string{"t"}, 0)
-	if r.Temporary != "t" || !r.IsAdmin("t") || r.Real("t") {
-		t.Fatalf("no temporary admin at once without real admins: %+v", r)
-	}
-	_, err = r.Promote("t", "u", true, 0)
-	want(err, ErrNotAdmin)
-	_, err = r.StepDown("t", 0)
-	want(err, ErrForbidden)
-	for i := range MaxAdmins {
-		r.Admins = append(r.Admins, Admin{UserID: string(rune('A' + i)), PromotedBy: ptr("c")})
-	}
-	r.Admins[0].PromotedBy = nil
-	r.Creator = r.Admins[0].UserID
-	_, err = r.Promote(r.Creator, "one-more", true, 0)
-	want(err, ErrForbidden)
-}
-
-func ptr(s string) *string { return &s }
-
-// TestTemporaryAdmin walks the five-minute rules with explicit times.
-func TestTemporaryAdmin(t *testing.T) {
-	r := New("c")
-	_, _ = r.Promote("c", "a", true, 0)
-	cands := []string{"s1", "s2", "spec"}
-
-	// Both real admins connected: nothing.
-	if log, next := r.Check(t0, present("c", "a", "s1"), cands, 0); len(log) != 0 || !next.IsZero() || len(r.Away) != 0 {
-		t.Fatalf("all here: %v %v %+v", log, next, r.Away)
-	}
-	// c leaves at t0, a at t0+2m: the role waits for a's five minutes.
-	r.Check(t0, present("a", "s1"), cands, 0)
-	log, next := r.Check(t0.Add(2*time.Minute), present("s1", "s2"), cands, 0)
-	if len(log) != 0 || !next.Equal(t0.Add(7*time.Minute)) || r.Temporary != "" {
-		t.Fatalf("both away: %v %v %q", log, next, r.Temporary)
-	}
-	if len(r.Away) != 2 || !r.Away[0].Since.Equal(t0) || !r.Away[1].Since.Equal(t0.Add(2*time.Minute)) {
-		t.Fatalf("away times: %+v", r.Away)
-	}
-	// One second early: still nothing.
-	if log, _ := r.Check(t0.Add(7*time.Minute-time.Second), present("s1", "s2"), cands, 0); len(log) != 0 {
-		t.Fatalf("early: %v", log)
-	}
-	// At the deadline the first connected candidate takes the role.
-	log, next = r.Check(t0.Add(7*time.Minute), present("s1", "s2"), cands, 4)
-	if r.Temporary != "s1" || len(log) != 1 || *log[0].Role != RoleTemporary || *log[0].UserID != "s1" || log[0].At != 4 || !next.IsZero() {
-		t.Fatalf("made: %q %v %v", r.Temporary, log, next)
-	}
-	// The restart keeps everything: the roles are a plain JSON value.
-	data, err := json.Marshal(r)
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+func wantRole(t *testing.T, err, want error) {
+	t.Helper()
+	if !errors.Is(err, want) {
+		t.Fatalf("got %v want %v", err, want)
+	}
+}
+func roundRole(t *testing.T, r Roles) Roles {
+	t.Helper()
+	data, e := json.Marshal(r)
+	mustRole(t, e)
 	var back Roles
-	if err := json.Unmarshal(data, &back); err != nil || back.Temporary != "s1" || len(back.Away) != 2 || !back.Away[1].Since.Equal(t0.Add(2*time.Minute)) {
-		t.Fatalf("round trip: %+v %v", back, err)
-	}
-	if err := back.Valid(); err != nil {
-		t.Fatal(err)
-	}
-	r = back
-	// The temporary admin leaves at 8m: the role passes on five minutes
-	// later, to the next connected candidate.
-	log, next = r.Check(t0.Add(8*time.Minute), present("s2", "spec"), cands, 0)
-	if len(log) != 0 || !next.Equal(t0.Add(13*time.Minute)) {
-		t.Fatalf("temporary away: %v %v", log, next)
-	}
-	log, _ = r.Check(t0.Add(13*time.Minute), present("s2", "spec"), cands, 0)
-	if r.Temporary != "s2" || len(log) != 2 || *log[0].UserID != "s1" || *log[0].Role != RoleHuman || *log[1].UserID != "s2" {
-		t.Fatalf("passed on: %q %v", r.Temporary, log)
-	}
-	// A real admin's return demotes the temporary admin at once.
-	log, next = r.Check(t0.Add(14*time.Minute), present("a", "s2"), cands, 0)
-	if r.Temporary != "" || len(log) != 1 || *log[0].UserID != "s2" || *log[0].Role != RoleHuman || !next.IsZero() {
-		t.Fatalf("returned: %q %v %v", r.Temporary, log, next)
-	}
-	if len(r.Away) != 1 || r.Away[0].UserID != "c" {
-		t.Fatalf("away after the return: %+v", r.Away)
-	}
-	// a leaves again: a fresh five minutes from its new departure.
-	_, next = r.Check(t0.Add(15*time.Minute), present("s2"), cands, 0)
-	if !next.Equal(t0.Add(20 * time.Minute)) {
-		t.Fatalf("away again: %v", next)
-	}
-	// Nobody connected to take it: no role, and the next connection checks.
-	if log, _ := r.Check(t0.Add(30*time.Minute), present(), cands, 0); len(log) != 0 || r.Temporary != "" {
-		t.Fatalf("nobody: %v", log)
-	}
-	if log, _ := r.Check(t0.Add(31*time.Minute), present("spec"), cands, 0); r.Temporary != "spec" || len(log) != 1 {
-		t.Fatalf("a spectator connects: %v", log)
-	}
-	// The last real admin stepping down... there are two; c is away. When
-	// the creator alone remains and steps down, the rule applies at once.
-	r2 := New("c")
-	r2.Check(t0, present("c", "s1"), cands, 0)
-	if _, err := r2.StepDown("c", 0); err != nil {
-		t.Fatal(err)
-	}
-	if log, _ := r2.Check(t0, present("c", "s1"), []string{"c", "s1"}, 0); r2.Temporary != "c" || len(log) != 1 {
-		t.Fatalf("after the last real admin stepped down: %q %v", r2.Temporary, log)
-	}
-	if roleOf(t, &r2, "c") != RoleTemporary || roleOf(t, &r2, "s1") != RoleHuman {
-		t.Fatal("roles after step-down")
-	}
+	mustRole(t, json.Unmarshal(data, &back))
+	mustRole(t, back.Valid())
+	return back
 }
 
-// TestRefusedWrite: when a room's store refuses a role change, the room
-// keeps the saved roles and the unsaved ones (ahead). Holds fails closed
-// for the temporary role in each of the rule's three changes: a real
-// admin's return, the role's grant and its passing on; and Carry starts
-// the next check from the unsaved change, so it is made once, with its
-// log entries, when a write succeeds.
-func TestRefusedWrite(t *testing.T) {
-	cands := []string{"s1", "s2"}
-	saved := New("c")
-	saved.Check(t0, present("s1", "s2"), cands, 0)
-
-	// The grant at five minutes is refused: nobody holds the role yet.
-	grant := saved.Clone()
-	grant.Check(t0.Add(5*time.Minute), present("s1", "s2"), cands, 0)
-	if grant.Temporary != "s1" {
-		t.Fatalf("the grant: %q", grant.Temporary)
+func TestRoleMatrix(t *testing.T) {
+	r := New("creator")
+	_, e := r.StepDown("creator", 0)
+	wantRole(t, e, ErrForbidden)
+	_, e = r.Promote("creator", "real", true, 1)
+	mustRole(t, e)
+	_, e = r.Promote("real", "child", true, 2)
+	mustRole(t, e)
+	_, e = r.Demote("child", "creator", 3)
+	wantRole(t, e, ErrForbidden)
+	_, e = r.Demote("child", "real", 3)
+	wantRole(t, e, ErrNotAdmin)
+	_, e = r.Demote("creator", "real", 3)
+	mustRole(t, e)
+	if !r.Real("child") {
+		t.Fatal("demoted ancestry cascaded")
 	}
-	if saved.Holds("s1", &grant, t0.Add(5*time.Minute), present("s1", "s2"), cands) {
-		t.Fatal("an unsaved grant gave the powers")
+	_, e = r.StepDown("child", 4)
+	mustRole(t, e)
+	_, e = r.Promote("stranger", "t", true, 4)
+	wantRole(t, e, ErrNotAdmin)
+	r.Check(t0, present("t", "d", "e", "other"), []string{"t", "d", "e", "other"}, 0)
+	log, next := r.Check(t0.Add(AwayLimit), present("t", "d", "e", "other"), []string{"t", "d", "e", "other"}, 5)
+	if r.Temporary != "t" || len(log) != 1 || !next.IsZero() {
+		t.Fatalf("grant: %+v %v", r, log)
 	}
-	// Retried from the saved roles and the unsaved ones: the same grant.
-	retry := saved.Clone()
-	log := retry.Carry(&grant, 3)
-	more, _ := retry.Check(t0.Add(5*time.Minute+Retry), present("s1", "s2"), cands, 3)
-	if retry.Temporary != "s1" || len(log) != 1 || *log[0].UserID != "s1" || *log[0].Role != RoleTemporary || log[0].At != 3 || len(more) != 0 {
-		t.Fatalf("the retried grant: %q %v %v", retry.Temporary, log, more)
+	_, e = r.Promote("t", "d", true, 6)
+	mustRole(t, e)
+	_, e = r.Promote("d", "e", true, 7)
+	mustRole(t, e)
+	_, e = r.Promote("t", "other", true, 8)
+	mustRole(t, e)
+	if r.Real("d") || !r.Temp("d") || *r.PromotedBy("e") != "d" {
+		t.Fatal("temporary promotion became real")
 	}
-	if err := retry.Valid(); err != nil {
-		t.Fatal(err)
+	_, e = r.Demote("d", "other", 9)
+	wantRole(t, e, ErrNotAdmin)
+	_, e = r.Demote("t", "creator", 9)
+	wantRole(t, e, ErrForbidden)
+	_, e = r.Demote("t", "d", 9)
+	mustRole(t, e)
+	if !r.Temp("e") {
+		t.Fatal("temporary demotion cascaded")
 	}
-	saved = retry
-	if !saved.Holds("s1", nil, t0.Add(6*time.Minute), present("s1", "s2"), cands) {
-		t.Fatal("the saved grant")
+	r = roundRole(t, r)
+	// All surviving temporaries lose authority, including descendants whose
+	// promoter was demoted. Every change is publicly logged.
+	log, _ = r.Check(t0.Add(6*time.Minute), present("creator", "t", "e", "other"), []string{"t", "e", "other"}, 10)
+	if len(log) != 3 || r.Temp("e") || r.Temporary != "" {
+		t.Fatalf("return: %+v %v", r, log)
 	}
-
-	// The creator's return is refused: s1 loses the powers at once.
-	back := saved.Clone()
-	back.Check(t0.Add(6*time.Minute), present("c", "s1", "s2"), cands, 0)
-	if back.Temporary != "" {
-		t.Fatalf("the return: %q", back.Temporary)
-	}
-	if saved.Holds("s1", &back, t0.Add(6*time.Minute), present("c", "s1", "s2"), cands) ||
-		!saved.Holds("c", &back, t0.Add(6*time.Minute), present("c", "s1", "s2"), cands) {
-		t.Fatal("the powers after a refused return")
-	}
-
-	// The passing on is refused, and s1 comes back before the retry: the
-	// rule had given the role to s2, so neither holds it until it is
-	// saved, and the retry passes it on.
-	saved.Check(t0.Add(8*time.Minute), present("s2"), cands, 0)
-	pass := saved.Clone()
-	pass.Check(t0.Add(13*time.Minute), present("s2"), cands, 0)
-	if pass.Temporary != "s2" {
-		t.Fatalf("the passing on: %q", pass.Temporary)
-	}
-	now := t0.Add(13*time.Minute + time.Second)
-	if saved.Holds("s1", &pass, now, present("s1", "s2"), cands) || saved.Holds("s2", &pass, now, present("s1", "s2"), cands) {
-		t.Fatal("the powers after a refused passing on")
-	}
-	if !saved.Holds("s1", nil, now, present("s1", "s2"), cands) {
-		t.Fatal("without the unsaved roles s1 would keep the role: the case Carry exists for")
-	}
-	retry = saved.Clone()
-	log = retry.Carry(&pass, 0)
-	more, _ = retry.Check(now, present("s1", "s2"), cands, 0)
-	if retry.Temporary != "s2" || len(log) != 2 || *log[0].UserID != "s1" || *log[1].UserID != "s2" || len(more) != 0 {
-		t.Fatalf("the retried passing on: %q %v %v", retry.Temporary, log, more)
-	}
-	if err := retry.Valid(); err != nil || len(retry.Away) != 1 || retry.Away[0].UserID != "c" {
-		t.Fatalf("after the retry: %+v %v", retry.Away, err)
-	}
-
-	// An unsaved temporary admin promoted since is not carried back.
-	promoted := saved.Clone()
-	if _, err := promoted.Promote("c", "s2", true, 0); err != nil {
-		t.Fatal(err)
-	}
-	if log := promoted.Carry(&pass, 0); promoted.Temporary != "" || len(log) != 1 || *log[0].UserID != "s1" {
-		t.Fatalf("carried onto a promotion: %q %v", promoted.Temporary, log)
-	}
-}
-
-// TestValid refuses records that break the invariants.
-func TestValid(t *testing.T) {
-	ok := New("c")
-	_, _ = ok.Promote("c", "a", true, 0)
-	ok.Check(t0, present("a"), nil, 0)
-	if err := ok.Valid(); err != nil {
-		t.Fatal(err)
-	}
-	for name, mut := range map[string]func(r *Roles){
-		"duplicate admin":        func(r *Roles) { r.Admins = append(r.Admins, r.Admins[0]) },
-		"empty admin":            func(r *Roles) { r.Admins[1].UserID = "" },
-		"unpromoted non-creator": func(r *Roles) { r.Admins[1].PromotedBy = nil },
-		"empty promoter":         func(r *Roles) { r.Admins[1].PromotedBy = ptr("") },
-		"real temporary":         func(r *Roles) { r.Temporary = "a" },
-		"away stranger":          func(r *Roles) { r.Away = append(r.Away, Away{UserID: "x", Since: t0}) },
-		"away twice":             func(r *Roles) { r.Away = append(r.Away, r.Away[0]) },
-		"away at zero":           func(r *Roles) { r.Away[0].Since = time.Time{} },
-	} {
-		r := ok.Clone()
-		mut(&r)
-		if r.Valid() == nil {
-			t.Errorf("%s: valid", name)
+	for _, e := range log {
+		if e.Role == nil || *e.Role != RoleHuman {
+			t.Fatal("missing demotion log")
 		}
 	}
+}
+
+func TestTemporaryHistoryAndSelection(t *testing.T) {
+	r := New("c")
+	seated, spec := []string{"a", "b", "c2"}, []string{"watcher", "old"}
+	cands := Candidates("ROOMAA", r.Elections, seated, spec)
+	if !slices.Equal(cands, Candidates("ROOMAA", 0, []string{"c2", "a", "b"}, []string{"old", "watcher"})) {
+		t.Fatal("arrival order changes lottery")
+	}
+	for _, u := range cands[:3] {
+		if !slices.Contains(seated, u) {
+			t.Fatal("spectator ahead of seated human")
+		}
+	}
+	r.Check(t0, present(cands...), cands, 0)
+	if log, next := r.Check(t0.Add(AwayLimit-time.Second), present(cands...), cands, 0); len(log) != 0 || !next.Equal(t0.Add(AwayLimit)) {
+		t.Fatal("early grant")
+	}
+	back := roundRole(t, r)
+	for _, v := range []*Roles{&r, &back} {
+		v.Check(t0.Add(AwayLimit), present(cands...), Candidates("ROOMAA", v.Elections, seated, spec), 1)
+	}
+	if r.Temporary != back.Temporary || r.Elections != 1 || !r.Equal(&back) {
+		t.Fatal("restart changes election")
+	}
+	first := r.Temporary
+	r.Check(t0.Add(6*time.Minute), present("c", cands[0]), cands, 2)
+	// A former spectator takes priority over never-temporary seated humans.
+	r.remember("old")
+	r.Check(t0.Add(7*time.Minute), present(cands...), cands, 0)
+	r = roundRole(t, r)
+	r.Check(t0.Add(12*time.Minute), present(cands...), cands, 3)
+	if r.Temporary != "old" {
+		t.Fatalf("former spectator not preferred to seats, first=%s: %+v", first, r)
+	}
+	// A connected promoted temporary keeps the team alive when its root leaves.
+	_, e := r.Promote("old", "watcher", true, 3)
+	mustRole(t, e)
+	r.Check(t0.Add(13*time.Minute), present("watcher"), cands, 3)
+	r.Check(t0.Add(18*time.Minute), present("watcher"), cands, 3)
+	if r.Temporary != "old" || !r.Temp("watcher") {
+		t.Fatal("connected deputy lost authority")
+	}
+	// Only after all temporaries have been away five minutes is a new team selected.
+	r.Check(t0.Add(19*time.Minute), present("a"), cands, 3)
+	log, _ := r.Check(t0.Add(24*time.Minute), present("a"), cands, 4)
+	if r.Temporary != "a" || len(log) != 3 {
+		t.Fatalf("replacement: %+v %v", r, log)
+	}
+}
+
+func TestRefusedWrite(t *testing.T) {
+	saved := New("c")
+	cands := []string{"t", "d", "x"}
+	here := present(cands...)
+	saved.Check(t0, here, cands, 0)
+	ahead := saved.Clone()
+	ahead.Check(t0.Add(AwayLimit), here, cands, 0)
+	if saved.Holds("t", &ahead, t0.Add(AwayLimit), here, cands) {
+		t.Fatal("unsaved grant has powers")
+	}
+	retry := saved.Clone()
+	log := retry.Carry(&ahead, 1)
+	retry.Check(t0.Add(AwayLimit+Retry), here, cands, 1)
+	if len(log) != 1 || !retry.Equal(&ahead) {
+		t.Fatalf("retry: %+v %+v", retry, ahead)
+	}
+	saved = retry
+	_, e := saved.Promote("t", "d", true, 2)
+	mustRole(t, e)
+	// Refused away-time writes do not overwrite a subsequent promotion.
+	away := saved.Clone()
+	away.Check(t0.Add(6*time.Minute), present("t", "x"), cands, 2)
+	_, e = saved.Promote("d", "x", true, 3)
+	mustRole(t, e)
+	saved.Carry(&away, 3)
+	if !saved.Temp("x") {
+		t.Fatal("away-time retry erased a promotion")
+	}
+	gone := saved.Clone()
+	gone.Check(t0.Add(7*time.Minute), present("c", "t", "d", "x"), cands, 4)
+	for _, u := range []string{"t", "d", "x"} {
+		if saved.Holds(u, &gone, t0.Add(7*time.Minute), present("c", "t", "d", "x"), cands) {
+			t.Fatalf("%s retained powers after refused return", u)
+		}
+	}
+	// Even if the returning real admin disconnects before the retry, its
+	// new five-minute absence starts now; the stale interval cannot regrant.
+	if saved.Holds("x", &gone, t0.Add(7*time.Minute), here, cands) {
+		t.Fatal("stale absence regranted a temporary role")
+	}
+	retry = saved.Clone()
+	log = retry.Carry(&gone, 4)
+	if len(log) != 3 || retry.Temporary != "" || len(retry.Deputies) != 0 {
+		t.Fatalf("team demotion: %+v %v", retry, log)
+	}
+}
+
+func TestStepDown(t *testing.T) {
+	r := New("")
+	r.Check(t0, present("a", "b"), []string{"a", "b"}, 0)
+	_, e := r.Promote("a", "b", true, 0)
+	mustRole(t, e)
+	_, e = r.StepDown("a", 1)
+	mustRole(t, e)
+	if r.Temporary != "b" || r.Temp("a") {
+		t.Fatal("temporary root step-down")
+	}
+	_, e = r.StepDown("b", 2)
+	mustRole(t, e)
+	if log, _ := r.Check(t0, present("a", "b"), []string{"a", "b"}, 2); len(log) != 0 {
+		t.Fatal("step-down immediately regranted")
+	}
+	r.Check(t0, present(), nil, 0)
+	r.Check(t0, present("a"), []string{"a"}, 3)
+	if !r.Temp("a") {
+		t.Fatal("reconnection did not allow election")
+	}
+}
+
+func TestBoundsAndValid(t *testing.T) {
+	r := New("c")
+	for i := 0; i < MaxAdmins-1; i++ {
+		_, e := r.Promote("c", fmt.Sprintf("real-%d", i), true, 0)
+		mustRole(t, e)
+	}
+	_, e := r.Promote("c", "overflow", true, 0)
+	wantRole(t, e, ErrForbidden)
+	r = New("c")
+	r.Check(t0, present("t"), []string{"t"}, 0)
+	r.Check(t0.Add(AwayLimit), present("t"), []string{"t"}, 0)
+	for i := 0; i < MaxAdmins-1; i++ {
+		_, e := r.Promote("t", fmt.Sprintf("temp-%d", i), true, 0)
+		mustRole(t, e)
+	}
+	_, e = r.Promote("t", "overflow", true, 0)
+	wantRole(t, e, ErrForbidden)
+	for i := 0; i < MaxHistory*2; i++ {
+		r.remember(fmt.Sprintf("old-%d", i))
+	}
+	if len(r.History) != MaxHistory {
+		t.Fatal("history not capped")
+	}
+	mustRole(t, r.Valid())
+	r = roundRole(t, r)
+	for name, mut := range map[string]func(*Roles){
+		"creator missing":   func(r *Roles) { r.Admins = r.Admins[1:] },
+		"duplicate real":    func(r *Roles) { r.Admins = append(r.Admins, r.Admins[0]) },
+		"duplicate temp":    func(r *Roles) { r.Deputies[0].UserID = r.Temporary },
+		"real temp":         func(r *Roles) { r.Temporary = "c" },
+		"duplicate history": func(r *Roles) { r.History[1] = r.History[0] },
+		"oversize history":  func(r *Roles) { r.History = append(r.History, "extra") },
+		"away stranger":     func(r *Roles) { r.Away = append(r.Away, Away{UserID: "stranger", Since: t0}) },
+	} {
+		v := r.Clone()
+		mut(&v)
+		if v.Valid() == nil {
+			t.Errorf("%s accepted", name)
+		}
+	}
+}
+
+func TestUpgradePermanentCreatorAtCapacity(t *testing.T) {
+	old := New("creator")
+	old.Admins = nil
+	for i := range MaxAdmins {
+		old.Admins = append(old.Admins, Admin{UserID: fmt.Sprintf("real-%d", i), PromotedBy: &old.Creator})
+	}
+	old.Temporary = "t"
+	old.Upgrade()
+	if len(old.Admins) != MaxAuthorities || !old.Real("creator") || old.Temporary != "" {
+		t.Fatalf("upgrade removed real grants: %+v", old)
+	}
+	mustRole(t, old.Valid())
+	old.Check(t0, present("t"), []string{"t"}, 0)
+	if log, _ := old.Check(t0.Add(AwayLimit), present("t"), []string{"t"}, 0); len(log) != 0 {
+		t.Fatal("automatic grant exceeded authority cap")
+	}
+	mustRole(t, old.Valid())
+	_, err := old.Demote("creator", "real-0", 1)
+	mustRole(t, err)
+	old.Check(t0.Add(AwayLimit), present("t"), []string{"t"}, 1)
+	if old.Temporary != "t" {
+		t.Fatal("no election after freeing the reserved slot")
+	}
+	mustRole(t, old.Valid())
 }

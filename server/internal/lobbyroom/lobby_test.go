@@ -550,6 +550,10 @@ func TestLobbyRolesAcrossRestart(t *testing.T) {
 	if got := ks[3].reject(1); got != outForbidden {
 		t.Fatalf("demoting the creator: %s", got)
 	}
+	// Prefer a known former temporary admin; election randomness is tested separately.
+	if err := f.lobbies.lookup(code).call(f.ctx(), func() { f.lobbies.lookup(code).rec.Roles.History = []string{user(1)} }); err != nil {
+		t.Fatal(err)
+	}
 	f.m.Leave(ks[0].c, code)
 	f.m.Leave(ks[3].c, code)
 	ks[1].lobby("the admins away", func(st wire.LobbyState) bool {

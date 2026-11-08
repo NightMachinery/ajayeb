@@ -37,6 +37,8 @@ func TestRolesRefusedWrites(t *testing.T) {
 		h.leave()
 		return h.record().Roles.Temporary
 	}
+	// Prefer a known former temporary admin; election randomness is tested separately.
+	h.on(func(a *actor) { a.st.rec.Roles.History = []string{userOf(1)} })
 	h.leave(admin, tabletest.SpectatorClient)
 
 	// The grant is refused: user-1 has no powers until the retry.

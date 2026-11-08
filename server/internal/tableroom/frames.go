@@ -90,9 +90,10 @@ func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck, withHistory boo
 	}
 	if role < 0 && r.Status == store.StatusPlaying {
 		st.You.FormerSeat = formerSeat(r, user)
+		st.You.RejoinSeat = rejoinSeat(r, user)
 	}
-	if r.Roles.Real(user) {
-		room := r.Roles.HasRoom()
+	if a.isAdmin(user) {
+		room := r.Roles.HasRoom(user)
 		st.You.CanPromote = &room
 	}
 	st.StartingHumanCount, st.AllowUndo, st.UndoOff, st.FinalReveal = r.StartingHumans, r.AllowUndo, r.UndoOff, !r.Setup.HideAtEnd
@@ -167,7 +168,7 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 			name = assigned.Name
 		}
 		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator,
-			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temporary == userID && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
+			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temp(userID) && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
 		h.NameNo = a.assignment(userID).Number
 		humans = append(humans, h)
 	}

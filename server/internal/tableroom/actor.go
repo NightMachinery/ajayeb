@@ -1,7 +1,6 @@
 package tableroom
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"slices"
@@ -547,7 +546,7 @@ func (a *actor) checkRoles() {
 	log := cand.Roles.Carry(a.rolesAhead, at)
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), at)
 	log = append(log, more...)
-	if len(log) == 0 && sameAway(cand.Roles.Away, a.st.rec.Roles.Away) {
+	if len(log) == 0 && cand.Roles.Equal(&a.st.rec.Roles) {
 		a.rolesAhead = nil
 		a.armRoles(next)
 		return
@@ -581,40 +580,31 @@ func (a *actor) checkRoles() {
 // connection and human, so only the temporary admin pays for the check.
 func (a *actor) isAdmin(u string) bool {
 	r := &a.st.rec
-	if r.Roles.Real(u) || u == "" || r.Roles.Temporary != u {
+	if r.Roles.Real(u) || u == "" || !r.Roles.Temp(u) {
 		return r.Roles.Real(u)
 	}
 	return r.Roles.Holds(u, a.rolesAhead, a.now(), a.connected, a.candidates(r))
 }
 
-func sameAway(x, y []roles.Away) bool {
-	return slices.EqualFunc(x, y, func(p, q roles.Away) bool { return p.UserID == q.UserID && p.Since.Equal(q.Since) })
-}
-
-// candidates are the connected humans in the temporary-admin rule's
-// order: seated humans by how long they have held their seat (seat order
-// breaks ties), then spectators by how long they have been connected.
+// candidates hash-orders seated humans and then spectators, using only
+// durable public inputs. Roles.Check applies former-admin recency first.
 func (a *actor) candidates(r *Record) []string {
-	var seated []SeatRecord
-	for _, sr := range r.Seats {
-		if sr.Kind == SeatHuman && a.connected(sr.UserID) {
-			seated = append(seated, sr)
+	seated, spectators := []string{}, []string{}
+	for _, s := range r.Seats {
+		if s.Kind == SeatHuman && a.connected(s.UserID) {
+			seated = append(seated, s.UserID)
 		}
-	}
-	slices.SortStableFunc(seated, func(x, y SeatRecord) int { return cmp.Compare(x.Taken, y.Taken) })
-	out := []string{}
-	for _, sr := range seated {
-		out = append(out, sr.UserID)
 	}
 	for _, c := range a.conns {
-		if u := a.userOf(c); seatIn(r, u) < 0 && !slices.Contains(out, u) {
-			out = append(out, u)
+		u := a.userOf(c)
+		if !slices.Contains(seated, u) && !slices.Contains(spectators, u) {
+			spectators = append(spectators, u)
 		}
 	}
-	return out
+	return roles.Candidates(r.Code, r.Roles.Elections, seated, spectators)
 }
 
-// armRoles sets the roles' clock to at (zero: no deadline).
+// armRoles sets the next absence deadline (zero means none).
 func (a *actor) armRoles(at time.Time) {
 	a.disarmRoles()
 	if at.IsZero() {
@@ -665,6 +655,9 @@ func authorities(r *Record) []string {
 		}
 	}
 	for _, ad := range r.Roles.Admins {
+		out = append(out, ad.UserID)
+	}
+	for _, ad := range r.Roles.Deputies {
 		out = append(out, ad.UserID)
 	}
 	if r.Roles.Temporary != "" {
@@ -974,7 +967,7 @@ func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
 		return a.duplicate(c, "seat", f.Seat, f.Seq)
 	}
 	switch {
-	case !a.isAdmin(user):
+	case !a.isAdmin(user) && !selfRejoin(r, user, f):
 		return a.refuse(c, f.Seq, "seat", f.Seat, outNotAdmin)
 	case r.Status != store.StatusPlaying:
 		return a.refuse(c, f.Seq, "seat", f.Seat, outForbidden)
@@ -1045,6 +1038,9 @@ func (a *actor) role(c *room.Client, f wire.TableRole) string {
 	}
 	if r.Status != store.StatusPlaying {
 		return a.refuse(c, f.Seq, "role", -1, outForbidden)
+	}
+	if !a.isAdmin(user) {
+		return a.refuse(c, f.Seq, "role", -1, outNotAdmin)
 	}
 	cand := r.clone()
 	at := len(r.Batches)
@@ -1369,4 +1365,21 @@ func seqUsers(xs []SeqRecord, user string) int {
 		}
 	}
 	return n
+}
+
+// selfRejoin authorizes only a spectator's own former bot-controlled seat.
+func selfRejoin(r *Record, user string, f wire.TableSeat) bool {
+	seat := rejoinSeat(r, user)
+	return seat != nil && *seat == f.Seat && f.Control == SeatHuman && f.UserID != nil && *f.UserID == user && f.Bot == nil
+}
+
+func rejoinSeat(r *Record, user string) *int {
+	if r.Status != store.StatusPlaying || seatIn(r, user) >= 0 {
+		return nil
+	}
+	seat := formerSeat(r, user)
+	if seat == nil || *seat < 0 || *seat >= len(r.Seats) || r.Seats[*seat].Kind != SeatBot {
+		return nil
+	}
+	return seat
 }

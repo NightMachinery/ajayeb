@@ -45,6 +45,7 @@ func TestOnlyTheSeatsUserLinksIt(t *testing.T) {
 	}
 
 	// The temporary admin, a player, gets no other seat's link either.
+	h.on(func(a *actor) { a.st.rec.Roles.History = []string{userOf(1)} })
 	h.leave(admin, spec)
 	clk.Advance(5 * time.Minute)
 	h.until(c1, "user-1 as the temporary admin", func(fr wire.TableState) bool { return human(t, fr, userOf(1)).Temporary })

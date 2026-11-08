@@ -287,10 +287,12 @@ func TestSharedLobbyDuelFrozenHintAdmins(t *testing.T) {
 		a.acked(i + 1)
 	}
 	f.send(a, wire.LobbyRole{T: "lobby-role", Code: code, Seq: 3, Op: "step-down"})
-	a.acked(3)
+	if got := a.reject(3); got != outForbidden {
+		t.Fatalf("creator step-down: %s", got)
+	}
 	f.send(b, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1})
 	sa, sb, sw := duelFrame(a), duelFrame(b), duelFrame(watch)
-	if sa.You.Admin || !sb.You.Admin || !sw.You.Admin || len(sw.You.Seats) != 0 || sb.Room.Hints != hints {
+	if !sa.You.Admin || !sb.You.Admin || !sw.You.Admin || len(sw.You.Seats) != 0 || sb.Room.Hints != hints {
 		t.Fatal("Start did not freeze the effective seated and spectator admins and hint preferences")
 	}
 	for _, st := range []wire.State{sa, sb, sw} {
@@ -308,8 +310,8 @@ func TestSharedLobbyDuelFrozenHintAdmins(t *testing.T) {
 	if err := f.m.Hints(f.ctx(), a.c, wire.NewHints(code, 11, hints)); err != nil {
 		t.Fatal(err)
 	}
-	if got := duelReject(a, 11); got.Code != wire.RejectCodeNotAdmin {
-		t.Fatal("former creator retained hint authority")
+	if got := duelAck(a, 11); got.Room.Hints != hints {
+		t.Fatal("creator lost frozen hint authority")
 	}
 	if err := f.m.Relink(f.ctx(), b.c, wire.NewRelink(code, 0)); err != nil {
 		t.Fatal(err)
@@ -326,7 +328,7 @@ func TestSharedLobbyDuelFrozenHintAdmins(t *testing.T) {
 		t.Fatal("frozen spectator hint admin did not survive restart")
 	}
 	saved, _, err := f.st.Load(code)
-	if err != nil || !slices.Equal(saved.HintAdmins, []string{user(1), user(2)}) {
+	if err != nil || !slices.Equal(saved.HintAdmins, []string{user(0), user(1), user(2)}) {
 		t.Fatalf("frozen set after reload: %v %v", saved, err)
 	}
 }

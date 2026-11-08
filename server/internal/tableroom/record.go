@@ -213,7 +213,8 @@ type StartSlot struct {
 // Format 3 remembers each client by its ClientKey; the formats before it
 // kept the id as sent, which upgrade re-keys once. Format 4 adds the
 // room-lifetime name ledger, initialized in current seat order on upgrade.
-const recordFormat = 4
+// Format 5 adds bounded temporary-role history and promotion ancestry.
+const recordFormat = 5
 
 // BatchRecord is one complete batch: the logical point id and one key per
 // required seat, sorted by seat.
@@ -388,8 +389,13 @@ func upgrade(r *Record) {
 			}
 		}
 	}
-	r.Names = namenum.Ledger{}
-	r.assignSeatNames()
+	if r.Format < 4 {
+		r.Names = namenum.Ledger{}
+		r.assignSeatNames()
+	}
+	r.Roles.Upgrade()
+	// A creator restored from a legacy step-down is no longer retired.
+	r.Retired = slices.DeleteFunc(r.Retired, func(u string) bool { return hasAuthority(r, u) })
 	r.Format = recordFormat
 }
 
@@ -655,7 +661,7 @@ func checkAuthority(r *Record, b seqBounds) error {
 
 // maxSeqUsers bounds the users with remembered seqs: every seated human,
 // every real admin, the temporary admin and the retired users.
-const maxSeqUsers = MaxSeats + roles.MaxAdmins + 1 + maxRetired
+const maxSeqUsers = MaxSeats + roles.MaxAuthorities + maxRetired
 
 // hasAuthority reports whether u may act at the table: a seated human or
 // an admin (real or temporary).

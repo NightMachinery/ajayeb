@@ -22,6 +22,11 @@ func (a *actor) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
 	if i := slotOf(r, user, SlotHuman); i >= 0 {
 		st.You.Seat = &i
 	}
+	st.You.RejoinSeat = rejoinSeat(r, user)
+	if a.isAdmin(user) {
+		room := r.Roles.HasRoom(user)
+		st.You.CanPromote = &room
+	}
 	st.CanStart = a.canStart(user)
 	st.Ack = ack
 	st.RoomLog = append([]wire.PlatformLogEntry{}, r.RoomLog...)
@@ -43,7 +48,7 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 			name = assigned.Name
 		}
 		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator,
-			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temporary == userID && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
+			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temp(userID) && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
 		h.NameNo = a.assignment(userID).Number
 		humans = append(humans, h)
 	}

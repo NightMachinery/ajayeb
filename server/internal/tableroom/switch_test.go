@@ -274,6 +274,8 @@ func TestRolesAndTemporaryAdmin(t *testing.T) {
 	// Both real admins leave; seats 1 and 2 stay. Five minutes after the
 	// last one left, the human holding a seat longest (seat order breaks
 	// the tie) becomes the temporary admin.
+	// Prefer a known former temporary admin; election randomness is tested separately.
+	h.on(func(a *actor) { a.st.rec.Roles.History = []string{userOf(1)} })
 	h.leave(admin, spec)
 	if r := h.record(); len(r.Roles.Away) != 2 || !r.Roles.Away[0].Since.Equal(t0) {
 		t.Fatalf("away times: %+v", r.Roles.Away)
@@ -284,7 +286,11 @@ func TestRolesAndTemporaryAdmin(t *testing.T) {
 	}
 	clk.Advance(time.Second)
 	h.until(c2, "user-1 as the temporary admin", func(fr wire.TableState) bool { return human(t, fr, userOf(1)).Temporary })
-	h.want(c1, roleOp(5, "promote", userOf(2)), outNotAdmin, "a temporary admin's promotion")
+	h.want(c1, roleOp(5, "promote", userOf(2)), outAccepted, "a temporary admin's promotion")
+	if hm := human(t, h.latest(c2), userOf(2)); !hm.Temporary || hm.Admin {
+		t.Fatal("a temporary promotion became real")
+	}
+	h.want(c1, roleOp(6, "demote", userOf(2)), outAccepted, "a temporary admin demotes its promotee")
 
 	// A restart keeps the temporary admin, the promoters and the away times.
 	h.f.restart()
@@ -300,7 +306,7 @@ func TestRolesAndTemporaryAdmin(t *testing.T) {
 	if !promoted {
 		t.Fatalf("the spectator's promoter across the restart: %+v", r.Roles.Admins)
 	}
-	h.want(c1, toBot(6, 2, BotEasy), outAccepted, "the temporary admin's switch")
+	h.want(c1, toBot(7, 2, BotEasy), outAccepted, "the temporary admin's switch")
 
 	// The temporary admin leaves: five minutes on, the role passes to the
 	// spectator connected longest (user-2, whose seat went to a bot).
@@ -317,14 +323,14 @@ func TestRolesAndTemporaryAdmin(t *testing.T) {
 	if hm := human(t, h.latest(c2), userOf(2)); hm.Temporary {
 		t.Fatal("the temporary admin stayed after a real admin returned")
 	}
-	log := h.sameLogEverywhere(8)
+	log := h.sameLogEverywhere(10)
 	var roles []string
 	for _, e := range log {
 		if e.Kind == "role" {
 			roles = append(roles, *e.UserID+"="+*e.Role)
 		}
 	}
-	want := []string{"user-1=admin", "watcher=admin", "user-1=human", "user-1=temporary", "user-1=human", "user-2=temporary", "user-2=human"}
+	want := []string{"user-1=admin", "watcher=admin", "user-1=human", "user-1=temporary", "user-2=temporary", "user-2=human", "user-1=human", "user-2=temporary", "user-2=human"}
 	if !slices.Equal(roles, want) {
 		t.Fatalf("role log %v, want %v", roles, want)
 	}

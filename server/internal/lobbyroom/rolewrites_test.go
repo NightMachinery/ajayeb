@@ -50,6 +50,10 @@ func TestLobbyRolesRefusedWrites(t *testing.T) {
 		i := slices.IndexFunc(st.Humans, func(h wire.PlatformHuman) bool { return h.UserID == u })
 		return i >= 0 && st.Humans[i].Temporary
 	}
+	// Prefer a known former temporary admin; election randomness is tested separately.
+	if err := f.lobbies.lookup(code).call(f.ctx(), func() { f.lobbies.lookup(code).rec.Roles.History = []string{user(1)} }); err != nil {
+		t.Fatal(err)
+	}
 	f.m.Leave(admin.c, code)
 	f.settle(code)
 

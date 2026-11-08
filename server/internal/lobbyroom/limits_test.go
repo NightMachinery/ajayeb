@@ -51,6 +51,14 @@ func largestLobbyFitsTheStore(t *testing.T, glyph string) {
 		r.Roles.Away = append(r.Roles.Away, roles.Away{UserID: ad.UserID, Since: since})
 	}
 	r.Roles.Away = append(r.Roles.Away, roles.Away{UserID: r.Roles.Temporary, Since: since})
+	for i := range roles.MaxHistory {
+		r.Roles.History = append(r.Roles.History, id(8, i))
+		r.Roles.Declined = append(r.Roles.Declined, id(9, i))
+	}
+	r.Roles.Elections = math.MaxUint64
+	for i := range maxUnseated {
+		r.Previous = append(r.Previous, tableroom.PreviousRecord{UserID: id(5, i), Seat: MaxSeats - 1})
+	}
 	r.Unseated = nil
 	for i := range maxUnseated {
 		r.Unseated = append(r.Unseated, id(5, i))
