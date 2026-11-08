@@ -25,6 +25,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 - `web/`: the SvelteKit client. `web/src/lib/wire/*.gen.ts` is generated; never edit it by hand.
 - `e2e/`: Playwright playthroughs (`specs/`), their shared helpers (`fixtures/`), and the opt-in `ux` project (`ux/`, run by `make shots`) that captures the review loop's screenshot set with its probes and budgets. One-off screenshots and layout probes come from `tools/chrome/`.
 - `tools/`: `heavy.py` (the memory and run-mode guard), `chrome/` (headless Chrome tools), `art/` (art scripts).
+- Shared tool files come from the public board-game-dev skill's templates and are listed in `tools/skill-templates.json`; project values live in `tools/project.json`. A file marked `vendored` stays byte-identical to its reviewed template (`make vendor-check`, part of `verify-quick`): fix it upstream and re-vendor, never by hand. A file marked `adapted` keeps Ajayeb's game or production integration. See [docs/dev/skill-templates.md](docs/dev/skill-templates.md).
 - `art/`: art direction, the asset manifest, style references, approved originals and the vector specs and logs.
 - `docs/`: start at [docs/README.md](docs/README.md).
 

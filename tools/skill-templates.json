@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "skill_commit": "ad6c766b72624344e03c5820a1f253e3e86095b4",
-  "note": "Per-file hashes identify the reviewed templates, including compatibility fixes pending upstream commit.",
+  "skill_commit": "5ba651ca3db219c3bf53f45aeb442b49dec6d61e",
+  "note": "Per-file hashes identify the reviewed templates at skill_commit.",
   "files": [
     {
       "template": "Makefile.template",

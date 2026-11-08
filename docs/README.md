@@ -44,6 +44,7 @@ These docs explain the current implementation, its rules and the tools used to b
 - [dev/protocol-fixtures.md](dev/protocol-fixtures.md): fixture coverage, compact storage and regeneration.
 - [dev/scenarios.md](dev/scenarios.md): named engine positions and the development-only room endpoint used by tests.
 - [dev/ram-policy.md](dev/ram-policy.md): the memory budget and the `tools/heavy.py` guard that every heavy job goes through.
+- [dev/skill-templates.md](dev/skill-templates.md): which tools are vendored from the board-game-dev skill's templates, which are adapted, and how to re-vendor.
 - [dev/decisions.md](dev/decisions.md): a short record of each major decision, its rationale and the options we rejected.
 
 Contributors and coding agents should also read [../AGENTS.md](../AGENTS.md), the working agreement for this repository.

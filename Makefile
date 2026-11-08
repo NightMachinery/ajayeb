@@ -265,7 +265,7 @@ test-py: ## Python unit tests for tools/heavy.py and self_host.py (guard kind li
 	$(HEAVY) run --kind light -- python3 -m unittest discover -s tests
 
 test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
-	$(HEAVY) run --kind light -- node --test tools/chrome/cli.test.mjs
+	$(HEAVY) run --kind light -- node --test tools/chrome/*.test.mjs
 
 vendor-check: ## Check vendored tool hashes without a skill checkout
 	python3 tools/skill_templates.py check --offline

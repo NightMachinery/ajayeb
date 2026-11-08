@@ -3,8 +3,8 @@
 Ajayeb shares tool implementations with the public board-game-dev-cool-breeze
 skill. [The manifest](../../tools/skill-templates.json) records the reviewed
 skill base commit, each template's SHA-256, its local path and the reason for
-its classification. The hashes identify the exact reviewed bytes, including
-compatibility fixes waiting to be committed upstream. The upstream MIT notice
+its classification. The hashes identify the exact reviewed bytes at that
+commit. The upstream MIT notice
 is preserved in [skill-templates.LICENSE](../../tools/skill-templates.LICENSE).
 
 ## Vendored files
