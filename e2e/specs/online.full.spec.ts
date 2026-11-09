@@ -319,7 +319,9 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           // A, still offline, has not seen it and offers no move.
           const stale = await hook(pageA, () => window.__ajayeb?.room()?.version);
           expect(stale).toBe(snapB.version);
-          await expect(pageA.locator('[data-act]:enabled').filter({ visible: true })).toHaveCount(0);
+          await expect(pageA.locator('[data-act]:enabled').filter({ visible: true })).toHaveCount(
+            0
+          );
           const wait = OFFLINE_MS - (Date.now() - off);
           if (wait > 0) await pageA.waitForTimeout(wait);
 
