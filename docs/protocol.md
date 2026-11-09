@@ -1275,6 +1275,12 @@ Both snapshots use these fixed metadata shapes:
   `by` the acting user; control is `human`/`bot`, role
   `admin`/`temporary`/`human`. Every seat switch and role change is public.
   Entries disclose no claims, private picks, observations or seeds.
+  An uninterrupted run of one user's own leaves and self-rejoins into the
+  same seat keeps only the latest `resign` and `seat` entries, each with its
+  own latest `at`, so cycling a seat cannot push older entries out of the
+  bounded log. Any entry in between, another user or another seat ends the
+  run; an admin's actions for someone else, role changes and device-link
+  entries are never merged.
 
 `table-reject` and `lobby-reject` carry only `t`, `seq`, and `code`, and go
 only to the submitting connection. Table codes are `decision-closed` (old
