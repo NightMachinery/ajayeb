@@ -24,12 +24,15 @@ func TestLobbySelfRejoin(t *testing.T) {
 	remove := edit(code, 1, "remove-human")
 	remove.UserID = ptr(user(1))
 	f.send(a, remove)
-	a.acked(1)
-	st := p.last()
+	removed := a.acked(1).Revision
+	// The admin's ack can arrive before the other connections' frames of
+	// the same publish, so wait for each viewer's frame of that revision.
+	atRemoval := func(st wire.LobbyState) bool { return st.Revision >= removed }
+	st := p.lobby("the removal", atRemoval)
 	if st.You.Seat != nil || st.You.RejoinSeat == nil || *st.You.RejoinSeat != 1 {
 		t.Fatalf("offer: %+v", st.You)
 	}
-	if w.last().You.RejoinSeat != nil {
+	if w.lobby("the removal", atRemoval).You.RejoinSeat != nil {
 		t.Fatal("another viewer received the offer")
 	}
 	req := edit(code, 1, "seat")

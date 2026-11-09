@@ -235,7 +235,9 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           });
           expect(await hook(page, () => window.__ajayeb?.room()?.version)).toBe(now.version);
           await expect(turnBar(page)).toHaveAttribute('data-turn', 'spectating');
-          await expect(page.locator('[data-act]')).toHaveCount(0);
+          // Only visible controls count: the small-window notice keeps its
+          // dismiss button in the page, hidden by CSS above the size floor.
+          await expect(page.locator('[data-act]').filter({ visible: true })).toHaveCount(0);
           // The players see one spectator.
           for (const p of [pageA, pageB]) {
             await expect(p.locator('[data-spectators="1"]').filter({ visible: true })).toHaveCount(
@@ -317,7 +319,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           // A, still offline, has not seen it and offers no move.
           const stale = await hook(pageA, () => window.__ajayeb?.room()?.version);
           expect(stale).toBe(snapB.version);
-          await expect(pageA.locator('[data-act]:enabled')).toHaveCount(0);
+          await expect(pageA.locator('[data-act]:enabled').filter({ visible: true })).toHaveCount(0);
           const wait = OFFLINE_MS - (Date.now() - off);
           if (wait > 0) await pageA.waitForTimeout(wait);
 
