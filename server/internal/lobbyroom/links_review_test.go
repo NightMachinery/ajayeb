@@ -94,7 +94,13 @@ func TestTemporaryLobbyAdminCannotLinkRealAdmins(t *testing.T) {
 	}
 	// Read a fresh per-viewer frame, without consuming an unrelated queued frame.
 	var shown, other wire.LobbyState
-	if err := a.call(f.ctx(), func() { shown = a.frame(temp.c, nil); other = a.frame(watch.c, nil) }); err != nil {
+	if err := a.call(f.ctx(), func() {
+		b := a.newBroadcast()
+		shown = b.frame(temp.c, nil)
+		other = b.frame(watch.c, nil)
+		// Reading the restricted viewer again must not alter the frame already queued.
+		_ = b.frame(temp.c, nil)
+	}); err != nil {
 		t.Fatal(err)
 	}
 	for _, h := range shown.Humans {

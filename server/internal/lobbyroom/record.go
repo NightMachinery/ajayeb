@@ -90,7 +90,8 @@ type Record struct {
 	// Revision advances on every change; every change is public.
 	Revision int         `json:"revision"`
 	Seqs     []SeqRecord `json:"seqs"`
-	// RoomLog is the public log of role changes, at most maxRoomLog.
+	// RoomLog is the public log of seat changes, roles and device links,
+	// oldest first and at most maxRoomLog.
 	RoomLog []wire.PlatformLogEntry `json:"roomLog"`
 	// Parent is the finished table whose rematch made this lobby, or "".
 	// A retried rematch finds its lobby by it (Lobbies.Rematch).
@@ -538,10 +539,34 @@ func unseat(r *Record, u string, seat int) {
 }
 
 func appendLog(r *Record, entries ...wire.PlatformLogEntry) {
-	r.RoomLog = append(r.RoomLog, entries...)
+	for _, entry := range entries {
+		n := len(r.RoomLog)
+		if ownSeatChange(entry) && n >= 2 {
+			older, newer := r.RoomLog[n-2], r.RoomLog[n-1]
+			if ownSeatChange(older) && ownSeatChange(newer) && older.By == entry.By && newer.By == entry.By &&
+				*older.Seat == *entry.Seat && *newer.Seat == *entry.Seat && older.Kind == entry.Kind && newer.Kind != entry.Kind {
+				// Keep the latest leave and rejoin, without crossing another
+				// user's action, another seat or a different kind of entry.
+				r.RoomLog = slices.Delete(r.RoomLog, n-2, n-1)
+			}
+		}
+		r.RoomLog = append(r.RoomLog, entry)
+	}
 	if over := len(r.RoomLog) - maxRoomLog; over > 0 {
 		r.RoomLog = slices.Delete(r.RoomLog, 0, over)
 	}
+}
+
+// ownSeatChange recognizes a self-leave or self-rejoin, never an action
+// made by an admin on another user's behalf.
+func ownSeatChange(e wire.PlatformLogEntry) bool {
+	if e.By == "" || e.Seat == nil {
+		return false
+	}
+	if e.Kind == "resign" {
+		return e.UserID != nil && *e.UserID == e.By
+	}
+	return e.Kind == "seat" && e.UserID != nil && *e.UserID == e.By && e.Control != nil && *e.Control == "human"
 }
 
 // rejoinSeat offers only an unseated human's own former open slot.

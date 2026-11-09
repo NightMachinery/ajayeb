@@ -7,20 +7,41 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
+// broadcast shares public metadata for one publication only. Viewer-specific
+// filtering must copy its slices before changing an element.
+type broadcast struct {
+	a      *actor
+	seats  []wire.PlatformSeat
+	humans []wire.PlatformHuman
+}
+
+func (a *actor) newBroadcast() *broadcast {
+	seats, humans := a.meta()
+	return &broadcast{a: a, seats: seats, humans: humans}
+}
+
+// frame builds a standalone snapshot (join, resync or duplicate).
+func (a *actor) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
+	return a.newBroadcast().frame(c, ack)
+}
+
 // frame is c's whole lobby snapshot; ack is set only on the sender's own
 // connection.
-func (a *actor) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
+func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
+	a := b.a
 	r := &a.rec
 	st := wire.NewLobbyState(a.code)
 	st.Revision = r.Revision
 	st.SeatCount = r.SeatCount
 	st.MaxSeats = a.l.maxSeats()
 	st.Options = cloneOptions(r.Options)
-	st.Seats, st.Humans = a.meta()
+	st.Seats, st.Humans = b.seats, b.humans
 	user := a.userOf(c)
-	if a.isAdmin(user) && !r.Roles.Real(user) {
+	admin := a.isAdmin(user)
+	if admin && !r.Roles.Real(user) {
+		st.Humans = slices.Clone(st.Humans)
 		for i := range st.Humans {
-			if !a.mayLink(user, st.Humans[i].UserID) {
+			if r.Roles.Real(st.Humans[i].UserID) {
 				st.Humans[i].Linkable = nil
 			}
 		}
@@ -30,7 +51,7 @@ func (a *actor) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
 		st.You.Seat = &i
 	}
 	st.You.RejoinSeat = rejoinSeat(r, user)
-	if a.isAdmin(user) {
+	if admin {
 		room := r.Roles.HasRoom(user)
 		st.You.CanPromote = &room
 	}
@@ -84,20 +105,22 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 
 // publish sends every connection its frame; ack goes to the sender only.
 func (a *actor) publish(sender *room.Client, ack *wire.PlatformAck) {
+	b := a.newBroadcast()
 	for _, c := range a.conns {
 		if c == sender {
-			c.Out.Push(a.frame(c, ack))
+			c.Out.Push(b.frame(c, ack))
 		} else {
-			c.Out.Push(a.frame(c, nil))
+			c.Out.Push(b.frame(c, nil))
 		}
 	}
 }
 
 // broadcastExcept sends a presence change to every connection but except.
 func (a *actor) broadcastExcept(except *room.Client) {
+	b := a.newBroadcast()
 	for _, c := range a.conns {
 		if c != except {
-			c.Out.Push(a.frame(c, nil))
+			c.Out.Push(b.frame(c, nil))
 		}
 	}
 }

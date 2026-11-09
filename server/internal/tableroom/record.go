@@ -158,10 +158,34 @@ func bumpPublic(r *Record) {
 // appendLog adds entries to the room log, forgetting its oldest beyond
 // maxRoomLog.
 func appendLog(r *Record, entries ...wire.PlatformLogEntry) {
-	r.RoomLog = append(r.RoomLog, entries...)
+	for _, entry := range entries {
+		n := len(r.RoomLog)
+		if ownSeatChange(entry) && n >= 2 {
+			older, newer := r.RoomLog[n-2], r.RoomLog[n-1]
+			if ownSeatChange(older) && ownSeatChange(newer) && older.By == entry.By && newer.By == entry.By &&
+				*older.Seat == *entry.Seat && *newer.Seat == *entry.Seat && older.Kind == entry.Kind && newer.Kind != entry.Kind {
+				// Keep the latest leave and rejoin, without crossing another
+				// user's action, another seat or a different kind of entry.
+				r.RoomLog = slices.Delete(r.RoomLog, n-2, n-1)
+			}
+		}
+		r.RoomLog = append(r.RoomLog, entry)
+	}
 	if over := len(r.RoomLog) - maxRoomLog; over > 0 {
 		r.RoomLog = slices.Delete(r.RoomLog, 0, over)
 	}
+}
+
+// ownSeatChange recognizes a self-leave or self-rejoin, never an action
+// made by an admin on another user's behalf.
+func ownSeatChange(e wire.PlatformLogEntry) bool {
+	if e.By == "" || e.Seat == nil {
+		return false
+	}
+	if e.Kind == "resign" {
+		return e.UserID == nil || *e.UserID == e.By
+	}
+	return e.Kind == "seat" && e.UserID != nil && *e.UserID == e.By && e.Control != nil && *e.Control == "human"
 }
 
 // SetupRecord is the stored setup.
