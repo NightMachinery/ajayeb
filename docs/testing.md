@@ -850,9 +850,12 @@ and the test-mode web build, which the Playwright config starts itself
 --seed-base 1000` on port 38954, with a fresh data directory under `.cache/e2e/`), in
 Playwright's own Chromium (Chrome for Testing, `channel: 'chromium'`) both
 locally and on CI, never the installed Google Chrome (D26). CI splits the
-suite into four shards (`--shard=1/4` to `--shard=4/4`), each a job with its
-own server, and keeps each shard's report and traces when it fails or runs
-out of time. The shards leave out the `@perf` case, which runs in its own
+suite into five ordinary shards (`--shard=1/5` to `--shard=5/5`, excluding
+`@haftgane-special`) and a sixth partition for `@haftgane-special` alone.
+The special-decisions spec retries real Home-created deals, so its variable
+runtime is isolated from the count-balanced shards. Each partition has its
+own server and keeps its report and traces when it fails or runs out of time.
+The shards leave out the `@perf` case, which runs in its own
 job, `e2e-perf`, described under `animation.spec.ts` below, and the
 `@slow` case, which waits out a five-minute server rule in real time
 (`haftgane-playthrough.full.spec.ts`) and runs locally on demand. There are two projects: `desktop` (Desktop Chrome, a mouse) runs the standard specs, and `mobile`
