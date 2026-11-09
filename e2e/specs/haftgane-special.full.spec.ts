@@ -188,8 +188,12 @@ test('special decisions reached from Home keep each frame private @full @mobile 
         await pages[7]!.goto(`/play/${code}`);
         await latest(pages[7]!);
         for (let step = 0; step < 30; step++) {
+          // Every received frame is checked below, including the final publish.
+          // Once this side has exercised all its decisions, another Age
+          // adds UI work without adding coverage. The retry still plays
+          // to the end when a required ability has not appeared.
           const before = await latest(host);
-          if (before.status === 'finished') break;
+          if (before.status === 'finished' || required.every((kind) => found.has(kind))) break;
           for (const p of pages.slice(0, 7)) {
             const f = await latest(p);
             // The end of an Age opens the conflicts over the next decision.

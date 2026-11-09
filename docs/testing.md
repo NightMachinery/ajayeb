@@ -1848,7 +1848,11 @@ server's seed counter deals.
 - An undo in a solo game: `haftgane-admin.full.spec.ts`.
 - Every special decision: `haftgane-special.full.spec.ts`
   ([special-decisions.md](haftgane/special-decisions.md)), now on mobile
-  too.
+  too. Its day and night policies retry up to four real Home-created
+  deals each, without depending on the server's next seed. Each table
+  stops after that policy's required decisions have been exercised;
+  the ownership and visibility assertions still check every received
+  frame from all seven seats and the spectator.
 - A shared Duel rematch from the result screen into its successor lobby:
   `shared-lobby.full.spec.ts`, whose rematch test has the guest forfeit,
   the owner ask for the rematch, the guest and the spectator follow it,
