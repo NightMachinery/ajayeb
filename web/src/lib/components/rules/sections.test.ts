@@ -92,7 +92,7 @@ describe('rule sections', () => {
     // The page and panel chrome, and the diagrams' own labels, are used by
     // the components rather than by sections.ts.
     const chrome =
-      /^rules\.(title|pageTitle|intro|toc|close|backHome|homeLink|menu|openPage|diagram\..+)$/;
+      /^rules\.(title|pageTitle|intro|toc|close|backHome|homeLinkGame|chooseGame|menu|openPage|diagram\..+)$/;
     const unused = Object.keys(rules).filter(
       (key) => !usedKeys.has(key as MessageKey) && !chrome.test(key)
     );

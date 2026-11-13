@@ -16,6 +16,7 @@
   import RulesContent from '$lib/games/haftgane/rules/RulesContent.svelte';
   import RulesToc from '$lib/games/haftgane/rules/RulesToc.svelte';
   import { hgSectionFromHash } from '$lib/games/haftgane/rules/sections';
+  import RulesGameSwitch from '$lib/components/rules/RulesGameSwitch.svelte';
 
   // A deep link opened from outside lands on its section. The router scrolls
   // the window, but this page scrolls inside its own main element, so it
@@ -42,6 +43,7 @@
       >
         {ht('hg.rules.backHome')}
       </a>
+      <RulesGameSwitch current="haftgane" />
       <h1 class="font-display text-3xl text-fg">{ht('hg.rules.pageTitle')}</h1>
       <p class="max-w-prose text-sm leading-relaxed text-fg-muted">{ht('hg.rules.intro')}</p>
     </header>

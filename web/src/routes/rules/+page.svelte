@@ -9,6 +9,7 @@
   import { t } from '$lib/i18n';
   import RulesContent from '$lib/components/rules/RulesContent.svelte';
   import RulesToc from '$lib/components/rules/RulesToc.svelte';
+  import RulesGameSwitch from '$lib/components/rules/RulesGameSwitch.svelte';
   import { sectionFromHash } from '$lib/components/rules/sections';
 
   // A deep link opened from outside lands on its section. The router scrolls
@@ -36,6 +37,7 @@
       >
         {t('rules.backHome')}
       </a>
+      <RulesGameSwitch current="duel" />
       <h1 class="font-display text-3xl text-fg">{t('rules.pageTitle')}</h1>
       <p class="max-w-prose text-sm leading-relaxed text-fg-muted">{t('rules.intro')}</p>
     </header>

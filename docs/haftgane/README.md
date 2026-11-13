@@ -40,7 +40,7 @@ original design estimates.
 
 ## In the app so far
 
-- **Rules reference:** `/rules/haftgane` gives players these rules in short, in our own words, with a deep link per section (`/rules/haftgane#trade`), and `openHaftganeRules()` shows the same content over a table (`web/src/lib/games/haftgane/rules/`, M18.rules-reference). Home does not link it yet.
+- **Rules reference:** `/rules/haftgane` gives players these rules in short, in our own words, with a deep link per section (`/rules/haftgane#trade`), and `openHaftganeRules()` shows the same content over a table (`web/src/lib/games/haftgane/rules/`, M18.rules-reference). The Home footer links it beside Duel's rules, and a game switch at the top of both rules pages links each to the other (M22.haftgane-rules-links).
 
 ## Reading order
 

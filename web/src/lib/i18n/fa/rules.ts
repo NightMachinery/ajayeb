@@ -12,13 +12,14 @@ import type { Translation } from '../types';
 export const rules = {
   // The page, the panel and the entry points.
   'rules.title': 'قوانین',
-  'rules.pageTitle': 'روش بازی',
+  'rules.pageTitle': 'روش بازی دوئل',
   'rules.intro':
     'قوانین بازی پایه برای دو بازیکن، به کوتاهی. بازی همه‌ی قوانین را خودش برایتان اجرا می‌کند، پس هر وقت حرکتی غافلگیرتان کرد می‌توانید به اینجا برگردید.',
   'rules.toc': 'فهرست',
   'rules.close': 'بستن قوانین',
   'rules.backHome': 'خانه',
-  'rules.homeLink': 'قوانین',
+  'rules.homeLinkGame': 'قوانین {game}',
+  'rules.chooseGame': 'قوانین کدام بازی',
   'rules.menu': 'قوانین',
   'rules.openPage': 'باز کردن قوانین در یک صفحه‌ی کامل',
 

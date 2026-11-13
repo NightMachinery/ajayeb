@@ -440,7 +440,14 @@
           href={resolve('/rules')}
           data-control="home-rules"
         >
-          {t('rules.homeLink')}
+          {t('rules.homeLinkGame', { game: pickerT('lobby.duel') })}
+        </a>
+        <a
+          class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"
+          href={resolve('/rules/haftgane')}
+          data-control="home-rules-haftgane"
+        >
+          {t('rules.homeLinkGame', { game: pickerT('lobby.haftgane') })}
         </a>
         <a
           class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"

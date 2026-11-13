@@ -15,13 +15,14 @@ import type { Messages } from '../types';
 export const rules = {
   // The page, the panel and the entry points.
   'rules.title': 'Rules',
-  'rules.pageTitle': 'How to play',
+  'rules.pageTitle': 'How to play Duel',
   'rules.intro':
     'The rules of the base game for two players, in short. The game applies every rule for you, so you can come back here whenever a move surprises you.',
   'rules.toc': 'Contents',
   'rules.close': 'Close the rules',
   'rules.backHome': 'Home',
-  'rules.homeLink': 'Rules',
+  'rules.homeLinkGame': '{game} rules',
+  'rules.chooseGame': 'Rules of which game',
   'rules.menu': 'Rules',
   'rules.openPage': 'Open the rules as a full page',
 

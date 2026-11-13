@@ -97,6 +97,21 @@ test.describe('rules page', () => {
     await page.locator('[data-control="home-rules"]').click();
     await expect(page).toHaveURL(/\/rules$/);
     await expect(main).toBeVisible();
+
+    // Each game's rules page links the other's, and Home links both.
+    const toDuel = page.locator('[data-control="rules-game-duel"]');
+    const toHaftgane = page.locator('[data-control="rules-game-haftgane"]');
+    await expect(toDuel).toHaveAttribute('aria-current', 'page');
+    await toHaftgane.click();
+    await expect(page).toHaveURL(/\/rules\/haftgane$/);
+    await expect(page.locator('[data-rules-page="haftgane"]')).toBeVisible();
+    await expect(toHaftgane).toHaveAttribute('aria-current', 'page');
+    await toDuel.click();
+    await expect(page).toHaveURL(/\/rules$/);
+    await page.goto('/');
+    await page.locator('[data-control="home-rules-haftgane"]').click();
+    await expect(page).toHaveURL(/\/rules\/haftgane$/);
+    await expect(page.locator('[data-rules-page="haftgane"]')).toBeVisible();
     expect(problems).toEqual([]);
   });
 });
