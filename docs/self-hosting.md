@@ -34,9 +34,15 @@ pass an explicit url. Existing installs keep their recorded URL.
 - `dev-start [url]`: starts a development setup instead of production. Runs
   the Go server under `go tool air` for live reload, and the Vite dev server
   for the web client, with the Caddyfile pointed at both.
-- `status [url]`: prints the recorded configuration, whether each tmux
-  session is running (with its last 20 lines of output), whether its port is
-  free, and the result of a server health check.
+- `status [url]`: prints the recorded configuration (including `caddy layout`
+  and `caddy sites` in fragment mode), whether each tmux session is running
+  (with its last 20 lines of output), whether its port is free, and the
+  result of a server health check.
+- `caddy-settings [url]`: resolves and validates the Caddy layout settings
+  against the on-disk Caddyfiles and saves them to `.self-host/config.json`
+  with no other side effects (never starts or stops tmux, builds binaries,
+  or writes or reloads Caddy). Prints the resolved layout, paths, and whether
+  Ajayeb's managed block was found once in the edit target.
 - `ship-all`: builds once and deploys every host in the private targets
   file; see "Deploying to several hosts" below.
 - `ship TARGET [url] [--remote-dir DIR]`: run on the dev machine, not on the
@@ -61,14 +67,32 @@ For example, `./self_host.py start --haftgane-tables` enables it locally;
 `./self_host.py ship --no-haftgane-tables` explicitly disables it remotely.
 An ordinary later `start`, `redeploy` or `ship` preserves that remote choice.
 
-The same commands take `--caddyfile PATH`, the Caddyfile the running Caddy
-reads. In this document, **the Caddyfile** means that file: `~/Caddyfile`
-unless `--caddyfile` has named another. `PATH` is absolute or relative to
-the home directory (write `scripts/Caddyfile`, not `~/scripts/Caddyfile`, so
-your own shell does not expand the `~` before `ship` forwards it to the
-remote host). The choice is recorded like the others, so later runs and the
-boot-time `start` keep it. A file that `--caddyfile` names must already
-exist; see "Caddy safety" below for why it is never created.
+The same commands (plus `caddy-settings` and `ship-all`) take `--caddyfile PATH`,
+the top-level Caddyfile the running Caddy reads: `~/Caddyfile` by default.
+`PATH` is absolute or home-relative (write `scripts/Caddyfile`, not
+`~/scripts/Caddyfile`, so your own shell does not expand the `~` before `ship`
+forwards it to the remote host); explicit working-directory relative paths
+such as `./Caddyfile` or `../Caddyfile` are refused.
+
+`setup`, `redeploy`, `start`, `dev-start`, `caddy-settings`, `ship` and `ship-all`
+also accept two layout options:
+
+- `--caddy-layout {inline,fragment}`: selects where Ajayeb writes its managed
+  block. `inline` (the default for new and legacy configs) edits `--caddyfile`
+  directly. `fragment` treats `--caddyfile` as read-only and edits an imported
+  fragment file named by `--caddy-sites`.
+- `--caddy-sites PATH`: the managed fragment file imported by `--caddyfile`
+  (default `~/.config/caddy/managed-sites/sites.caddy`). Passing `--caddy-sites`
+  or `BGD_CADDY_SITES` when the resolved layout is not `fragment` is refused.
+
+Settings resolve in order: CLI flag, environment variable (`BGD_CADDY_LAYOUT`,
+`BGD_CADDYFILE`, `BGD_CADDY_SITES`), saved `.self-host/config.json`, then the
+defaults (`inline`, `~/Caddyfile`, `~/.config/caddy/managed-sites/sites.caddy`).
+Resolved settings are saved to `.self-host/config.json`, so later runs and the
+boot-time `start` keep them. In `inline` mode, a named `--caddyfile` must
+already exist; in `fragment` mode, the top-level Caddyfile must exist and
+import `--caddy-sites`, while a brand-new fragment file may be created on first
+deploy. See "Caddy safety and layouts" below.
 
 ## Processes
 
@@ -102,10 +126,12 @@ the site as ready.
 
 `.self-host/config.json` records the site URL, the mode (`prod` or `dev`),
 the chosen ports, whether both schemes serve the site (`both_schemes`), the
-Caddyfile when it is not `~/Caddyfile` (`caddyfile`), and on the dev machine
-the remembered ship target. It is not committed; `.self-host/` is gitignored
-entirely, since it holds local build output, the production data directory
-and Caddyfile backups.
+Haftgane release flag (`haftgane_tables`), the Caddy layout settings
+(`caddy_layout`, `caddyfile` when not `~/Caddyfile`, and `caddy_sites` when in
+`fragment` mode), and on the dev machine the remembered ship target. Absent
+`caddy_layout` in an older config file means `inline`. It is not committed;
+`.self-host/` is gitignored entirely, since it holds local build output, the
+production data directory and Caddy backups.
 
 ## Build
 
@@ -263,85 +289,103 @@ Ajayeb's own local services.
 
 ## Caddy safety
 
-Because the Caddyfile is shared with other sites on the same machine, every
-edit goes through a safe path. An unchanged managed block never needs a
-backup, write or load:
+## Caddy safety and layouts
 
-1. If the Caddyfile already contains exactly the managed block this command
-   would write, stop here: no backup, no write, no load. This is what makes
-   `start` safe to run at boot, before Caddy is necessarily up yet; see
-   "Starting at boot" below.
-2. If the Caddyfile does not exist, refuse to create it when a new file could
-   cost a running Caddy its other sites. A new file would hold the managed
-   block alone, and loading it replaces everything that Caddy serves. So a
-   missing file that `--caddyfile` named is taken as a wrong path, and a
-   missing `~/Caddyfile` is created only when no Caddy on its default admin
-   address (`localhost:2019`) is already serving a config, which it would be
-   reading from some other file. This check happens before any Caddyfile
-   edit. Production commands record its failure and still start the game
-   server without editing or loading the file; `dev-start` stops on failure.
-3. Copy the Caddyfile to `.self-host/Caddyfile.bak.<timestamp>` before
-   writing anything.
-4. Write the managed block in place (or append it, if this is the first
-   time), already in Caddy's own tab-indented format.
-5. Hand the Caddyfile to the running Caddy. `caddy adapt` finds the admin
-   address the file's global options name (Caddy's default when they name
-   none); when the file does not adapt in the script's environment (an
-   unset `{$VAR}` can make an option invalid there), the address is read
-   from the global options block as text instead. Everything else goes
-   through that Caddy's admin API, so Caddy adapts the file in its own
-   process, and a `{$VAR}` placeholder in the shared file resolves from
-   Caddy's environment, as it did when Caddy started, whatever the shell
-   running the script exports (an ssh session often exports less than the
-   shell that started Caddy):
-   - **The check.** Caddy adapts the file as it was before the edit
-     (`/adapt`, which loads nothing), and the result must equal the config
-     Caddy is running. If it does not, the file is not what this Caddy
-     serves: the path is wrong, another Caddy owns that admin address, the
-     file imports relative paths (Caddy resolves those against its own
-     working directory when it adapts text, not against the file's), or
-     the file holds edits Caddy has not loaded yet. Hide lists are compared
-     as sets, since Caddy orders the config files in them differently from
-     one version to the next. Restore the backup and stop the Caddy step without loading
-     anything, with a message naming those causes.
-     For a Caddyfile this command is creating, the check is that the Caddy
-     serves no config at all.
-   - **The hidden config file.** Caddy's `file_server` hides the Caddyfile
-     it was started from, by that file's path. Text adapted with no file
-     name gets a relative stand-in (`./Caddyfile`) instead, so the script
-     reads the real path from the running config and puts it back, both
-     for the check and in what it loads. Loading the text as it comes would
-     otherwise weaken that protection for every site on the shared Caddy.
-   - **The load.** Caddy adapts the edited file the same way, the hidden
-     path goes back in, and the result goes to `/load` as JSON. Caddy
-     switches to it only if all of it loads. If Caddy refuses it, restore
-     the backup and stop the Caddy step with Caddy's error; Caddy keeps serving the old
-     config. Caddy restarts its admin listener after a load, so if the
-     reply is lost, the script waits a moment and compares the running
-     config with what it sent: a match means the load took, and anything
-     else (a different config, or no answer to that question) restores the
-     backup and stops the Caddy step, saying the outcome is unknown.
-6. If nothing listens on that address (the connection is refused, or a name
-   such as `localhost` resolves to an address this host cannot use), Caddy
-   is not running: run `caddy
-   validate --config` on the Caddyfile instead, restore the backup and stop
-   the Caddy step if it fails, and otherwise keep the validated edit and print a warning.
-   Caddy reads the Caddyfile itself the next time it starts. Production
-   commands still start the game server, but exit nonzero because Caddy
-   has not published it. `caddy
-   validate` reads `{$VAR}` placeholders from the script's own environment,
-   so it can fail on a file that Caddy itself would load; the error says so
-   when the file has placeholders.
-7. If the Caddyfile turns the admin API off, puts it on a Unix socket or
-   gives its address as a `{$VAR}` placeholder, fall back to `caddy validate` and then `caddy reload --config`, where a
-   failed reload keeps the valid edit and prints a warning. Production
-   commands still start the game server and exit nonzero on this failure.
+Two Caddyfile layouts are supported:
 
-Any other error after the write, a Ctrl-C included, also restores the
-backup before the error leaves the Caddy step. Production commands catch
-ordinary errors there and still attempt game startup; a Ctrl-C interrupts
-the command. Left behind unloaded, the block would
-make the next run believe there was nothing to do.
+- `inline` (default): Ajayeb inserts or replaces its `# BEGIN MANAGED AJAYEB`
+  block inside the top-level `--caddyfile`.
+- `fragment`: the top-level `--caddyfile` stays read-only (even in a root-owned
+  or read-only directory) and imports a shared fragment file (`--caddy-sites`,
+  default `~/.config/caddy/managed-sites/sites.caddy`). Other games may share
+  that fragment file; Ajayeb replaces only its own marker block and preserves
+  all surrounding bytes untouched.
+
+In `fragment` mode, validation runs under lock before any write or `stop`:
+
+- the fragment path cannot be a symlink or resolve to the top-level Caddyfile;
+- the top-level Caddyfile must exist, contain no Ajayeb markers, and match the
+  fragment exactly once via a top-level `import` with no extra arguments;
+- top-level `import` paths may be literal absolute paths or use `{$VAR}` /
+  `{$VAR:default}` placeholders that resolve in the caller's environment
+  (unresolved placeholders and relative import paths are refused);
+- globs that would ingest `.lock`, `.before`, `.candidate` or `Caddyfile.before`
+  files are refused;
+- sibling imported files cannot contain Ajayeb markers, and the target file
+  cannot contain duplicated, unmatched or reversed markers.
+
+In `inline` mode, if the top-level Caddyfile has no Ajayeb markers yet, `self_host.py`
+scans its resolved top-level imports and refuses with a message naming
+`--caddy-layout fragment` if any imported file already holds Ajayeb markers, so a
+migrated setup is never overwritten or silently duplicated.
+
+### Locking and safe load sequence
+
+Every Caddy-reading, Caddy-validating and Caddy-editing path (`preflight_caddyfile`,
+`apply_caddyfile_safely`, `start_prod_with_caddy` no-op verification and
+`caddy-settings`) acquires advisory `flock` locks in sorted canonical order under
+`BGD_CADDY_LOCK_DIR`, `$XDG_STATE_HOME/bgd-self-host/caddy-locks`, or
+`~/.local/state/bgd-self-host/caddy-locks` (`0o700` directory permissions, no
+symlinks allowed, `0o600` lock files named `caddy-<sha256[:24]>.lock` for the
+top-level file and fragment). In `inline` mode the legacy sibling `<Caddyfile>.lock`
+is locked as well.
+
+Because the Caddyfile or shared fragment carries other sites on the machine,
+every edit goes through a safe sequence under the lock:
+
+1. Validate layout hygiene (`validate_fragment_setup` or `validate_inline_setup`).
+   If the edit target already contains exactly the managed block this command
+   would write, stop here without writing backups or reloading (production `start`
+   still verifies via `/config/` that a reachable Caddy serves the current top-level
+   config).
+2. In `inline` mode, if the Caddyfile does not exist, refuse to create it when a
+   new file could cost a running Caddy its other sites (a missing named
+   `--caddyfile` is always refused, and a missing `~/Caddyfile` is created only
+   when nothing on `localhost:2019` already serves a config).
+3. Capture baseline source stamps (stat, mode, SHA-256 of top-level, edit target
+   and sibling imported files) and, when a local TCP admin listener answers,
+   adapt the pre-mutation top-level Caddyfile (`/adapt`) and compare it with
+   `/config/` (`check_caddy_serves` with `known_caddy_aliases` normalizing known
+   config/import aliases), aborting on mismatch before writing any byte.
+4. Re-verify baseline source stamps, write backups into `.self-host/`
+   (`<target>.bak.<timestamp>` plus `.before` / `.candidate` files and
+   `caddy-top.before` in fragment mode), and atomically update the target via
+   `_write_owned_target`. Only Ajayeb's marker span is modified.
+5. Re-verify source stamps, adapt the full top-level Caddyfile in Caddy (`/adapt`),
+   verify in `fragment` mode that Ajayeb's rendered host and upstream dials
+   appear in the adapted JSON (`verify_fragment_in_adapted`), re-verify source
+   stamps once more (aborting before `/load` on any external drift), and POST
+   the full JSON once to `/load`.
+   - On `/load` refusal, restore the target only if its on-disk identity matches
+     what was written, and verify running `/config/` still matches the baseline.
+   - If the `/load` reply is lost (`CaddyUnsure`), inspect `/config/` and classify
+     the outcome before rolling back: `new` succeeds; `old` (`CaddyLoadOld`)
+     restores target bytes under unchanged ownership and verifies the previous
+     config is still running; `unknown` (`CaddyLoadUnknown`) leaves `.before` /
+     `.candidate` backups in `.self-host/` (preserving candidate bytes in
+     `fragment` mode rather than risking a blind overwrite, and in `inline` mode
+     restoring the file without claiming a verified runtime rollback).
+6. When no local TCP admin API listens or answers, verify post-write source
+   stamps and run `caddy validate --config <top-level> --adapter caddyfile` (never
+   validating or reloading the bare fragment path alone), falling back to `caddy
+   reload --config <top-level> --adapter caddyfile` when admin API is off or on a
+   Unix socket.
+
+### Migrating an existing host to fragment layout
+
+1. Create the shared fragment directory (for example `~/.config/caddy/managed-sites/`)
+   and copy Ajayeb's `# BEGIN MANAGED AJAYEB` ... `# END MANAGED AJAYEB` block
+   into `sites.caddy`. Remove that block from the top-level Caddyfile and add
+   `import /home/USER/.config/caddy/managed-sites/sites.caddy` (or an equivalent
+   absolute / `{$VAR}` import), then verify with `caddy validate` and reload
+   Caddy once.
+2. Run `./self_host.py caddy-settings --caddy-layout fragment --caddyfile PATH --caddy-sites PATH`.
+   This checks the import boundary, finds the managed block once in `sites.caddy`,
+   and updates `.self-host/config.json` without restarting tmux or touching Caddy.
+3. Subsequent `start`, `redeploy`, `ship` and `ship-all` invocations keep those
+   saved fragment settings automatically.
+
+The pre-stop preflight and separation of concerns remain unchanged:
 
 `setup`, `redeploy` and `start` also run the check of step 5 as a
 preflight, before they stop the game server, whenever the block will need
@@ -503,8 +547,9 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
 4. Runs `setup --prebuilt .self-host/bin/ajayeb.upload [url]` over SSH on
    the remote side, or `redeploy` instead of `setup` when the remote
    already has a `.self-host/config.json`. `--both-schemes`,
-   `--no-both-schemes`, `--haftgane-tables`, `--no-haftgane-tables` and
-   `--caddyfile PATH` are passed on when given, and
+   `--no-both-schemes`, `--haftgane-tables`, `--no-haftgane-tables`,
+   `--caddy-layout {inline,fragment}`, `--caddyfile PATH` and `--caddy-sites PATH`
+   are forwarded only when explicitly given, and
    the remote host records them in its own config, so a later `ship` can
    leave them out. `--prebuilt` installs by moving
    the uploaded binary into `.self-host/bin/ajayeb` rather than copying it,
@@ -578,10 +623,11 @@ keeps the command's build-once guarantee and prevents an incompatible binary
 from reaching a host. Use separate target files for different architectures.
 
 After preflight, it reuses `ship`'s build, upload and setup/redeploy steps.
-Each remote keeps its own remembered ports, `both_schemes`, Caddyfile path
-and Haftgane release choice. `ship-all --haftgane-tables` or
-`ship-all --no-haftgane-tables` changes that remembered release choice on
-every target; omitting both preserves each target's own setting.
+Each remote keeps its own remembered ports, `both_schemes`, Caddy layout and
+paths (`--caddy-layout`, `--caddyfile`, `--caddy-sites`), and Haftgane release
+choice unless this invocation explicitly passes those flags. `ship-all
+--haftgane-tables` or `ship-all --no-haftgane-tables` changes that remembered
+release choice on every target; omitting them preserves each target's own setting.
 The batch safety override, `--force-room-archive`, explicitly accepts
 live-room archiving on every target for that invocation only. The local remembered single-target
 `ship` destination is left alone. A new host uses the normal setup defaults;

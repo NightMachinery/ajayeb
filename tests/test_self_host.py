@@ -1,14 +1,18 @@
 import errno
+import hashlib
 import io
 import json
 import os
 import shlex
+import shutil
 import socket
 import ssl
+import stat
 import subprocess
 import tarfile
 import tempfile
 import threading
+import time
 import unittest
 import urllib.error
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -743,12 +747,21 @@ DEAD_PROXY_ENV = {
 def setUpModule():
     # No test may reach a real Caddy or read a real Caddyfile (a developer
     # machine may run one): Caddy's default admin address points at a dead
-    # port, and the default Caddyfile at a path that does not exist.
-    nowhere = Path(tempfile.mkdtemp()) / "no-such-Caddyfile"
+    # port, the default Caddyfile/sites at paths that do not exist, and lock
+    # files in an isolated temp directory.
+    sandbox_tmp = Path(tempfile.mkdtemp())
+    unittest.addModuleCleanup(lambda: shutil.rmtree(sandbox_tmp, ignore_errors=True) if "shutil" in globals() else None)
+    nowhere = sandbox_tmp / "no-such-Caddyfile"
+    nowhere_sites = sandbox_tmp / "no-such-sites.caddy"
+    lock_dir = sandbox_tmp / "caddy-locks"
     for name, value in (
         ("CADDY_DEFAULT_ADMIN", closed_address()),
         ("DEFAULT_CADDYFILE", nowhere),
         ("CADDYFILE", nowhere),
+        ("DEFAULT_CADDY_SITES", nowhere_sites),
+        ("CADDY_SITES", nowhere_sites),
+        ("CADDY_LAYOUT", "inline"),
+        ("CADDY_LOCK_DIR", lock_dir),
     ):
         patcher = mock.patch.object(self_host, name, value)
         patcher.start()
@@ -3406,6 +3419,855 @@ class HaftganeReleaseOptionTests(unittest.TestCase):
                 self.assertEqual(mocks["deploy_remote"].call_count, 2)
                 for call in mocks["deploy_remote"].call_args_list:
                     self.assertIs(call.kwargs.get("haftgane_tables"), choice)
+
+
+class CaddyFragmentLayoutTests(unittest.TestCase):
+    OTHER_GAME = (
+        "# BEGIN MANAGED OTHER\n"
+        "other-game.example.test {\n"
+        "\troot * /srv/other\n"
+        "\tfile_server\n"
+        "}\n"
+        "# END MANAGED OTHER\n\n"
+        "trailing.example.test {\n"
+        "\trespond \"ok\" 200\n"
+        "}\n"
+    )
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.home = self.root / "home"
+        self.home.mkdir()
+        self.config_dir = self.root / ".self-host"
+        self.config_file = self.config_dir / "config.json"
+        self.lock_dir = self.root / "caddy-locks"
+        self.top = self.root / "caddy" / "Caddyfile"
+        self.top.parent.mkdir(parents=True, exist_ok=True)
+        self.sites = self.root / "managed-sites" / "sites.caddy"
+        self.sites.parent.mkdir(parents=True, exist_ok=True)
+        self.site = self_host.parse_site_url("https://ajayeb.example.test")
+        self.ports = self_host.Ports(server=41731, web_dev=41732)
+        for patcher in (
+            mock.patch.object(Path, "home", return_value=self.home),
+            mock.patch.object(self_host, "CONFIG_DIR", self.config_dir),
+            mock.patch.object(self_host, "CONFIG_FILE", self.config_file),
+            mock.patch.object(self_host, "CADDY_LOCK_DIR", self.lock_dir),
+            mock.patch.object(self_host, "DEFAULT_CADDYFILE", self.home / "Caddyfile"),
+            mock.patch.object(self_host, "CADDYFILE", self.top),
+            mock.patch.object(self_host, "CADDYFILE_NAMED", False),
+            mock.patch.object(self_host, "CADDY_LAYOUT", "inline"),
+            mock.patch.object(self_host, "CADDY_SITES", self.sites),
+            mock.patch.object(self_host, "CADDY_RECHECK_DELAY", 0.0),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _adapted_prod(self, sites_path: Path, ports: self_host.Ports | None = None, *, both_schemes: bool = False) -> dict:
+        p = ports or self.ports
+        routes = [
+            {
+                "match": [{"host": [self.site.host]}],
+                "handle": [
+                    {
+                        "handler": "reverse_proxy",
+                        "upstreams": [{"dial": f"localhost:{p.server}"}],
+                    }
+                ],
+            },
+            {
+                "match": [{"host": ["other-game.example.test"]}],
+                "handle": [
+                    {
+                        "handler": "file_server",
+                        "hide": [str(sites_path.resolve()), str(self.top)],
+                    }
+                ],
+            },
+        ]
+        if not both_schemes:
+            routes.insert(
+                0,
+                {
+                    "match": [{"host": [self.site.host]}],
+                    "handle": [{"handler": "static_response", "status_code": 301}],
+                },
+            )
+        return {"apps": {"http": {"servers": {"srv0": {"routes": routes}}}}}
+
+    def _adapted_dev(self, sites_path: Path, ports: self_host.Ports | None = None) -> dict:
+        p = ports or self.ports
+        return {
+            "apps": {
+                "http": {
+                    "servers": {
+                        "srv0": {
+                            "routes": [
+                                {
+                                    "match": [{"host": [self.site.host]}],
+                                    "handle": [
+                                        {"handler": "reverse_proxy", "upstreams": [{"dial": f"localhost:{p.server}"}]},
+                                        {"handler": "reverse_proxy", "upstreams": [{"dial": f"localhost:{p.web_dev}"}]},
+                                    ],
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+
+    def test_config_roundtrip_defaults_absent_layout_and_scopes_caddy_sites(self):
+        legacy = self_host.Config.from_json('{"url": "https://ajayeb.example.test", "mode": "prod"}')
+        self.assertEqual(legacy.caddy_layout, "inline")
+        self.assertIsNone(legacy.caddy_sites)
+
+        inline_cfg = self_host.Config(site=self.site, mode=self_host.Mode.PROD, caddy_layout="inline")
+        self.assertNotIn("caddy_sites", json.loads(inline_cfg.to_json()))
+
+        frag_cfg = self_host.Config(
+            site=self.site,
+            mode=self_host.Mode.PROD,
+            caddyfile=str(self.top),
+            caddy_layout="fragment",
+            caddy_sites=str(self.sites),
+        )
+        restored = self_host.Config.from_json(frag_cfg.to_json())
+        self.assertEqual(restored.caddy_layout, "fragment")
+        self.assertEqual(restored.caddyfile, str(self.top))
+        self.assertEqual(restored.caddy_sites, str(self.sites))
+
+    def test_caddy_settings_precedence_and_relative_path_refusal(self):
+        # Defaults when nothing saved and no env/CLI: inline, ~/Caddyfile, None for caddy_sites.
+        with mock.patch.dict(os.environ, {}, clear=True):
+            cfg = self_host.resolve_config(str(self.site.origin))
+            self.assertEqual(cfg.caddy_layout, "inline")
+            self.assertIsNone(cfg.caddyfile)
+            self.assertIsNone(cfg.caddy_sites)
+
+            # --caddy-sites / BGD_CADDY_SITES rejected without fragment layout.
+            with self.assertRaisesRegex(ValueError, "fragment"):
+                self_host.resolve_config(str(self.site.origin), caddy_sites=str(self.sites))
+        with mock.patch.dict(os.environ, {"BGD_CADDY_SITES": str(self.sites)}, clear=True):
+            with self.assertRaisesRegex(ValueError, "fragment"):
+                self_host.resolve_config(str(self.site.origin))
+
+        # Relative CWD dot paths refused.
+        for bad in ("./Caddyfile", "../Caddyfile", ".", "..", "sub/../Caddyfile"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    self_host.caddyfile_path(bad)
+                with self.assertRaises(ValueError):
+                    self_host.caddy_sites_path(bad)
+
+        # Precedence: CLI > env > saved config > default.
+        saved_top = self.root / "saved" / "Caddyfile"
+        saved_sites = self.root / "saved" / "sites.caddy"
+        env_top = self.root / "env" / "Caddyfile"
+        env_sites = self.root / "env" / "sites.caddy"
+        cli_top = self.root / "cli" / "Caddyfile"
+        cli_sites = self.root / "cli" / "sites.caddy"
+        self_host.save_config(
+            self_host.Config(
+                site=self.site,
+                mode=self_host.Mode.DEV,
+                caddy_layout="fragment",
+                caddyfile=str(saved_top),
+                caddy_sites=str(saved_sites),
+            )
+        )
+        # Saved config wins over default.
+        with mock.patch.dict(os.environ, {}, clear=True):
+            from_saved = self_host.resolve_config(None)
+            self.assertEqual(from_saved.caddy_layout, "fragment")
+            self.assertEqual(from_saved.caddyfile, str(saved_top))
+            self.assertEqual(from_saved.caddy_sites, str(saved_sites))
+
+        # Env wins over saved config.
+        with mock.patch.dict(
+            os.environ,
+            {
+                "BGD_CADDY_LAYOUT": "fragment",
+                "BGD_CADDYFILE": str(env_top),
+                "BGD_CADDY_SITES": str(env_sites),
+            },
+            clear=True,
+        ):
+            from_env = self_host.resolve_config(None)
+            self.assertEqual(from_env.caddyfile, str(env_top))
+            self.assertEqual(from_env.caddy_sites, str(env_sites))
+
+            # CLI wins over env.
+            from_cli = self_host.resolve_config(
+                None, caddy_layout="fragment", caddyfile=str(cli_top), caddy_sites=str(cli_sites)
+            )
+            self.assertEqual(from_cli.caddyfile, str(cli_top))
+            self.assertEqual(from_cli.caddy_sites, str(cli_sites))
+
+        # Switching back to inline drops stale saved caddy_sites cleanly when BGD_CADDY_SITES is unset.
+        with mock.patch.dict(os.environ, {}, clear=True):
+            back_inline = self_host.resolve_config(None, caddy_layout="inline", caddyfile=str(cli_top))
+            self.assertEqual(back_inline.caddy_layout, "inline")
+            self.assertIsNone(back_inline.caddy_sites)
+
+    def test_caddy_settings_subcommand_validates_saves_and_has_no_side_effects(self):
+        self.top.write_text(f"import {self.sites}\n")
+        self.sites.write_text(
+            self.OTHER_GAME + "\n" + self_host.render_caddy_block(self.site, self_host.Mode.PROD, self.ports)
+        )
+        # Pre-existing config in DEV mode should keep its mode/ports/flags.
+        existing = self_host.Config(
+            site=self.site,
+            mode=self_host.Mode.DEV,
+            ports=self.ports,
+            both_schemes=True,
+            haftgane_tables=True,
+        )
+        self_host.save_config(existing)
+        top_before = self.top.read_bytes()
+        sites_before = self.sites.read_bytes()
+
+        out = io.StringIO()
+        with mock.patch.object(self_host, "command_stop", side_effect=AssertionError("must not stop tmux")), \
+             mock.patch.object(self_host, "load_through_caddy", side_effect=AssertionError("must not reload")), \
+             mock.patch.object(self_host, "reload_caddy", side_effect=AssertionError("must not reload")), \
+             mock.patch.object(self_host, "validate_caddyfile", side_effect=AssertionError("must not validate")), \
+             redirect_stdout(out):
+            rc = self_host.main(
+                ["caddy-settings", "--caddy-layout", "fragment", "--caddyfile", str(self.top), "--caddy-sites", str(self.sites)]
+            )
+        self.assertEqual(rc, 0)
+        text = out.getvalue()
+        self.assertIn("fragment", text)
+        self.assertIn(str(self.top), text)
+        self.assertIn(str(self.sites), text)
+        self.assertIn("found once", text)
+        saved = self_host.load_config()
+        self.assertIsNotNone(saved)
+        self.assertEqual(saved.mode, self_host.Mode.DEV)
+        self.assertTrue(saved.both_schemes)
+        self.assertTrue(saved.haftgane_tables)
+        self.assertEqual(saved.caddy_layout, "fragment")
+        self.assertEqual(saved.caddy_sites, str(self.sites))
+        self.assertEqual(self.top.read_bytes(), top_before)
+        self.assertEqual(self.sites.read_bytes(), sites_before)
+
+        # Invalid setup fails without overwriting saved config.
+        self.top.write_text("example.test {\n\trespond ok 200\n}\n")
+        err = io.StringIO()
+        with redirect_stderr(err):
+            rc2 = self_host.main(
+                ["caddy-settings", "--caddy-layout", "fragment", "--caddyfile", str(self.top), "--caddy-sites", str(self.sites)]
+            )
+        self.assertEqual(rc2, 1)
+        self.assertIn("does not import", err.getvalue())
+
+    def test_ship_and_ship_all_forward_caddy_layout_only_when_explicit(self):
+        cmd_plain = self_host.remote_deploy_command("u@h", "ajayeb", "redeploy", "https://ajayeb.example.test")
+        self.assertNotIn("--caddy-layout", cmd_plain[-1])
+        self.assertNotIn("--caddy-sites", cmd_plain[-1])
+        self.assertNotIn("--caddyfile", cmd_plain[-1])
+
+        cmd_frag = self_host.remote_deploy_command(
+            "u@h",
+            "ajayeb",
+            "setup",
+            "https://ajayeb.example.test",
+            caddy_layout="fragment",
+            caddyfile="~/Caddyfile",
+            caddy_sites="~/.config/caddy/managed-sites/sites.caddy",
+        )
+        tokens = shlex.split(cmd_frag[-1])
+        self.assertIn("--caddy-layout", tokens)
+        self.assertEqual(tokens[tokens.index("--caddy-layout") + 1], "fragment")
+        self.assertIn("--caddyfile", tokens)
+        self.assertEqual(tokens[tokens.index("--caddyfile") + 1], "~/Caddyfile")
+        self.assertIn("--caddy-sites", tokens)
+        self.assertEqual(tokens[tokens.index("--caddy-sites") + 1], "~/.config/caddy/managed-sites/sites.caddy")
+
+        # main routes flags for ship and ship-all and omits when absent.
+        with mock.patch.object(self_host, "command_ship") as m_ship:
+            self.assertEqual(
+                self_host.main(
+                    ["ship", "u@h", "https://ajayeb.example.test", "--caddy-layout", "fragment", "--caddy-sites", "m/sites.caddy"]
+                ),
+                0,
+            )
+            self.assertEqual(m_ship.call_args.kwargs["caddy_layout"], "fragment")
+            self.assertEqual(m_ship.call_args.kwargs["caddy_sites"], "m/sites.caddy")
+
+        targets = [self_host.DeployTarget(self_host.ShipTarget(f"host-{i}.example.test"), self.site) for i in range(2)]
+        with mock.patch.multiple(
+            self_host,
+            load_deploy_targets=mock.Mock(return_value=targets),
+            detect_remote_platform=mock.Mock(return_value=("linux", "amd64")),
+            git_version=mock.Mock(return_value="v-test"),
+            cross_build=mock.DEFAULT,
+            upload_to_remote=mock.DEFAULT,
+            determine_deploy_command=mock.Mock(return_value="redeploy"),
+            deploy_remote=mock.DEFAULT,
+            poll_host_version=mock.Mock(return_value="v-test"),
+            poll_public_version=mock.Mock(return_value="v-test"),
+        ) as mocks:
+            self.assertEqual(
+                self_host.main(["ship-all", "--caddy-layout", "fragment", "--caddyfile", "top.caddy", "--caddy-sites", "s.caddy"]),
+                0,
+            )
+            for call in mocks["deploy_remote"].call_args_list:
+                self.assertEqual(call.kwargs.get("caddy_layout"), "fragment")
+                self.assertEqual(call.kwargs.get("caddyfile"), "top.caddy")
+                self.assertEqual(call.kwargs.get("caddy_sites"), "s.caddy")
+
+    def test_fragment_validation_imports_globs_placeholders_and_markers(self):
+        cfg = self_host.CaddyConfig("fragment", self.top, self.sites)
+
+        # Unrelated top-level (missing import) -> error.
+        self.top.write_text("other.example.test {\n\trespond ok 200\n}\n")
+        with self.assertRaisesRegex(RuntimeError, "does not import"):
+            self_host.validate_fragment_setup(cfg)
+
+        # Duplicate import -> error.
+        self.top.write_text(f"import {self.sites}\nimport {self.sites}\n")
+        with self.assertRaisesRegex(RuntimeError, "more than once"):
+            self_host.validate_fragment_setup(cfg)
+
+        # Import with args -> error.
+        self.top.write_text(f"import {self.sites} arg1\n")
+        with self.assertRaisesRegex(ValueError, "must not pass arguments"):
+            self_host.validate_fragment_setup(cfg)
+
+        # Empty / non-matching glob -> error.
+        other_glob_dir = self.root / "empty-glob"
+        other_glob_dir.mkdir()
+        self.top.write_text(f"import {other_glob_dir}/*.caddy\n")
+        with self.assertRaisesRegex(RuntimeError, "does not import"):
+            self_host.validate_fragment_setup(cfg)
+
+        # Unsafe glob capturing lock/before/candidate -> error.
+        self.top.write_text(f"import {self.sites.parent}/sites.*\n")
+        with self.assertRaisesRegex(ValueError, "lock or backup"):
+            self_host.validate_fragment_setup(cfg)
+
+        # Relative import path -> error.
+        self.top.write_text("import managed-sites/sites.caddy\n")
+        with self.assertRaisesRegex(ValueError, "relative import"):
+            self_host.validate_fragment_setup(cfg)
+
+        # Unresolved {$VAR} -> error; resolved {$VAR} -> succeeds.
+        self.top.write_text("import {$AJAYEB_MANAGED_DIR}/sites.caddy\n")
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "unresolved environment placeholder"):
+                self_host.validate_fragment_setup(cfg)
+        with mock.patch.dict(os.environ, {"AJAYEB_MANAGED_DIR": str(self.sites.parent)}, clear=True):
+            matched, count, _ = self_host.validate_fragment_setup(cfg)
+            self.assertEqual(count, 1)
+            self.assertEqual(matched, ())
+
+        # Symlink fragment refused; markers in top-level or sibling file refused.
+        self.top.write_text(f"import {self.sites.parent}/*.caddy\n")
+        sibling = self.sites.parent / "sibling.caddy"
+        sibling.write_text(f"{self_host.MANAGED_START}\nfoo\n{self_host.MANAGED_END}\n")
+        with self.assertRaisesRegex(RuntimeError, "sibling imported file"):
+            self_host.validate_fragment_setup(cfg)
+        sibling.unlink()
+
+        self.top.write_text(f"import {self.sites}\n{self_host.MANAGED_START}\n")
+        with self.assertRaisesRegex(RuntimeError, "top-level"):
+            self_host.validate_fragment_setup(cfg)
+
+        self.top.write_text(f"import {self.sites}\n")
+        self.sites.symlink_to(sibling)
+        with self.assertRaisesRegex(RuntimeError, "symlink"):
+            self_host.validate_fragment_setup(cfg)
+        self.sites.unlink()
+
+        # Reversed or duplicate markers in fragment refused.
+        self.sites.write_text(f"{self_host.MANAGED_END}\n{self_host.MANAGED_START}\n")
+        with self.assertRaisesRegex(RuntimeError, "reversed"):
+            self_host.validate_fragment_setup(cfg)
+        self.sites.write_text(f"{self_host.MANAGED_START}\n{self_host.MANAGED_START}\n{self_host.MANAGED_END}\n")
+        with self.assertRaisesRegex(RuntimeError, "duplicate or unmatched"):
+            self_host.validate_fragment_setup(cfg)
+
+    def test_inline_mirror_guard_refuses_migrated_fragment_and_names_flag(self):
+        cfg = self_host.CaddyConfig("inline", self.top, self.sites)
+        self.top.write_text(f"import {self.sites}\n")
+        self.sites.write_text(self_host.render_caddy_block(self.site, self_host.Mode.PROD, self.ports))
+        with self.assertRaisesRegex(RuntimeError, "--caddy-layout fragment"):
+            self_host.validate_inline_setup(cfg)
+        # Also blocks apply_caddyfile_safely before touching target.
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "--caddy-layout fragment"):
+                self_host.apply_caddyfile_safely(self.site, self_host.Mode.PROD, self.ports, caddy_config=cfg)
+        self.assertEqual(self.top.read_text(), f"import {self.sites}\n")
+
+    def test_fragment_mode_preserves_other_games_bytes_and_verifies_routes(self):
+        self.top.write_text(f"{{\n\tadmin localhost:2019\n}}\nimport {self.sites}\n")
+        self.sites.write_text(self.OTHER_GAME)
+        top_before = self.top.read_bytes()
+        cfg = self_host.CaddyConfig("fragment", self.top, self.sites)
+
+        base_adapted = {
+            "apps": {
+                "http": {
+                    "servers": {
+                        "srv0": {
+                            "routes": [
+                                {
+                                    "match": [{"host": ["other-game.example.test"]}],
+                                    "handle": [{"handler": "file_server", "hide": [str(self.sites.resolve()), str(self.top)]}],
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        prod_adapted = self._adapted_prod(self.sites)
+        dev_ports = self_host.Ports(server=41731, web_dev=41732)
+        dev_adapted = self._adapted_dev(self.sites, dev_ports)
+        running_cfg = copy_json(base_adapted)
+        admin_calls: list[tuple[str, bytes | None]] = []
+
+        def fake_req(address, path, *, data=None, headers=None, timeout=10.0):
+            admin_calls.append((path, data))
+            if path == "/config/":
+                return running_cfg
+            if path == "/adapt":
+                if self_host.MANAGED_START.encode() not in self.sites.read_bytes():
+                    return {"result": base_adapted}
+                if b"41732" in self.sites.read_bytes():
+                    return {"result": dev_adapted}
+                return {"result": prod_adapted}
+            if path == "/load":
+                running_cfg.clear()
+                running_cfg.update(json.loads(data.decode()))
+                return {}
+            raise AssertionError(path)
+
+        with mock.patch.object(self_host, "caddy_admin_address", return_value="127.0.0.1:2019"), \
+             mock.patch.object(self_host, "caddy_admin_request", side_effect=fake_req):
+            # First insert (PROD).
+            res1 = self_host.apply_caddyfile_safely(self.site, self_host.Mode.PROD, self.ports, caddy_config=cfg)
+            self.assertTrue(res1)
+            sites_after_prod = self.sites.read_text()
+            self.assertTrue(sites_after_prod.startswith(self.OTHER_GAME))
+            self.assertIn(self_host.MANAGED_START, sites_after_prod)
+            self.assertEqual(self.top.read_bytes(), top_before)
+            self.assertTrue(any(p.name.startswith("sites.caddy.bak.") for p in self.config_dir.iterdir()))
+
+            # No-op when block already matches.
+            admin_calls.clear()
+            res_noop = self_host.apply_caddyfile_safely(self.site, self_host.Mode.PROD, self.ports, caddy_config=cfg)
+            self.assertIsNone(res_noop)
+            self.assertEqual(admin_calls, [])
+
+            # Update in-place (DEV) keeps surrounding bytes byte-identical.
+            res2 = self_host.apply_caddyfile_safely(self.site, self_host.Mode.DEV, dev_ports, caddy_config=cfg)
+            self.assertTrue(res2)
+            sites_after_dev = self.sites.read_text()
+            prefix, rest = sites_after_dev.split(self_host.MANAGED_START, 1)
+            self.assertEqual(prefix, self.OTHER_GAME + "\n")
+            _, suffix = rest.split(self_host.MANAGED_END, 1)
+            self.assertEqual(suffix, "\n")
+
+        # Missing route / dial rejected by verify_fragment_in_adapted.
+        with self.assertRaises(self_host.CaddyMismatch):
+            self_host.verify_fragment_in_adapted(base_adapted, self.site, self_host.Mode.PROD, self.ports, self.sites)
+        with self.assertRaises(self_host.CaddyMismatch):
+            self_host.verify_fragment_in_adapted(prod_adapted, self.site, self_host.Mode.DEV, dev_ports, self.sites)
+
+    def test_fragment_drift_and_lost_reply_old_new_unknown_and_rejected(self):
+        self.top.write_text(f"{{\n\tadmin localhost:2019\n}}\nimport {self.sites}\n")
+        self.sites.write_text(self.OTHER_GAME)
+        cfg = self_host.CaddyConfig("fragment", self.top, self.sites)
+        prod_adapted = self._adapted_prod(self.sites)
+        dev_ports = self_host.Ports(server=41731, web_dev=41732)
+        dev_adapted = self._adapted_dev(self.sites, dev_ports)
+
+        # Install initial prod block via validate path (top-level passed to caddy validate/reload).
+        validated_configs: list[list[str]] = []
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=None), \
+             mock.patch.object(self_host, "validate_caddyfile", side_effect=lambda: (validated_configs.append([str(self_host.CADDYFILE)]), subprocess.CompletedProcess([], 0, "", ""))[1]), \
+             mock.patch.object(self_host, "reload_caddy"):
+            self.assertTrue(self_host.apply_caddyfile_safely(self.site, self_host.Mode.PROD, self.ports, caddy_config=cfg))
+        self.assertEqual(validated_configs, [[str(self.top)]])
+
+        prod_sites_bytes = self.sites.read_bytes()
+
+        # 1. Rejected /load restores exact bytes and verifies runtime JSON.
+        def reject_req(address, path, *, data=None, headers=None, timeout=10.0):
+            if path == "/config/":
+                return prod_adapted
+            if path == "/adapt":
+                return {"result": dev_adapted if b"41732" in self.sites.read_bytes() else prod_adapted}
+            if path == "/load":
+                raise self_host.CaddyRejected("boom")
+            raise AssertionError(path)
+
+        with mock.patch.object(self_host, "caddy_admin_address", return_value="127.0.0.1:2019"), \
+             mock.patch.object(self_host, "caddy_admin_request", side_effect=reject_req):
+            with self.assertRaisesRegex(RuntimeError, "restored the previous sites.caddy"):
+                self_host.apply_caddyfile_safely(self.site, self_host.Mode.DEV, dev_ports, caddy_config=cfg)
+        self.assertEqual(self.sites.read_bytes(), prod_sites_bytes)
+
+        # 2. Lost reply -> Caddy kept OLD -> CaddyLoadOld restores bytes & verifies runtime.
+        def lost_old_req(address, path, *, data=None, headers=None, timeout=10.0):
+            if path == "/config/":
+                return prod_adapted
+            if path == "/adapt":
+                return {"result": dev_adapted if b"41732" in self.sites.read_bytes() else prod_adapted}
+            if path == "/load":
+                raise self_host.CaddyUnsure("eof")
+            raise AssertionError(path)
+
+        with mock.patch.object(self_host, "caddy_admin_address", return_value="127.0.0.1:2019"), \
+             mock.patch.object(self_host, "caddy_admin_request", side_effect=lost_old_req):
+            with self.assertRaisesRegex(self_host.CaddyLoadOld, "verified previous config still running"):
+                self_host.apply_caddyfile_safely(self.site, self_host.Mode.DEV, dev_ports, caddy_config=cfg)
+        self.assertEqual(self.sites.read_bytes(), prod_sites_bytes)
+
+        # 3. Lost reply -> Caddy applied NEW -> succeeds!
+        config_gets = 0
+
+        def lost_new_req(address, path, *, data=None, headers=None, timeout=10.0):
+            nonlocal config_gets
+            if path == "/config/":
+                config_gets += 1
+                return prod_adapted if config_gets <= 2 else dev_adapted
+            if path == "/adapt":
+                return {"result": dev_adapted if b"41732" in self.sites.read_bytes() else prod_adapted}
+            if path == "/load":
+                raise self_host.CaddyUnsure("eof")
+            raise AssertionError(path)
+
+        with mock.patch.object(self_host, "caddy_admin_address", return_value="127.0.0.1:2019"), \
+             mock.patch.object(self_host, "caddy_admin_request", side_effect=lost_new_req):
+            self.assertTrue(self_host.apply_caddyfile_safely(self.site, self_host.Mode.DEV, dev_ports, caddy_config=cfg))
+        self.assertIn("41732", self.sites.read_text())
+
+        # Restore back to prod for next test.
+        self.sites.write_bytes(prod_sites_bytes)
+
+        # 4. Lost reply -> UNKNOWN -> preserves candidate & backups in .self-host without rollback.
+        config_gets = 0
+
+        def lost_unknown_req(address, path, *, data=None, headers=None, timeout=10.0):
+            nonlocal config_gets
+            if path == "/config/":
+                config_gets += 1
+                return prod_adapted if config_gets <= 2 else {"apps": {"http": {"servers": {"other": {}}}}}
+            if path == "/adapt":
+                return {"result": dev_adapted if b"41732" in self.sites.read_bytes() else prod_adapted}
+            if path == "/load":
+                raise self_host.CaddyUnsure("eof")
+            raise AssertionError(path)
+
+        with mock.patch.object(self_host, "caddy_admin_address", return_value="127.0.0.1:2019"), \
+             mock.patch.object(self_host, "caddy_admin_request", side_effect=lost_unknown_req):
+            with self.assertRaises(self_host.CaddyLoadUnknown):
+                self_host.apply_caddyfile_safely(self.site, self_host.Mode.DEV, dev_ports, caddy_config=cfg)
+        self.assertIn("41732", self.sites.read_text())
+        self.assertEqual((self.config_dir / "caddy-sites.before").read_bytes(), prod_sites_bytes)
+        self.assertIn(b"41732", (self.config_dir / "caddy-sites.candidate").read_bytes())
+
+        # 5. Drift after candidate adapt aborts BEFORE /load (and restores under unchanged ownership).
+        self.sites.write_bytes(prod_sites_bytes)
+        drift_calls: list[str] = []
+
+        def drift_req(address, path, *, data=None, headers=None, timeout=10.0):
+            drift_calls.append(path)
+            if path == "/config/":
+                return prod_adapted
+            if path == "/adapt":
+                if b"41732" in self.sites.read_bytes():
+                    # Simulate external top-level drift after candidate adapt!
+                    self.top.write_text(f"{{\n\tadmin localhost:2019\n}}\n# drifted\nimport {self.sites}\n")
+                    return {"result": dev_adapted}
+                return {"result": prod_adapted}
+            if path == "/load":
+                raise AssertionError("/load must not run on source drift")
+            raise AssertionError(path)
+
+        with mock.patch.object(self_host, "caddy_admin_address", return_value="127.0.0.1:2019"), \
+             mock.patch.object(self_host, "caddy_admin_request", side_effect=drift_req):
+            with self.assertRaisesRegex(RuntimeError, "changed outside lock before load"):
+                self_host.apply_caddyfile_safely(self.site, self_host.Mode.DEV, dev_ports, caddy_config=cfg)
+        self.assertNotIn("/load", drift_calls)
+        self.assertEqual(self.sites.read_bytes(), prod_sites_bytes)
+
+        # 6. Ownership check blocks _restore_caddy_target if modified externally.
+        with self.assertRaisesRegex(RuntimeError, "changed outside lock"):
+            self_host._restore_caddy_target(self.sites, b"old\n", b"different-expected\n")
+
+    def test_lock_directory_naming_permissions_symlinks_and_readonly_top_dir(self):
+        # Verify exact lock dir precedence & permissions.
+        with mock.patch.object(self_host, "CADDY_LOCK_DIR", None):
+            xdg = self.root / "xdg-state"
+            with mock.patch.dict(os.environ, {"XDG_STATE_HOME": str(xdg), "BGD_CADDY_LOCK_DIR": ""}, clear=True):
+                d = self_host._caddy_lock_dir()
+                self.assertEqual(d, (xdg / "bgd-self-host" / "caddy-locks").resolve())
+                self.assertEqual(stat.S_IMODE(d.stat().st_mode), 0o700)
+
+            env_dir = self.root / "env-locks"
+            with mock.patch.dict(os.environ, {"BGD_CADDY_LOCK_DIR": str(env_dir), "XDG_STATE_HOME": str(xdg)}, clear=True):
+                d2 = self_host._caddy_lock_dir()
+                self.assertEqual(d2, env_dir.resolve())
+
+            sym_dir = self.root / "sym-locks"
+            sym_dir.symlink_to(env_dir)
+            with mock.patch.dict(os.environ, {"BGD_CADDY_LOCK_DIR": str(sym_dir)}, clear=True):
+                with self.assertRaisesRegex(RuntimeError, "symlink"):
+                    self_host._caddy_lock_dir()
+
+        # Verify byte-for-byte lock names + fragment works with read-only top parent directory!
+        ro_dir = self.root / "ro-caddy"
+        ro_dir.mkdir()
+        ro_top = ro_dir / "Caddyfile"
+        ro_top.write_text(f"import {self.sites}\n")
+        cfg = self_host.CaddyConfig("fragment", ro_top, self.sites)
+        expected_top_lock = self.lock_dir / f"caddy-{hashlib.sha256(str(ro_top.resolve()).encode()).hexdigest()[:24]}.lock"
+        expected_sites_lock = self.lock_dir / f"caddy-{hashlib.sha256(str(self.sites.resolve()).encode()).hexdigest()[:24]}.lock"
+        ro_dir.chmod(0o555)
+        self.addCleanup(lambda: ro_dir.chmod(0o755))
+        with self_host._caddy_locks(cfg):
+            self.assertTrue(expected_top_lock.exists())
+            self.assertTrue(expected_sites_lock.exists())
+            self.assertEqual(stat.S_IMODE(expected_top_lock.stat().st_mode), 0o600)
+
+        # Symlink lock file refused.
+        sym_lock = self.lock_dir / f"caddy-{hashlib.sha256(str(self.top.resolve()).encode()).hexdigest()[:24]}.lock"
+        sym_lock.unlink(missing_ok=True)
+        sym_lock.symlink_to(self.sites)
+        with self.assertRaisesRegex(RuntimeError, "symlink"):
+            with self_host._caddy_locks(self_host.CaddyConfig("fragment", self.top, self.sites)):
+                pass
+
+    def test_start_prod_with_caddy_unchanged_fragment_uses_known_aliases_under_lock(self):
+        self.top.write_text(f"{{\n\tadmin localhost:2019\n}}\nimport {self.sites}\n")
+        self.sites.write_text(self_host.render_caddy_block(self.site, self_host.Mode.PROD, self.ports))
+        cfg = self_host.Config(
+            site=self.site,
+            mode=self_host.Mode.PROD,
+            ports=self.ports,
+            caddy_layout="fragment",
+            caddyfile=str(self.top),
+            caddy_sites=str(self.sites),
+        )
+        self_host.use_caddyfile(cfg)
+        with mock.patch.multiple(
+            self_host,
+            caddy_admin_address=mock.Mock(return_value="mock-admin"),
+            check_caddy_serves=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.Mock(return_value=True),
+            announce_serving=mock.DEFAULT,
+        ) as mocks:
+            self_host.start_prod_with_caddy(cfg, None)
+            mocks["check_caddy_serves"].assert_called_once()
+            self.assertEqual(mocks["check_caddy_serves"].call_args.kwargs.get("caddyfile"), self.top)
+            self.assertIsInstance(mocks["check_caddy_serves"].call_args.kwargs.get("known_aliases"), dict)
+            mocks["announce_serving"].assert_called_once_with(cfg)
+
+    def test_concurrent_fragment_locks_and_known_alias_normalization(self):
+        cfg = self_host.CaddyConfig("fragment", self.top, self.sites)
+        events: list[str] = []
+        entered_first = threading.Event()
+        release_first = threading.Event()
+
+        def worker_one():
+            with self_host._caddy_locks(cfg):
+                events.append("one-enter")
+                entered_first.set()
+                release_first.wait(timeout=2)
+                events.append("one-exit")
+
+        def worker_two():
+            entered_first.wait(timeout=2)
+            with self_host._caddy_locks(cfg):
+                events.append("two-enter")
+                events.append("two-exit")
+
+        t1 = threading.Thread(target=worker_one)
+        t2 = threading.Thread(target=worker_two)
+        t1.start()
+        t2.start()
+        release_first.set()
+        t1.join(timeout=5)
+        t2.join(timeout=5)
+        self.assertEqual(events, ["one-enter", "one-exit", "two-enter", "two-exit"])
+
+        # known_caddy_aliases normalizes symlinked sibling paths between adapted and running JSON.
+        real_sibling = self.sites.parent / "real-sibling.caddy"
+        real_sibling.write_text("sib.example.test {\n\trespond ok 200\n}\n")
+        sym_top = self.root / "sym-Caddyfile"
+        sym_top.symlink_to(self.top)
+        self.top.write_text(f"import {self.sites}\n")
+        self.sites.write_text("")
+        sym_cfg = self_host.CaddyConfig("fragment", sym_top, self.sites)
+        aliases = self_host.known_caddy_aliases(sym_cfg, (real_sibling,))
+        self.assertEqual(aliases[str(sym_top)], str(self.top.resolve()))
+        adapted = {"apps": {"http": {"servers": {"s": {"routes": [{"handle": [{"handler": "file_server", "hide": [str(sym_top), str(real_sibling)]}]}]}}}}}
+        running = {"apps": {"http": {"servers": {"s": {"routes": [{"handle": [{"handler": "file_server", "hide": [str(real_sibling.resolve()), str(self.top.resolve())]}]}]}}}}}
+        self.assertTrue(self_host._same_config_with_aliases(adapted, running, aliases))
+
+    def test_preflight_fragment_rejects_missing_import_before_stop(self):
+        self.top.write_text("unrelated.example.test {\n\trespond ok 200\n}\n")
+        cfg = self_host.Config(
+            site=self.site,
+            mode=self_host.Mode.PROD,
+            ports=self.ports,
+            caddy_layout="fragment",
+            caddyfile=str(self.top),
+            caddy_sites=str(self.sites),
+        )
+        self_host.use_caddyfile(cfg)
+        err = io.StringIO()
+        with mock.patch.object(self_host, "ensure_tools"), redirect_stderr(err):
+            exc = self_host.prepare_prod_caddy(cfg)
+        self.assertIsNotNone(exc)
+        self.assertIn("does not import", str(exc))
+        self.assertFalse(self.sites.exists())
+
+
+def copy_json(obj):
+    return json.loads(json.dumps(obj))
+
+
+class DisposableCaddyIntegrationTests(unittest.TestCase):
+    _SAFE_ENV_KEYS = (
+        "PATH",
+        "USER",
+        "LOGNAME",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "TMPDIR",
+        "HOME",
+        "XDG_STATE_HOME",
+        "BGD_CADDY_LOCK_DIR",
+    )
+
+    @unittest.skipUnless(shutil.which("caddy") is not None, "caddy binary not installed")
+    def test_disposable_caddy_fragment_prod_and_dev_preserves_other_game(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        home = root / "home"
+        home.mkdir()
+        xdg_state = root / "xdg"
+        lock_dir = root / "locks"
+
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            probe.bind(("127.0.0.1", 0))
+            admin_port = probe.getsockname()[1]
+        finally:
+            probe.close()
+
+        # The managed block always answers the other scheme too (a redirect),
+        # so the two schemes need ports of their own: Caddy's global
+        # http_port and https_port options, with portless site addresses.
+        ports = []
+        for _ in range(2):
+            probe_http = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                probe_http.bind(("127.0.0.1", 0))
+                ports.append(probe_http.getsockname()[1])
+            finally:
+                probe_http.close()
+        http_port, https_port = ports
+
+        top = root / "Caddyfile"
+        sites = root / "managed-sites" / "sites.caddy"
+        sites.parent.mkdir(parents=True, exist_ok=True)
+        other_game = "http://other-game.example.test {\n\trespond \"other\" 200\n}\n"
+        sites.write_text(other_game)
+        top.write_text(
+            f"{{\n\tadmin 127.0.0.1:{admin_port}\n\tauto_https off\n\thttp_port {http_port}\n"
+            f"\thttps_port {https_port}\n}}\nimport {sites}\n"
+        )
+
+        safe_env = {k: os.environ[k] for k in self._SAFE_ENV_KEYS if k in os.environ}
+        safe_env.update(
+            {
+                "HOME": str(home),
+                "XDG_STATE_HOME": str(xdg_state),
+                "BGD_CADDY_LOCK_DIR": str(lock_dir),
+            }
+        )
+        proc = subprocess.Popen(
+            ["caddy", "run", "--config", str(top), "--adapter", "caddyfile"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=safe_env,
+        )
+
+        def cleanup_caddy():
+            try:
+                if proc.poll() is None:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait(timeout=5)
+            finally:
+                for stream in (proc.stdout, proc.stderr):
+                    if stream is not None:
+                        stream.close()
+
+        self.addCleanup(cleanup_caddy)
+
+        deadline = time.monotonic() + 10.0
+        while True:
+            if proc.poll() is not None:
+                _, err = proc.communicate()
+                self.fail(f"disposable caddy exited early ({proc.returncode}): {err}")
+            try:
+                cfg_now = self_host.caddy_admin_request(f"127.0.0.1:{admin_port}", "/config/")
+                if isinstance(cfg_now, dict) and cfg_now.get("apps"):
+                    break
+            except (self_host.CaddyUnreachable, self_host.CaddyUnsure):
+                if time.monotonic() >= deadline:
+                    self.fail("disposable caddy admin API did not become ready")
+                time.sleep(0.1)
+
+        site = self_host.parse_site_url("http://ajayeb.example.test")
+        caddy_cfg = self_host.CaddyConfig("fragment", top, sites)
+        config_dir = root / ".self-host"
+        with mock.patch.dict(os.environ, safe_env, clear=True), \
+             mock.patch.object(Path, "home", return_value=home), \
+             mock.patch.object(self_host, "CONFIG_DIR", config_dir), \
+             mock.patch.object(self_host, "CADDY_LOCK_DIR", lock_dir), \
+             mock.patch.object(self_host, "CADDYFILE", top), \
+             mock.patch.object(self_host, "CADDY_LAYOUT", "fragment"), \
+             mock.patch.object(self_host, "CADDY_SITES", sites):
+            self.assertTrue(
+                self_host.apply_caddyfile_safely(
+                    site,
+                    self_host.Mode.PROD,
+                    self_host.Ports(server=41811, web_dev=41812),
+                    both_schemes=False,
+                    caddy_config=caddy_cfg,
+                )
+            )
+            self.assertTrue(sites.read_text().startswith(other_game))
+            self.assertTrue(
+                self_host.apply_caddyfile_safely(
+                    site,
+                    self_host.Mode.DEV,
+                    self_host.Ports(server=41811, web_dev=41812),
+                    both_schemes=False,
+                    caddy_config=caddy_cfg,
+                )
+            )
+            running = self_host.caddy_admin_request(f"127.0.0.1:{admin_port}", "/config/")
+            self_host.verify_fragment_in_adapted(
+                running, site, self_host.Mode.DEV, self_host.Ports(server=41811, web_dev=41812), sites
+            )
 
 
 if __name__ == "__main__":
