@@ -826,13 +826,15 @@ class CaddyLoadTests(unittest.TestCase):
         self.assertIn("reverse_proxy localhost:39111", edited)
         self.assertIn("other-site.test", edited)
         self.assertEqual(
-            admin.paths(), [("GET", "/config/"), ("POST", "/adapt"), ("POST", "/adapt"), ("POST", "/load")]
+            admin.paths(),
+            [("GET", "/config/"), ("POST", "/adapt"), ("GET", "/config/"), ("POST", "/adapt"), ("POST", "/load")],
         )
         _, _, adapt_headers, before = admin.requests[1]
         self.assertEqual(adapt_headers["Content-Type"], "text/caddyfile")
         self.assertEqual(before, self.OTHER_SITE.encode())
-        self.assertEqual(admin.requests[2][3], edited.encode())
-        _, _, load_headers, loaded = admin.requests[3]
+        # The running config is read again right before the candidate is adapted and loaded.
+        self.assertEqual(admin.requests[3][3], edited.encode())
+        _, _, load_headers, loaded = admin.requests[4]
         self.assertEqual(load_headers["Content-Type"], "application/json")
         self.assertEqual(load_headers["Cache-Control"], "must-revalidate")
         self.assertEqual(json.loads(loaded), served_from(edited))
@@ -917,7 +919,9 @@ class CaddyLoadTests(unittest.TestCase):
             def request(address, path, **kwargs):
                 if path == "/config/":
                     gets.append(path)
-                    if len(gets) == 2:
+                    # The first read is the snapshot, the second the check right
+                    # before the load, the third the recheck after the lost reply.
+                    if len(gets) == 3:
                         raise failure("recheck failed")
                 return real_request(address, path, **kwargs)
 
@@ -3802,6 +3806,43 @@ class CaddyFragmentLayoutTests(unittest.TestCase):
                 self_host.apply_caddyfile_safely(self.site, self_host.Mode.PROD, self.ports, caddy_config=cfg)
         self.assertEqual(self.top.read_text(), f"import {self.sites}\n")
 
+    def test_inline_mirror_guard_warns_instead_of_refusing_what_it_cannot_scan_or_read(self):
+        """The guard is advisory: a top-level file our brace counting cannot
+        follow (a quoted brace, a heredoc) or an unreadable import must not
+        refuse an inline install that Caddy itself accepts."""
+        cfg = self_host.CaddyConfig("inline", self.top, self.sites)
+        quoted = 'braces.example.test {\n\trespond "}" 200\n}\n'
+        heredoc = "heredoc.example.test {\n\trespond <<EOF\n\t}\n\tEOF 200\n}\n"
+        for text in (quoted, heredoc):
+            with self.subTest(text=text):
+                self.top.write_text(text)
+                stderr = io.StringIO()
+                with redirect_stderr(stderr):
+                    self_host.validate_inline_setup(cfg)
+                self.assertIn("could not scan the imports", stderr.getvalue())
+        unreadable = self.root / "private" / "other.caddy"
+        unreadable.parent.mkdir()
+        unreadable.write_text("other.example.test {\n}\n")
+        unreadable.chmod(0)
+        self.addCleanup(unreadable.chmod, 0o600)
+        self.top.write_text(f"import {unreadable}\n")
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            self_host.validate_inline_setup(cfg)
+        if os.geteuid() != 0:
+            self.assertIn("could not read imported file", stderr.getvalue())
+
+    def test_a_symlinked_inline_caddyfile_is_refused_with_the_file_it_points_to(self):
+        real = self.root / "real" / "Caddyfile"
+        real.parent.mkdir()
+        real.write_text("other.example.test {\n}\n")
+        link = self.root / "link-Caddyfile"
+        link.symlink_to(real)
+        with self.assertRaises(RuntimeError) as caught:
+            self_host._capture_file_state(link, allow_symlink=False)
+        self.assertIn(str(real.resolve()), str(caught.exception))
+        self.assertIn("--caddyfile", str(caught.exception))
+
     def test_fragment_mode_preserves_other_games_bytes_and_verifies_routes(self):
         self.top.write_text(f"{{\n\tadmin localhost:2019\n}}\nimport {self.sites}\n")
         self.sites.write_text(self.OTHER_GAME)
@@ -4182,7 +4223,11 @@ class DisposableCaddyIntegrationTests(unittest.TestCase):
         top = root / "Caddyfile"
         sites = root / "managed-sites" / "sites.caddy"
         sites.parent.mkdir(parents=True, exist_ok=True)
-        other_game = "http://other-game.example.test {\n\trespond \"other\" 200\n}\n"
+        other_game = (
+            "# BEGIN MANAGED OTHER\n"
+            "http://other-game.example.test {\n\trespond \"other\" 200\n}\n"
+            "# END MANAGED OTHER\n"
+        )
         sites.write_text(other_game)
         top.write_text(
             f"{{\n\tadmin 127.0.0.1:{admin_port}\n\tauto_https off\n\thttp_port {http_port}\n"

@@ -287,14 +287,16 @@ Never start these dev servers in a worktree, and never leave them running
 after a session. They use ports from the 38951 to 38959 range reserved for
 Ajayeb's own local services.
 
-## Caddy safety
-
 ## Caddy safety and layouts
 
 Two Caddyfile layouts are supported:
 
-- `inline` (default): Ajayeb inserts or replaces its `# BEGIN MANAGED AJAYEB`
-  block inside the top-level `--caddyfile`.
+- `inline` (default): Ajayeb inserts or replaces its `# BEGIN ajayeb self_host.py`
+  ... `# END ajayeb self_host.py` block inside the top-level `--caddyfile`. The
+  file is written by replacing it, so it must be a regular file (a symlink is
+  refused with the path it points to, which `--caddyfile` can name instead) in a
+  directory the deploy user can write, where the legacy `<Caddyfile>.lock` and a
+  short-lived temporary file are also created.
 - `fragment`: the top-level `--caddyfile` stays read-only (even in a root-owned
   or read-only directory) and imports a shared fragment file (`--caddy-sites`,
   default `~/.config/caddy/managed-sites/sites.caddy`). Other games may share
@@ -317,7 +319,11 @@ In `fragment` mode, validation runs under lock before any write or `stop`:
 In `inline` mode, if the top-level Caddyfile has no Ajayeb markers yet, `self_host.py`
 scans its resolved top-level imports and refuses with a message naming
 `--caddy-layout fragment` if any imported file already holds Ajayeb markers, so a
-migrated setup is never overwritten or silently duplicated.
+migrated setup is never overwritten or silently duplicated. This guard is
+advisory: when the top-level file holds something its simple brace counting
+cannot follow (a quoted `}` or a heredoc body) or an imported file cannot be
+read, it warns and lets inline mode go on, since Caddy itself still adapts and
+checks the whole file before anything is loaded.
 
 ### Locking and safe load sequence
 
@@ -328,7 +334,11 @@ Every Caddy-reading, Caddy-validating and Caddy-editing path (`preflight_caddyfi
 `~/.local/state/bgd-self-host/caddy-locks` (`0o700` directory permissions, no
 symlinks allowed, `0o600` lock files named `caddy-<sha256[:24]>.lock` for the
 top-level file and fragment). In `inline` mode the legacy sibling `<Caddyfile>.lock`
-is locked as well.
+is locked as well. The lock directory comes from the caller's environment, so
+every caller on a host (the boot `start`, an ssh `redeploy`, and every other
+game's script editing the same files) must see the same `BGD_CADDY_LOCK_DIR` and
+`XDG_STATE_HOME`, or none of them; otherwise they lock different files and only
+the source-stamp checks catch a race.
 
 Because the Caddyfile or shared fragment carries other sites on the machine,
 every edit goes through a safe sequence under the lock:
@@ -354,8 +364,9 @@ every edit goes through a safe sequence under the lock:
 5. Re-verify source stamps, adapt the full top-level Caddyfile in Caddy (`/adapt`),
    verify in `fragment` mode that Ajayeb's rendered host and upstream dials
    appear in the adapted JSON (`verify_fragment_in_adapted`), re-verify source
-   stamps once more (aborting before `/load` on any external drift), and POST
-   the full JSON once to `/load`.
+   stamps once more (aborting before `/load` on any external drift), read the
+   running config again and abort if it changed since step 3 (in both layouts),
+   and POST the full JSON once to `/load`.
    - On `/load` refusal, restore the target only if its on-disk identity matches
      what was written, and verify running `/config/` still matches the baseline.
    - If the `/load` reply is lost (`CaddyUnsure`), inspect `/config/` and classify
@@ -374,7 +385,7 @@ every edit goes through a safe sequence under the lock:
 ### Migrating an existing host to fragment layout
 
 1. Create the shared fragment directory (for example `~/.config/caddy/managed-sites/`)
-   and copy Ajayeb's `# BEGIN MANAGED AJAYEB` ... `# END MANAGED AJAYEB` block
+   and copy Ajayeb's `# BEGIN ajayeb self_host.py` ... `# END ajayeb self_host.py` block
    into `sites.caddy`. Remove that block from the top-level Caddyfile and add
    `import /home/USER/.config/caddy/managed-sites/sites.caddy` (or an equivalent
    absolute / `{$VAR}` import), then verify with `caddy validate` and reload
@@ -385,9 +396,17 @@ every edit goes through a safe sequence under the lock:
 3. Subsequent `start`, `redeploy`, `ship` and `ship-all` invocations keep those
    saved fragment settings automatically.
 
+Before either step, check the server's shell and its boot launcher for
+`BGD_CADDY_LAYOUT`, `BGD_CADDYFILE` and `BGD_CADDY_SITES`. They override the
+saved settings and are saved along with them, and other games' scripts read the
+same names: a `BGD_CADDY_SITES` exported for another game while Ajayeb is still
+inline makes every Ajayeb `start` and `redeploy` refuse. Run `caddy-settings`
+first, and export those names only once every game on the host uses the same
+fragment.
+
 The pre-stop preflight and separation of concerns remain unchanged:
 
-`setup`, `redeploy` and `start` also run the check of step 5 as a
+`setup`, `redeploy` and `start` also run the check of step 3 as a
 preflight, before they stop the game server, whenever the block will need
 writing and a Caddy answers. A Caddy that does not serve the file as it
 stands is then reported before the game is stopped. The production

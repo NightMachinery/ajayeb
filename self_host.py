@@ -1054,7 +1054,14 @@ def validate_fragment_setup(caddy_config: CaddyConfig, *, env=None) -> tuple[tup
 
 def validate_inline_setup(caddy_config: CaddyConfig, *, env=None) -> None:
     """Refuse inline mode when the top-level Caddyfile has no Ajayeb block
-    yet but already imports another file carrying Ajayeb markers."""
+    yet but already imports another file carrying Ajayeb markers.
+
+    The guard is advisory: inline mode worked before it existed, and Caddy
+    itself is the judge of the file. So when the top-level file cannot be
+    scanned (our brace counting is simpler than Caddy's parser, for example
+    a quoted "}" or a heredoc body) or an imported file cannot be read, it
+    warns and lets inline mode go on rather than refuse a working install.
+    Fragment mode keeps its own checks fail-closed."""
     top = caddy_config.caddyfile
     if not top.exists() or not top.is_file():
         return
@@ -1062,7 +1069,15 @@ def validate_inline_setup(caddy_config: CaddyConfig, *, env=None) -> None:
     if find_managed_block(top_text, target=top) is not None:
         return
     source = os.environ if env is None else env
-    imports, snippets = scan_top_level_imports(top_text)
+    try:
+        imports, snippets = scan_top_level_imports(top_text)
+    except ValueError as exc:
+        print(
+            f"warning: could not scan the imports of {top} ({exc}); skipping the check for "
+            "Ajayeb markers in imported files",
+            file=sys.stderr,
+        )
+        return
     seen: set[Path] = set()
     for imp in imports:
         pat = imp.pattern
@@ -1084,9 +1099,17 @@ def validate_inline_setup(caddy_config: CaddyConfig, *, env=None) -> None:
             if matched in seen or matched.resolve() == top.resolve():
                 continue
             seen.add(matched)
-            if not matched.is_file():
+            try:
+                if not matched.is_file():
+                    continue
+                imported_text = matched.read_text()
+            except (OSError, UnicodeDecodeError) as exc:
+                print(
+                    f"warning: could not read imported file {matched} ({exc}); skipping it in the check "
+                    "for Ajayeb markers",
+                    file=sys.stderr,
+                )
                 continue
-            imported_text = matched.read_text()
             if MANAGED_START in imported_text or MANAGED_END in imported_text:
                 raise RuntimeError(
                     f"top-level {top} has no Ajayeb managed block, but imported file {matched} "
@@ -1529,15 +1552,29 @@ def _caddy_locks(caddy_config: CaddyConfig):
         yield
 
 
+def _symlink_refusal(path: Path) -> RuntimeError:
+    """The edited Caddy file is written by replacing it, which would turn a
+    symlink into a plain file, so a symlink is refused. Name the file it
+    points to, which --caddyfile (or --caddy-sites) can name instead."""
+    try:
+        real = path.resolve(strict=True)
+    except OSError:
+        return RuntimeError(f"managed Caddy file cannot be a symlink: {path}")
+    return RuntimeError(
+        f"managed Caddy file cannot be a symlink: {path} points to {real}; name that file instead "
+        "(--caddyfile for the top-level file, --caddy-sites for the fragment)"
+    )
+
+
 def _capture_file_state(path: Path, *, allow_symlink: bool) -> dict[str, object] | None:
     if not allow_symlink and path.is_symlink():
-        raise RuntimeError(f"managed Caddy file cannot be a symlink: {path}")
+        raise _symlink_refusal(path)
     try:
         lst = path.lstat()
     except FileNotFoundError:
         return None
     if not allow_symlink and stat.S_ISLNK(lst.st_mode):
-        raise RuntimeError(f"managed Caddy file cannot be a symlink: {path}")
+        raise _symlink_refusal(path)
     st = path.stat()
     if not stat.S_ISREG(st.st_mode):
         raise RuntimeError(f"managed Caddy path is not a regular file: {path}")
@@ -1955,7 +1992,7 @@ def load_or_validate_caddyfile(
                 known_aliases=known_aliases,
                 verify_candidate=verify_candidate,
                 verify_source=verify_source,
-                recheck_before_adapt=(cfg.layout == "fragment"),
+                recheck_before_adapt=True,
             )
             return True
         except CaddyRejected as exc:
